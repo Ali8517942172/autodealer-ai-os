@@ -1,0 +1,68 @@
+{
+  "name": "Daily Competitor Intelligence",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 6 * * *" }] }
+      },
+      "name": "Daily Trigger (6 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{$env.MARKETING_API_URL}}/api/competitors",
+        "method": "GET"
+      },
+      "name": "Fetch Competitor Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [500, 300],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "functionCode": "// Hermes Agent: Analyze competitor pricing\nconst competitors = items.map(i => i.json);\nconst alerts = competitors.filter(c => c.ai_recommendation && c.ai_recommendation.includes('Reduce'));\n\nreturn [{\n  json: {\n    total_competitors_checked: competitors.length,\n    price_alerts: alerts.length,\n    summary: `Checked ${competitors.length} competitor listings. Found ${alerts.length} pricing opportunities.`,\n    alerts: alerts,\n    analyzed_by: 'Hermes AI Agent',\n    analyzed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Hermes Agent: Price Analysis",
+      "type": "n8n-nodes-base.function",
+      "position": [750, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "channel": "#marketing-intel",
+        "text": "📊 Daily Competitor Report:\n{{$json[\"summary\"]}}\n\nPrice Alerts: {{$json[\"price_alerts\"]}}\nAnalyzed by: {{$json[\"analyzed_by\"]}}"
+      },
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.slack",
+      "position": [1000, 200],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CRM_API_URL}}/api/inventory/price-review",
+        "method": "POST",
+        "body": "={{JSON.stringify($json.alerts)}}"
+      },
+      "name": "Update CRM Price Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1000, 400],
+      "typeVersion": 3
+    }
+  ],
+  "connections": {
+    "Daily Trigger (6 AM)": {
+      "main": [[{ "node": "Fetch Competitor Data", "type": "main", "index": 0 }]]
+    },
+    "Fetch Competitor Data": {
+      "main": [[{ "node": "Hermes Agent: Price Analysis", "type": "main", "index": 0 }]]
+    },
+    "Hermes Agent: Price Analysis": {
+      "main": [[
+        { "node": "Post to Slack", "type": "main", "index": 0 },
+        { "node": "Update CRM Price Alerts", "type": "main", "index": 0 }
+      ]]
+    }
+  }
+}

@@ -1,0 +1,256 @@
+-- =============================================
+-- Alba AI Platform - Supabase Database Schema
+-- =============================================
+-- This schema powers the AI CRM and is designed
+-- for Supabase (PostgreSQL) with Row Level Security.
+-- =============================================
+
+-- Enable pgvector extension for RAG
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- =============================================
+-- AUTHENTICATION & RBAC
+-- =============================================
+
+CREATE TABLE roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) UNIQUE NOT NULL,  -- admin, sales_manager, salesperson, marketing, service
+    permissions JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE user_profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id),
+    full_name VARCHAR(100) NOT NULL,
+    role_id UUID REFERENCES roles(id),
+    department VARCHAR(50),
+    phone VARCHAR(20),
+    commission_tier VARCHAR(20) DEFAULT 'standard',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- CRM: LEADS
+-- =============================================
+
+CREATE TABLE leads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(20),
+    source VARCHAR(50) NOT NULL,  -- website, whatsapp, walk_in, referral, phone, facebook, instagram
+    status VARCHAR(30) DEFAULT 'new',  -- new, contacted, qualified, negotiation, won, lost
+    
+    -- AI Agent Fields
+    ai_score INTEGER DEFAULT 0,           -- 0-100, scored by Cowork Agent
+    ai_priority VARCHAR(10) DEFAULT 'COLD', -- HOT, WARM, COLD
+    ai_intent TEXT,                        -- "Looking for family SUV, budget ~200k"
+    ai_probability DECIMAL(5,2),           -- Probability to buy (0.00 - 1.00)
+    
+    -- Vehicle Interest
+    vehicle_interest VARCHAR(100),
+    budget_min DECIMAL(12,2),
+    budget_max DECIMAL(12,2),
+    timeline VARCHAR(30),  -- immediate, 1_month, 3_months, browsing
+    has_trade_in BOOLEAN DEFAULT FALSE,
+    
+    -- Assignment
+    assigned_to UUID REFERENCES user_profiles(id),
+    assigned_at TIMESTAMPTZ,
+    
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    last_contacted_at TIMESTAMPTZ
+);
+
+-- =============================================
+-- CRM: CUSTOMERS
+-- =============================================
+
+CREATE TABLE customers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lead_id UUID REFERENCES leads(id),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(20),
+    nationality VARCHAR(50),
+    emirates_id VARCHAR(20),
+    
+    -- Finance Profile (AI Finance Eligibility)
+    monthly_salary DECIMAL(12,2),
+    employer VARCHAR(100),
+    employment_months INTEGER,
+    preferred_bank VARCHAR(50),
+    
+    -- AI Sentiment
+    ai_sentiment VARCHAR(20) DEFAULT 'neutral',  -- happy, neutral, cold, angry, risk
+    lifetime_value_aed DECIMAL(12,2) DEFAULT 0,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- INVENTORY: VEHICLES (synced with Odoo ERP)
+-- =============================================
+
+CREATE TABLE vehicles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    vin VARCHAR(17) UNIQUE,
+    make VARCHAR(50) NOT NULL,
+    model VARCHAR(50) NOT NULL,
+    year INTEGER NOT NULL,
+    color VARCHAR(30),
+    mileage_km INTEGER,
+    condition VARCHAR(20),  -- new, pre_owned, certified_preowned
+    
+    -- Financial Intelligence (Accounting USP)
+    purchase_price DECIMAL(12,2),
+    shipping_cost DECIMAL(12,2) DEFAULT 0,
+    customs_duty DECIMAL(12,2) DEFAULT 0,
+    reconditioning_cost DECIMAL(12,2) DEFAULT 0,
+    total_landed_cost DECIMAL(12,2) GENERATED ALWAYS AS (
+        purchase_price + shipping_cost + customs_duty + reconditioning_cost
+    ) STORED,
+    
+    listing_price DECIMAL(12,2),
+    gross_margin DECIMAL(12,2) GENERATED ALWAYS AS (
+        listing_price - (purchase_price + shipping_cost + customs_duty + reconditioning_cost)
+    ) STORED,
+    
+    -- Inventory Intelligence
+    stock_date DATE DEFAULT CURRENT_DATE,
+    days_in_stock INTEGER GENERATED ALWAYS AS (
+        CURRENT_DATE - stock_date
+    ) STORED,
+    holding_cost_per_day DECIMAL(8,2) DEFAULT 50.00,
+    status VARCHAR(20) DEFAULT 'available',  -- available, reserved, sold, in_transit
+    
+    -- AI Fields
+    ai_demand_score INTEGER,          -- 1-100, predicted by Inventory Intelligence agent
+    ai_price_recommendation DECIMAL(12,2),
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- DEALS / SALES
+-- =============================================
+
+CREATE TABLE deals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lead_id UUID REFERENCES leads(id),
+    customer_id UUID REFERENCES customers(id),
+    vehicle_id UUID REFERENCES vehicles(id),
+    salesperson_id UUID REFERENCES user_profiles(id),
+    
+    -- Pricing
+    selling_price DECIMAL(12,2) NOT NULL,
+    discount_aed DECIMAL(12,2) DEFAULT 0,
+    accessories_revenue DECIMAL(12,2) DEFAULT 0,
+    vat_amount DECIMAL(12,2),
+    
+    -- Financial Metrics (Accounting USP)
+    gross_profit DECIMAL(12,2),
+    salesperson_commission DECIMAL(12,2),
+    finance_commission DECIMAL(12,2) DEFAULT 0,
+    insurance_commission DECIMAL(12,2) DEFAULT 0,
+    net_profit DECIMAL(12,2),
+    
+    -- Finance Details
+    payment_method VARCHAR(20),  -- cash, bank_finance, in_house_finance
+    bank_name VARCHAR(50),
+    loan_amount DECIMAL(12,2),
+    monthly_emi DECIMAL(12,2),
+    loan_tenure_months INTEGER,
+    
+    status VARCHAR(20) DEFAULT 'pending',  -- pending, approved, delivered, cancelled
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    closed_at TIMESTAMPTZ
+);
+
+-- =============================================
+-- RAG: DOCUMENT VECTORS (pgvector)
+-- =============================================
+
+CREATE TABLE document_embeddings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id VARCHAR(20) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    department VARCHAR(50) NOT NULL,
+    chunk_index INTEGER DEFAULT 0,
+    content TEXT NOT NULL,
+    embedding vector(1536),  -- OpenAI text-embedding-3-small dimensions
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create HNSW index for fast similarity search
+CREATE INDEX ON document_embeddings USING hnsw (embedding vector_cosine_ops);
+
+-- =============================================
+-- MARKETING: CAMPAIGNS
+-- =============================================
+
+CREATE TABLE campaigns (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(200) NOT NULL,
+    channels TEXT[] DEFAULT '{}',
+    budget_aed DECIMAL(12,2),
+    status VARCHAR(20) DEFAULT 'draft',
+    generated_by VARCHAR(50),  -- 'Hermes AI Agent'
+    
+    -- Attribution
+    impressions INTEGER DEFAULT 0,
+    clicks INTEGER DEFAULT 0,
+    leads_generated INTEGER DEFAULT 0,
+    deals_closed INTEGER DEFAULT 0,
+    revenue_attributed DECIMAL(12,2) DEFAULT 0,
+    true_roi DECIMAL(8,2),
+    
+    content JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- AUDIT LOG (Production requirement)
+-- =============================================
+
+CREATE TABLE audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID,
+    action VARCHAR(50) NOT NULL,
+    table_name VARCHAR(50),
+    record_id UUID,
+    old_values JSONB,
+    new_values JSONB,
+    ip_address INET,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- Row Level Security Policies
+-- =============================================
+
+ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deals ENABLE ROW LEVEL SECURITY;
+
+-- Salesperson can only see their own leads
+CREATE POLICY "Salesperson sees own leads" ON leads
+    FOR SELECT USING (assigned_to = auth.uid());
+
+-- Managers can see all leads
+CREATE POLICY "Manager sees all leads" ON leads
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles up
+            JOIN roles r ON up.role_id = r.id
+            WHERE up.id = auth.uid()
+            AND r.name IN ('admin', 'sales_manager')
+        )
+    );
