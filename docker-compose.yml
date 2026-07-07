@@ -1,22 +1,20 @@
 version: '3.8'
 
 services:
-  # Alba AI CRM Frontend (React + Vite)
+  # AI CRM Frontend (React + Vite)
   ai-crm-frontend:
     build:
       context: ./apps/ai-crm/frontend
-      dockerfile: Dockerfile
     ports:
       - "3000:80"
     environment:
       - NODE_ENV=production
     restart: always
 
-  # Alba AI CRM Backend (Node.js API)
+  # AI CRM Backend (Node.js API)
   ai-crm-backend:
     build:
       context: ./apps/ai-crm/backend
-      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     environment:
@@ -25,4 +23,64 @@ services:
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
     restart: always
 
-  # Future modules (Marketing, RAG, Automation) will be added here
+  # Marketing Intelligence OS (Node.js + MongoDB)
+  marketing-os:
+    build:
+      context: ./apps/marketing-os
+    ports:
+      - "5001:5001"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    depends_on:
+      - mongodb
+    restart: always
+
+  # Enterprise RAG (Python FastAPI + pgvector)
+  enterprise-rag:
+    build:
+      context: ./apps/enterprise-rag
+    ports:
+      - "5002:5002"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    restart: always
+
+  # Inventory Intelligence (Node.js + Supabase)
+  inventory-intel:
+    build:
+      context: ./apps/inventory-intel
+    ports:
+      - "5003:5003"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    restart: always
+
+  # MongoDB (for Marketing OS)
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+
+  # n8n Automation Engine
+  n8n:
+    image: n8nio/n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: always
+
+volumes:
+  mongodb_data:
+  n8n_data:
