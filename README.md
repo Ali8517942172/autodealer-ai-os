@@ -179,13 +179,56 @@ autodealer-ai-os/
 ├── .github/workflows/        # CI/CD pipelines
 ├── architecture/              # System diagrams, DB schemas, API specs
 ├── deployment/                # Docker Compose, environment configs
-├── docs/                      # Business flows, setup guides
+├── docs/                      # Business flows, AI dev workflow, setup guides
 ├── apps/
 │   ├── ai-crm/                # AI-First CRM (React + Node.js + Supabase)
+│   ├── ai-gateway/            # Centralized AI/LLM Gateway (FastAPI + OpenRouter)
 │   ├── marketing-os/          # Marketing Intelligence (Node.js + MongoDB)
 │   ├── enterprise-rag/        # Multi-Agent Knowledge Assistant (FastAPI + pgvector)
 │   ├── inventory-intel/       # Vehicle Lifecycle Management (Node.js + Supabase)
-│   ├── automation-engine/     # n8n/Make Workflows
+│   ├── odoo-integration/      # Odoo ERP Integration (Node.js + XML-RPC)
+│   ├── automation-engine/     # n8n / Make / Zapier Workflows
 │   └── executive-dashboard/   # Real-time Analytics (React)
 └── README.md
 ```
+
+---
+
+## Complete JD Requirements Mapping
+
+Every requirement from the Alba Corp AI Engineer (Vibe Coder) job description is implemented:
+
+| JD Requirement | Where It's Implemented | How |
+|---------------|----------------------|-----|
+| **Supabase** | `ai-crm/`, `inventory-intel/`, `enterprise-rag/` | Auth, RBAC, Postgres, pgvector, Realtime, Storage |
+| **MongoDB** | `marketing-os/` | AI memory, competitor data, campaign analytics |
+| **Openclaw Agent** | `ai-gateway/` | Knowledge & Compliance agent via `/api/v1/agent/run` |
+| **Hermes Agent** | `ai-gateway/` | Marketing Intelligence agent |
+| **Cowork Agent** | `ai-gateway/` | Sales Copilot agent |
+| **n8n** | `automation-engine/workflows/` | Lead pipeline, competitor intel, daily reports |
+| **Make** | `automation-engine/workflows/` | Google Sheets → CRM sync |
+| **Zapier** | `automation-engine/workflows/` | Gmail inquiry → AI parsing → CRM lead |
+| **ReactJS + Vite + Tailwind** | `ai-crm/frontend/` | CRM dashboard UI |
+| **Node.js** | `ai-crm/backend/`, `marketing-os/`, `inventory-intel/`, `odoo-integration/` | API Gateway, business logic |
+| **Python (FastAPI)** | `enterprise-rag/`, `ai-gateway/` | AI services, RAG engine, agent orchestration |
+| **Odoo ERP** | `odoo-integration/` | Sales, Inventory, Accounting, Purchase sync |
+| **Claude Code / Codex** | `docs/AI_Development_Workflow.md` | Entire development methodology |
+| **API Development** | Every service | REST APIs with `/api/v1/` versioning, Swagger |
+| **Docker** | `docker-compose.yml` | Full platform orchestration |
+| **Production Systems** | All services | Health checks, .env, audit logs, RBAC, error handling |
+
+---
+
+## Cost to Run
+
+| Component | Cost |
+|-----------|------|
+| React + Vite + Tailwind | Free |
+| Node.js + FastAPI | Free |
+| Supabase (Free Tier) | Free |
+| MongoDB Atlas (Free Tier) | Free |
+| n8n (Self-hosted) | Free |
+| Odoo Community Edition | Free |
+| OpenRouter (Free Models) | Free |
+| GitHub | Free |
+| **Total** | **$0** |

@@ -1,0 +1,30 @@
+name: Alba AI OS Enterprise CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js (CRM Backend)
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Dependencies
+      run: |
+        cd apps/ai-crm/backend
+        npm install
+        
+    # In production, we will run Mocha/Jest unit tests here
+    # - name: Run Unit Tests
+    #   run: npm test
+    
+    - name: Build Docker Images
+      run: docker-compose build

@@ -1,0 +1,46 @@
+{
+  "name": "Google Sheets to CRM Lead Sync",
+  "description": "JD Requirement: 'Build workflow automations using Make'. Syncs leads from Google Sheets (used by marketing team for event registrations) to the AI CRM via API.",
+  "trigger": {
+    "module": "google-sheets",
+    "action": "Watch New Rows",
+    "config": {
+      "spreadsheet_id": "your_sheet_id",
+      "sheet_name": "Event Leads",
+      "columns": ["Name", "Email", "Phone", "Vehicle Interest", "Source"]
+    }
+  },
+  "actions": [
+    {
+      "step": 1,
+      "module": "http",
+      "action": "Make an API Request",
+      "config": {
+        "url": "{{CRM_API_URL}}/api/v1/leads",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{CRM_API_KEY}}",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "name": "{{Name}}",
+          "email": "{{Email}}",
+          "phone": "{{Phone}}",
+          "vehicle_interest": "{{Vehicle Interest}}",
+          "source": "google_sheets_{{Source}}"
+        }
+      }
+    },
+    {
+      "step": 2,
+      "module": "slack",
+      "action": "Send Message",
+      "config": {
+        "channel": "#new-leads",
+        "message": "📋 New event lead: {{Name}} interested in {{Vehicle Interest}} (Source: Google Sheets)"
+      }
+    }
+  ],
+  "schedule": "Every 5 minutes",
+  "business_impact": "Eliminates manual data entry from event registrations. Leads appear in CRM within 5 minutes of being added to the sheet."
+}

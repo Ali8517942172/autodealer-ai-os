@@ -1,0 +1,55 @@
+{
+  "name": "Gmail Inquiry to CRM Lead",
+  "description": "JD Requirement: 'Build workflow automations using Zapier'. Converts incoming Gmail inquiries into CRM leads automatically.",
+  "trigger": {
+    "app": "Gmail",
+    "event": "New Email Matching Search",
+    "config": {
+      "search_query": "subject:(inquiry OR interested OR test drive OR price) from:(-@company.com)",
+      "label": "Customer Inquiries"
+    }
+  },
+  "actions": [
+    {
+      "step": 1,
+      "app": "Webhooks by Zapier",
+      "action": "POST",
+      "config": {
+        "url": "{{AI_GATEWAY_URL}}/api/v1/agent/run",
+        "payload": {
+          "agent": "sales",
+          "input": "Extract customer name, phone, email, and vehicle interest from this email: {{Body_Plain}}"
+        },
+        "notes": "Uses Cowork AI agent to parse unstructured email into structured lead data"
+      }
+    },
+    {
+      "step": 2,
+      "app": "Webhooks by Zapier",
+      "action": "POST",
+      "config": {
+        "url": "{{CRM_API_URL}}/api/v1/leads",
+        "payload": {
+          "name": "{{step1.parsed_name}}",
+          "email": "{{From_Email}}",
+          "phone": "{{step1.parsed_phone}}",
+          "vehicle_interest": "{{step1.parsed_vehicle}}",
+          "source": "gmail",
+          "ai_parsed": true
+        }
+      }
+    },
+    {
+      "step": 3,
+      "app": "Gmail",
+      "action": "Send Email",
+      "config": {
+        "to": "{{From_Email}}",
+        "subject": "Thank you for your interest!",
+        "body": "Dear {{step1.parsed_name}},\n\nThank you for reaching out about the {{step1.parsed_vehicle}}. A member of our sales team will contact you within the hour.\n\nBest regards,\nSales Team"
+      }
+    }
+  ],
+  "schedule": "Instant (triggered on new email)",
+  "business_impact": "Every email inquiry becomes a CRM lead automatically. No manual data entry. Auto-reply within seconds."
+}
