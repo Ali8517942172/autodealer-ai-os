@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Alba AI CRM Frontend (React + Vite)
+  ai-crm-frontend:
+    build:
+      context: ./apps/ai-crm/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: always
+
+  # Alba AI CRM Backend (Node.js API)
+  ai-crm-backend:
+    build:
+      context: ./apps/ai-crm/backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    restart: always
+
+  # Future modules (Marketing, RAG, Automation) will be added here
