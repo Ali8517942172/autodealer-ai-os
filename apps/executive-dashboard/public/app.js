@@ -1,14 +1,18 @@
 // AutoDealer AI OS - Dashboard Frontend JavaScript
-// Connects to all backend services and renders live data
+// Connects to all backend services — production (Render) or local dev
+
+const IS_PROD = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
 const API = {
-    crm: 'http://localhost:5000',
-    marketing: 'http://localhost:5001',
-    inventory: 'http://localhost:5003',
-    odoo: 'http://localhost:5004',
-    dashboard: 'http://localhost:5005',
-    gateway: 'http://localhost:5010'
+    crm:       IS_PROD ? 'https://autodealer-crm-api.onrender.com'  : 'http://localhost:5000',
+    marketing: IS_PROD ? 'https://autodealer-marketing.onrender.com' : 'http://localhost:5001',
+    rag:       IS_PROD ? 'https://autodealer-rag.onrender.com'       : 'http://localhost:5002',
+    inventory: IS_PROD ? 'https://autodealer-crm-api.onrender.com'  : 'http://localhost:5003',
+    odoo:      IS_PROD ? 'https://autodealer-crm-api.onrender.com'  : 'http://localhost:5004',
+    dashboard: IS_PROD ? 'https://autodealer-dashboard.onrender.com' : 'http://localhost:5005',
+    gateway:   IS_PROD ? 'https://autodealer-gateway.onrender.com'   : 'http://localhost:5010'
 };
+
 
 // ==========================================
 // PAGE NAVIGATION
