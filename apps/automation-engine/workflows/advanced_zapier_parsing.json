@@ -1,0 +1,75 @@
+{
+  "name": "Zapier AI Inbound Email Parsing & CRM Sync",
+  "platform": "Zapier",
+  "description": "Monitors a dedicated sales inbox for unstructured inquiries, uses Zapier's built-in AI (or external LLM) to extract structured entity data (Name, Email, Vehicle, Intent), and securely pushes it to the Alba AI Platform. Includes fallback mechanisms if the AI parsing fails.",
+  "trigger": {
+    "app": "Gmail",
+    "event": "New Email Matching Search",
+    "config": {
+      "search_string": "to:sales@albacorp.net",
+      "folder": "INBOX"
+    }
+  },
+  "steps": [
+    {
+      "step": 1,
+      "app": "Formatter by Zapier",
+      "action": "Text",
+      "config": {
+        "transform": "Remove HTML Tags",
+        "input": "{{trigger.body_html}}"
+      },
+      "purpose": "Clean email body for AI parsing."
+    },
+    {
+      "step": 2,
+      "app": "ChatGPT / AI by Zapier",
+      "action": "Extract Structured Data",
+      "config": {
+        "instructions": "Extract the customer's full name, phone number, vehicle of interest, budget (if mentioned), and urgency (Low, Medium, High).",
+        "input_text": "{{step1.output}}"
+      }
+    },
+    {
+      "step": 3,
+      "app": "Filter by Zapier",
+      "action": "Only continue if...",
+      "config": {
+        "conditions": [
+          {
+            "field": "{{step2.extracted_data.vehicle_of_interest}}",
+            "condition": "Exists"
+          }
+        ]
+      },
+      "purpose": "Ensure it is an actual car inquiry, not spam."
+    },
+    {
+      "step": 4,
+      "app": "Webhooks by Zapier",
+      "action": "Custom Request (POST)",
+      "config": {
+        "url": "{{ALBA_AI_GATEWAY_URL}}/api/v1/inbound-email",
+        "headers": {
+          "X-API-KEY": "{{ZAPIER_SECRET}}",
+          "Content-Type": "application/json"
+        },
+        "data": {
+          "source": "email",
+          "parsed_data": "{{step2.extracted_data}}",
+          "raw_email": "{{step1.output}}"
+        }
+      }
+    }
+  ],
+  "error_handling": {
+    "onError": [
+      {
+        "action": "Zapier Manager",
+        "event": "Find or Create Error Log",
+        "description": "If Webhook fails (e.g. 500 error), trigger Zapier Manager to alert the DevOps team via SMS and create an Airtable bug report."
+      }
+    ]
+  },
+  "business_impact": "Automates lead extraction from legacy channels (email) with human-level accuracy, preventing manual data entry errors and saving hours of administrative time."
+}

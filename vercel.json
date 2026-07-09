@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/ai-crm/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "https://autodealer-crm-api.onrender.com",
+    "VITE_AI_GATEWAY_URL": "https://autodealer-gateway.onrender.com"
+  }
+}

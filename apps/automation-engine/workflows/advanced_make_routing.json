@@ -1,0 +1,82 @@
+{
+  "name": "Advanced Multi-Channel Lead Routing & Scoring",
+  "platform": "Make.com",
+  "description": "Enterprise-grade Make.com scenario that watches for leads across multiple channels (Google Forms, Facebook Lead Ads). It validates phone numbers and emails, uses AI for initial sentiment analysis, and routes to Alba CRM with dead-letter queue error handling.",
+  "modules": [
+    {
+      "step": 1,
+      "module": "Webhook",
+      "action": "Custom Webhook",
+      "purpose": "Listens for inbound leads from various marketing channels."
+    },
+    {
+      "step": 2,
+      "module": "JSON",
+      "action": "Parse JSON",
+      "purpose": "Parses standard incoming lead structure."
+    },
+    {
+      "step": 3,
+      "module": "Tools",
+      "action": "Text Parser / Data Validator",
+      "purpose": "Validates email format and normalizes phone numbers. Throws error if invalid."
+    },
+    {
+      "step": 4,
+      "module": "OpenAI",
+      "action": "Create a Completion",
+      "purpose": "Analyzes the lead's notes to determine sentiment, urgency, and extracts missing vehicle preferences."
+    },
+    {
+      "step": 5,
+      "module": "Router",
+      "action": "Flow Control",
+      "routes": [
+        {
+          "condition": "AI Urgency is HOT",
+          "modules": [
+            {
+              "module": "HTTP",
+              "action": "Make an API Request",
+              "url": "{{ALBA_AI_GATEWAY_URL}}/api/v1/leads/hot",
+              "method": "POST"
+            },
+            {
+              "module": "Slack",
+              "action": "Create a Message",
+              "message": "🔥 URGENT HOT LEAD: {{lead.name}} - Call immediately!"
+            }
+          ]
+        },
+        {
+          "condition": "AI Urgency is WARM or COLD",
+          "modules": [
+            {
+              "module": "HTTP",
+              "action": "Make an API Request",
+              "url": "{{ALBA_AI_GATEWAY_URL}}/api/v1/leads/standard",
+              "method": "POST"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "error_handling": {
+    "directives": [
+      {
+        "type": "Break",
+        "description": "If Alba CRM API is down, pause and retry up to 3 times over 15 minutes."
+      },
+      {
+        "type": "Ignore / Resume",
+        "description": "If Slack notification fails, ignore and continue processing."
+      },
+      {
+        "type": "Commit to Dead Letter",
+        "description": "If validation fails, write the raw payload to a Google Sheet 'Dead Letter Leads' for manual review."
+      }
+    ]
+  },
+  "business_impact": "Ensures zero lead drop-off, validates data before CRM entry to maintain database hygiene, and instantly prioritizes high-value prospects."
+}

@@ -31,12 +31,14 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 5005;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Service URLs (in production: from environment or service discovery)
 const SERVICES = {

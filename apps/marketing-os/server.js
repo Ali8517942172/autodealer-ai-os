@@ -236,6 +236,63 @@ cron.schedule('0 6 * * *', async () => {
     // Stores results in MongoDB competitor_pricing collection
 });
 
+// ==========================================
+// WEBHOOKS (Make.com & Zapier)
+// ==========================================
+
+async function forwardToCRM(leadData) {
+    try {
+        const response = await fetch('http://localhost:5000/api/leads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(leadData)
+        });
+        const result = await response.json();
+        console.log('[Marketing -> CRM] Forwarded lead successfully:', result.id);
+        return result;
+    } catch (err) {
+        console.error('[Marketing -> CRM] Error forwarding lead:', err.message);
+    }
+}
+
+app.post('/api/webhooks/zapier', async (req, res) => {
+    console.log('[Zapier Webhook] Received Lead:', req.body);
+    // Transform Zapier payload to CRM lead format
+    const leadData = {
+        name: req.body.full_name || 'Zapier Lead',
+        email: req.body.email || 'zapier@example.com',
+        source: 'Zapier (Facebook Ads)',
+        status: 'New',
+        vehicle: req.body.vehicle_interest || 'Unknown'
+    };
+    
+    // Calculate True ROI / Score here if needed
+    leadData.score = 85;
+    leadData.priority = 'hot';
+
+    await forwardToCRM(leadData);
+    res.json({ status: 'success', message: 'Lead received from Zapier and forwarded to CRM.' });
+});
+
+app.post('/api/webhooks/make', async (req, res) => {
+    console.log('[Make.com Webhook] Received Lead:', req.body);
+    // Transform Make.com payload to CRM lead format
+    const leadData = {
+        name: req.body.lead_name || 'Make.com Lead',
+        email: req.body.contact_email || 'make@example.com',
+        source: 'Make.com (Google Forms)',
+        status: 'New',
+        vehicle: req.body.car_model || 'Unknown'
+    };
+    
+    // Calculate True ROI / Score here if needed
+    leadData.score = 90;
+    leadData.priority = 'hot';
+
+    await forwardToCRM(leadData);
+    res.json({ status: 'success', message: 'Lead received from Make.com and forwarded to CRM.' });
+});
+
 // Start Server
 connectDB().then(() => {
     app.listen(port, () => {

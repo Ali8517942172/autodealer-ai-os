@@ -1,0 +1,97 @@
+services:
+  # ─────────────────────────────────────────────
+  # 1. AI Gateway (Python / FastAPI) — port $PORT
+  # ─────────────────────────────────────────────
+  - type: web
+    name: autodealer-gateway
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+    rootDir: apps/ai-gateway
+    healthCheckPath: /api/health
+
+  # ─────────────────────────────────────────────
+  # 2. Executive Dashboard (Node.js) — port $PORT
+  # ─────────────────────────────────────────────
+  - type: web
+    name: autodealer-dashboard
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CRM_API_URL
+        value: https://autodealer-crm-api.onrender.com
+      - key: MARKETING_API_URL
+        value: https://autodealer-marketing.onrender.com
+      - key: AI_GATEWAY_URL
+        value: https://autodealer-gateway.onrender.com
+    rootDir: apps/executive-dashboard
+    healthCheckPath: /api/health
+
+  # ─────────────────────────────────────────────
+  # 3. AI CRM Backend (Node.js) — port $PORT
+  # ─────────────────────────────────────────────
+  - type: web
+    name: autodealer-crm-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: AI_GATEWAY_URL
+        value: https://autodealer-gateway.onrender.com
+    rootDir: apps/ai-crm/backend
+    healthCheckPath: /api/health
+
+  # ─────────────────────────────────────────────
+  # 4. Marketing OS (Node.js) — port $PORT
+  # ─────────────────────────────────────────────
+  - type: web
+    name: autodealer-marketing
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AI_GATEWAY_URL
+        value: https://autodealer-gateway.onrender.com
+      - key: CRM_API_URL
+        value: https://autodealer-crm-api.onrender.com
+    rootDir: apps/marketing-os
+    healthCheckPath: /api/health
+
+  # ─────────────────────────────────────────────
+  # 5. Enterprise RAG (Python / FastAPI) — port $PORT
+  # ─────────────────────────────────────────────
+  - type: web
+    name: autodealer-rag
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+    rootDir: apps/enterprise-rag
+    healthCheckPath: /api/health

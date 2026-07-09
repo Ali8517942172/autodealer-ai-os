@@ -1,0 +1,146 @@
+{
+  "name": "Alba CRM — Lead Ingestion Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-lead",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "webhook-trigger-001",
+      "name": "Webhook: Receive Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "alba-lead-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and enrich the incoming lead payload\nconst body = $input.first().json.body || $input.first().json;\n\n// Basic validation\nif (!body.name && !body.email && !body.phone) {\n  throw new Error('Lead must have at least one of: name, email, phone');\n}\n\n// Normalize source\nconst source = body.source || 'n8n Webhook';\n\n// Simple AI score heuristic (real scoring via AI Gateway)\nlet score = 50;\nif (body.budget_aed > 300000) score += 20;\nif (body.phone) score += 15;\nif (body.vehicle_interest) score += 10;\nif (source.includes('WhatsApp')) score += 10;\nscore = Math.min(score, 100);\n\nreturn [{\n  json: {\n    name: body.name || 'Unknown',\n    email: body.email || null,\n    phone: body.phone || null,\n    source: source,\n    vehicle_interest: body.vehicle_interest || null,\n    budget_aed: body.budget_aed || null,\n    notes: body.notes || null,\n    ai_score: score,\n    status: score >= 80 ? 'HOT' : score >= 55 ? 'WARM' : 'COLD',\n    enriched_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "code-enrich-001",
+      "name": "Validate & Score Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://autodealer-crm-api.onrender.com/api/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Source",
+              "value": "n8n-automation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "id": "http-crm-001",
+      "name": "Push to CRM API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $('Validate & Score Lead').item.json.status }}",
+              "rightValue": "HOT",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-hot-lead-001",
+      "name": "Is HOT Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, lead_id: $('Push to CRM API').item.json.lead?.id, status: $('Validate & Score Lead').item.json.status, ai_score: $('Validate & Score Lead').item.json.ai_score, message: 'Lead created and escalated to sales team' }) }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "response-success-001",
+      "name": "Respond: Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, lead_id: $('Push to CRM API').item.json.lead?.id, status: $('Validate & Score Lead').item.json.status, ai_score: $('Validate & Score Lead').item.json.ai_score, message: 'Lead queued for follow-up' }) }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "response-queued-001",
+      "name": "Respond: Queued",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 400]
+    }
+  ],
+  "connections": {
+    "Webhook: Receive Lead": {
+      "main": [
+        [{ "node": "Validate & Score Lead", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validate & Score Lead": {
+      "main": [
+        [{ "node": "Push to CRM API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Push to CRM API": {
+      "main": [
+        [{ "node": "Is HOT Lead?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is HOT Lead?": {
+      "main": [
+        [{ "node": "Respond: Success", "type": "main", "index": 0 }],
+        [{ "node": "Respond: Queued", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "last"
+  },
+  "staticData": null,
+  "tags": ["alba-corp", "crm", "leads", "webhook"],
+  "active": true,
+  "versionId": "2.0.0"
+}
