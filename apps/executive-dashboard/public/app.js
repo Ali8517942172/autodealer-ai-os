@@ -92,11 +92,11 @@ async function loadDashboard() {
         // AI Insights
         const insightsHtml = data.ai_insights.map(i => `
             <div class="insight-item ${i.priority.toLowerCase()}">
-                <div class="insight-priority" style="color: ${i.priority === 'HIGH' ? 'var(--error)' : i.priority === 'MEDIUM' ? 'var(--warning)' : 'var(--accent-primary)'}; font-weight: 700; font-size: 11px; margin-bottom: 4px;">
+                <div class="insight-priority" style="color: ${i.priority === 'HIGH' ? '#ba1a1a' : i.priority === 'MEDIUM' ? '#7e3000' : '#3525cd'}; font-weight: 700; font-size: 11px; margin-bottom: 4px;">
                     ${i.priority} PRIORITY
                 </div>
                 ${i.insight}
-                <div style="margin-top:8px; color:var(--accent-primary); font-size:12px; display:flex; align-items:center; gap:4px;"><i class="ph ph-arrow-right"></i> Action: ${i.action}</div>
+                <div style="margin-top:8px; color:#3525cd; font-size:12px; display:flex; align-items:center; gap:4px;"><i class="ph ph-arrow-right"></i> Action: ${i.action}</div>
             </div>
         `).join('');
         document.getElementById('aiInsights').innerHTML = insightsHtml;
@@ -104,23 +104,23 @@ async function loadDashboard() {
         // Inventory Alerts
         const alertsHtml = data.inventory.ai_alerts.map(a => `
             <div class="alert-item">
-                <div class="alert-badge" style="color: ${a.alert === 'CRITICAL' ? 'var(--error)' : 'var(--warning)'}; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+                <div class="alert-badge" style="color: ${a.alert === 'CRITICAL' ? '#ba1a1a' : '#7e3000'}; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
                     ${a.alert === 'CRITICAL' ? '<i class="ph-fill ph-warning-circle"></i>' : '<i class="ph-fill ph-warning"></i>'} ${a.alert}
                 </div>
                 <strong>${a.vehicle}</strong> — ${a.days} days
-                <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">${a.action}</div>
+                <div style="color:#777587;font-size:12px;margin-top:4px;">${a.action}</div>
             </div>
         `).join('');
         document.getElementById('inventoryAlerts').innerHTML = alertsHtml;
 
         // Marketing ROI
         const channels = [
-            { name: 'WhatsApp', roi: data.marketing.best_channel_roi, color: 'var(--success)', icon: 'ph-whatsapp-logo' },
-            { name: 'Facebook/IG', roi: '800%', color: 'var(--accent-primary)', icon: 'ph-facebook-logo' },
-            { name: 'Google Ads', roi: '700%', color: 'var(--warning)', icon: 'ph-google-logo' }
+            { name: 'WhatsApp', roi: data.marketing.best_channel_roi, color: '#006c49', icon: 'ph-whatsapp-logo' },
+            { name: 'Facebook/IG', roi: '800%', color: '#3525cd', icon: 'ph-facebook-logo' },
+            { name: 'Google Ads', roi: '700%', color: '#7e3000', icon: 'ph-google-logo' }
         ];
         document.getElementById('marketingROI').innerHTML = channels.map(c => `
-            <div class="channel-item" style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-glass);">
+            <div class="channel-item" style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #c7c4d8;">
                 <span style="display:flex; align-items:center; gap:8px;"><i class="ph ${c.icon}" style="color:${c.color}; font-size:18px;"></i> ${c.name}</span>
                 <span class="channel-roi" style="color:${c.color}; font-weight:700;">${c.roi}</span>
             </div>
@@ -169,7 +169,7 @@ async function loadInventoryPage() {
         // Aging Report
         const agingRes = await fetch(`${API.inventory}/api/v1/inventory/reports/aging`);
         const aging = await agingRes.json();
-        const colors = ['var(--success)', 'var(--accent-primary)', 'var(--warning)', '#f97316', 'var(--error)'];
+        const colors = ['#006c49', '#3525cd', '#7e3000', '#f97316', '#ba1a1a'];
         const maxCount = Math.max(...aging.brackets.map(b => b.count), 1);
 
         document.getElementById('agingBars').innerHTML = aging.brackets.map((b, i) => `
@@ -209,7 +209,7 @@ async function loadMarketingPage() {
                 <td>${c.leads_generated}</td>
                 <td>${c.deals_closed}</td>
                 <td>AED ${c.revenue_generated_aed.toLocaleString()}</td>
-                <td style="color:var(--success);font-weight:700;">${c.true_roi}</td>
+                <td style="color:#006c49;font-weight:700;">${c.true_roi}</td>
             </tr>
         `).join('');
 
@@ -220,7 +220,7 @@ async function loadMarketingPage() {
             <div class="competitor-item">
                 <div class="comp-name">${c.competitor} — ${c.model}</div>
                 <div>Price: <strong>AED ${c.price_aed.toLocaleString()}</strong></div>
-                <div class="comp-rec" style="margin-top:8px; color:var(--accent-secondary); font-size:13px; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-robot"></i> ${c.ai_recommendation}</div>
+                <div class="comp-rec" style="margin-top:8px; color:#3525cd; font-size:13px; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-robot"></i> ${c.ai_recommendation}</div>
             </div>
         `).join('');
     } catch (err) {
@@ -321,8 +321,8 @@ async function askAI() {
         card.style.display = 'block';
         document.getElementById('aiResponse').innerHTML = `
             <strong style="display:block; margin-bottom:12px; font-size:16px; color:white;">Q: ${data.question}</strong>
-            <p style="margin-bottom:16px; font-size:15px; color:var(--text-secondary); line-height:1.6;">${data.answer}</p>
-            <small style="color:var(--text-muted); display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-check-circle"></i> Answered by: ${data.agent}</small>
+            <p style="margin-bottom:16px; font-size:15px; color:#464555; line-height:1.6;">${data.answer}</p>
+            <small style="color:#777587; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-check-circle"></i> Answered by: ${data.agent}</small>
         `;
         input.value = '';
     } catch (err) {
@@ -345,7 +345,7 @@ async function askRAG() {
 
     // Typing indicator
     const typingId = 'typing-' + Date.now();
-    messages.innerHTML += `<div class="chat-msg bot" id="${typingId}"><div class="msg-avatar"><i class="ph-fill ph-robot"></i></div><div class="msg-bubble"><em style="color:var(--text-muted)">Openclaw is thinking...</em></div></div>`;
+    messages.innerHTML += `<div class="chat-msg bot" id="${typingId}"><div class="msg-avatar"><i class="ph-fill ph-robot"></i></div><div class="msg-bubble"><em style="color:#777587">Openclaw is thinking...</em></div></div>`;
     messages.scrollTop = messages.scrollHeight;
 
     // Try REAL RAG API first, fallback to demo
@@ -362,7 +362,7 @@ async function askRAG() {
         const source = data.sources ? `\n\n📄 Sources: ${data.sources.join(', ')}` : '';
         document.getElementById(typingId).querySelector('.msg-bubble').innerHTML = 
             `<strong>Openclaw Agent</strong><p>${(answer + source).replace(/\n/g, '<br>')}</p>
-            <small style="color:var(--accent-secondary);font-size:11px;">✓ Live RAG Response</small>`;
+            <small style="color:#3525cd;font-size:11px;">✓ Live RAG Response</small>`;
     } catch (err) {
         // Demo responses for common questions (fallback when RAG API is offline)
         const ragResponses = {
@@ -375,7 +375,7 @@ async function askRAG() {
         const key = Object.keys(ragResponses).find(k => question.toLowerCase().includes(k)) || 'default';
         document.getElementById(typingId).querySelector('.msg-bubble').innerHTML = 
             `<strong>Openclaw Agent</strong><p>${ragResponses[key].replace(/\n/g, '<br>')}</p>
-            <small style="color:var(--text-muted);font-size:11px;">⚡ Demo Mode (RAG API connecting...)</small>`;
+            <small style="color:#777587;font-size:11px;">⚡ Demo Mode (RAG API connecting...)</small>`;
     }
     messages.scrollTop = messages.scrollHeight;
 }
@@ -408,12 +408,12 @@ async function calcCommission() {
             <div class="pl-grid">
                 <div class="pl-item"><span class="pl-label">Selling Price</span><span class="pl-value">AED ${data.financial_summary.selling_price.toLocaleString()}</span></div>
                 <div class="pl-item"><span class="pl-label">Landed Cost</span><span class="pl-value">AED ${data.financial_summary.total_landed_cost.toLocaleString()}</span></div>
-                <div class="pl-item"><span class="pl-label">Gross Margin</span><span class="pl-value" style="color:var(--success)">AED ${data.financial_summary.gross_margin.toLocaleString()}</span></div>
-                <div class="pl-item"><span class="pl-label">Holding Cost</span><span class="pl-value" style="color:var(--warning)">AED ${data.financial_summary.holding_cost_deducted.toLocaleString()}</span></div>
+                <div class="pl-item"><span class="pl-label">Gross Margin</span><span class="pl-value" style="color:#006c49">AED ${data.financial_summary.gross_margin.toLocaleString()}</span></div>
+                <div class="pl-item"><span class="pl-label">Holding Cost</span><span class="pl-value" style="color:#7e3000">AED ${data.financial_summary.holding_cost_deducted.toLocaleString()}</span></div>
                 <div class="pl-item"><span class="pl-label">Commission Tier</span><span class="pl-value">${data.commission_breakdown.commission_tier}</span></div>
-                <div class="pl-item"><span class="pl-label">Total Commission</span><span class="pl-value" style="color:var(--accent-primary)">AED ${data.commission_breakdown.total_commission.toLocaleString()}</span></div>
+                <div class="pl-item"><span class="pl-label">Total Commission</span><span class="pl-value" style="color:#3525cd">AED ${data.commission_breakdown.total_commission.toLocaleString()}</span></div>
                 <div class="pl-item"><span class="pl-label">VAT Payable</span><span class="pl-value">AED ${data.tax.vat_payable.toLocaleString()}</span></div>
-                <div class="pl-item"><span class="pl-label" style="font-weight:700">Net Profit</span><span class="pl-value" style="color:var(--success);font-size:18px">AED ${data.net_profit.toLocaleString()} (${data.profit_margin_pct})</span></div>
+                <div class="pl-item"><span class="pl-label" style="font-weight:700">Net Profit</span><span class="pl-value" style="color:#006c49;font-size:18px">AED ${data.net_profit.toLocaleString()} (${data.profit_margin_pct})</span></div>
             </div>
         `;
     } catch (err) {
@@ -444,9 +444,9 @@ function loadEventLog() {
 
     document.getElementById('eventLog').innerHTML = events.map(e => `
         <div class="event-entry">
-            <span class="event-time" style="color:var(--text-muted); font-family:monospace;">[${e.time}]</span>
-            <span class="event-type" style="color:var(--accent-secondary); font-size:12px; padding:2px 6px; background:rgba(6,182,212,0.1); border-radius:4px; margin-right:8px;">${e.type}</span>
-            <span style="color:var(--text-primary); font-size:14px;">${e.msg}</span>
+            <span class="event-time" style="color:#777587; font-family:monospace;">[${e.time}]</span>
+            <span class="event-type" style="color:#3525cd; font-size:12px; padding:2px 6px; background:rgba(6,182,212,0.1); border-radius:4px; margin-right:8px;">${e.type}</span>
+            <span style="color:#131b2e; font-size:14px;">${e.msg}</span>
         </div>
     `).join('');
 }
@@ -463,9 +463,9 @@ function addLiveEvent(type, msg) {
     const entry = document.createElement('div');
     entry.className = 'event-entry';
     entry.innerHTML = `
-        <span class="event-time" style="color:var(--text-muted); font-family:monospace;">[${time}]</span>
-        <span class="event-type" style="color:var(--accent-secondary); font-size:12px; padding:2px 6px; background:rgba(6,182,212,0.1); border-radius:4px; margin-right:8px;">${type}</span>
-        <span style="color:var(--text-primary); font-size:14px;">${msg}</span>
+        <span class="event-time" style="color:#777587; font-family:monospace;">[${time}]</span>
+        <span class="event-type" style="color:#3525cd; font-size:12px; padding:2px 6px; background:rgba(6,182,212,0.1); border-radius:4px; margin-right:8px;">${type}</span>
+        <span style="color:#131b2e; font-size:14px;">${msg}</span>
     `;
     log.prepend(entry);
     showPage('automation');
@@ -521,39 +521,3 @@ document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && document.activeElement.id === 'askAiInput') askAI();
     if (e.key === 'Enter' && document.activeElement.id === 'ragInput') askRAG();
 });
-
-// ==========================================
-// STITCH DESIGN TOGGLES
-// ==========================================
-function toggleStitchView(page, view) {
-    const liveView = document.getElementById(`${page}-live-view`);
-    const stitchView = document.getElementById(`${page}-stitch-view`);
-    const liveBtn = document.getElementById(`${page === 'marketing' ? 'mkt' : page}-live-btn`);
-    const stitchBtn = document.getElementById(`${page === 'marketing' ? 'mkt' : page}-stitch-btn`);
-
-    if (view === 'stitch') {
-        if (liveView) liveView.style.display = 'none';
-        if (stitchView) stitchView.style.display = 'block';
-        if (liveBtn) liveBtn.classList.remove('active');
-        if (stitchBtn) stitchBtn.classList.add('active');
-    } else {
-        if (liveView) liveView.style.display = 'block';
-        if (stitchView) stitchView.style.display = 'none';
-        if (liveBtn) liveBtn.classList.add('active');
-        if (stitchBtn) stitchBtn.classList.remove('active');
-    }
-}
-
-function switchStitchTab(screen) {
-    const frameMap = {
-        'crm': 'stitch-crm.html',
-        'inventory': 'stitch-inventory.html',
-        'marketing': 'stitch-marketing.html',
-        'finance': 'stitch-finance.html',
-        'rag': 'stitch-rag.html',
-        'automation': 'stitch-automation.html'
-    };
-    document.getElementById('stitch-main-frame').src = frameMap[screen];
-    document.querySelectorAll('.stitch-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(`tab-${screen}`).classList.add('active');
-}

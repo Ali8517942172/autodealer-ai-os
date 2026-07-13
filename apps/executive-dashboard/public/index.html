@@ -1,489 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoDealer AI OS — Executive Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoDealer AI OS — Executive Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: "#3525cd",
+          "primary-container": "#4f46e5",
+          "on-primary": "#ffffff",
+          "on-primary-container": "#eef0ff",
+          secondary: "#006c49",
+          "secondary-container": "#dcfce9",
+          "on-secondary-container": "#00532f",
+          tertiary: "#7e3000",
+          "tertiary-container": "#ffe3d3",
+          error: "#ba1a1a",
+          "error-container": "#ffdad6",
+          "on-error-container": "#93000a",
+          surface: "#faf8ff",
+          "surface-container-low": "#f2f3ff",
+          "surface-container": "#eaedff",
+          "surface-container-high": "#e2e7ff",
+          "surface-variant": "#dae2fd",
+          outline: "#777587",
+          "outline-variant": "#c7c4d8",
+          "on-surface": "#131b2e",
+          "on-surface-variant": "#464555",
+          background: "#faf8ff"
+        },
+        fontFamily: { sans: ["Inter", "sans-serif"] },
+        borderRadius: { DEFAULT: "0.5rem", lg: "0.75rem", xl: "1rem" }
+      }
+    }
+  };
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; font-size: 20px; }
+  body { font-family: 'Inter', sans-serif; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 10px; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .nav-item.active { background: #eef0ff; color: #3525cd; font-weight: 600; }
+  .nav-item.active .nav-icon { color: #3525cd; }
+  .pulse-dot { animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .status-dot.pulse { animation: pulse 1.6s infinite; }
+
+  /* Badges */
+  .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:9999px; font-size:11px; font-weight:700; letter-spacing:.02em; }
+  .badge-hot { background:#ffdad6; color:#ba1a1a; }
+  .badge-warm { background:#ffe3d3; color:#7e3000; }
+  .badge-cold { background:#eaedff; color:#464555; }
+  .badge-critical { background:#ffdad6; color:#ba1a1a; }
+  .badge-warning { background:#ffe3d3; color:#7e3000; }
+  .badge-safe { background:#dcfce9; color:#00532f; }
+
+  /* AI Insights / Alerts */
+  .insight-item, .alert-item { padding:12px; border-radius:10px; background:#f2f3ff; font-size:13px; line-height:1.5; border-left:3px solid #3525cd; }
+  .insight-item.medium { border-left-color:#7e3000; }
+  .insight-item.low { border-left-color:#006c49; }
+  .channel-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eaedff; font-size:13px; }
+  .performer-card .perf-name { font-weight:700; margin-bottom:8px; }
+  .performer-card .perf-stat { display:flex; justify-content:space-between; padding:4px 0; }
+  .competitor-item { padding:12px; border-radius:10px; background:#f2f3ff; font-size:13px; }
+  .comp-name { font-weight:600; margin-bottom:4px; }
+  .pl-item { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eaedff; }
+  .pl-label { color:#464555; }
+  .pl-value { font-weight:600; }
+  .aging-label { width:100px; font-size:13px; color:#464555; }
+  .event-entry { padding:6px 0; border-bottom:1px solid #eaedff; }
+  .chat-msg.user { display:flex; gap:12px; flex-direction:row-reverse; }
+  .chat-msg.user .msg-bubble { background:#3525cd; color:#fff; border-radius:12px 12px 0 12px; padding:12px 16px; max-width:80%; }
+  .chat-msg.bot { display:flex; gap:12px; }
+  .chat-msg.bot .msg-bubble { background:#f2f3ff; border-radius:12px 12px 12px 0; padding:12px 16px; max-width:80%; }
+  .msg-avatar { width:32px; height:32px; border-radius:9999px; background:#3525cd; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .chat-msg.user .msg-avatar { background:#eaedff; color:#3525cd; }
+</style>
 </head>
-<body>
-    <!-- App Container -->
-    <div class="app-container">
-        
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon-wrapper">
-                        <i class="ph-fill ph-car-profile"></i>
-                    </div>
-                    <h1>AutoDealer<span class="accent">AI</span></h1>
-                </div>
-                <p class="tagline">Enterprise AI Platform</p>
-            </div>
-            
-            <nav class="nav">
-                <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
-                    <i class="ph ph-squares-four nav-icon"></i> <span class="nav-label">Dashboard</span>
-                </a>
-                <a class="nav-item" data-page="leads" onclick="showPage('leads')">
-                    <i class="ph ph-target nav-icon"></i> <span class="nav-label">Leads & CRM</span>
-                </a>
-                <a class="nav-item" data-page="inventory" onclick="showPage('inventory')">
-                    <i class="ph ph-car nav-icon"></i> <span class="nav-label">Inventory</span>
-                </a>
-                <a class="nav-item" data-page="marketing" onclick="showPage('marketing')">
-                    <i class="ph ph-chart-line-up nav-icon"></i> <span class="nav-label">Marketing</span>
-                </a>
-                <a class="nav-item" data-page="finance" onclick="showPage('finance')">
-                    <i class="ph ph-currency-dollar nav-icon"></i> <span class="nav-label">Finance</span>
-                </a>
-                <a class="nav-item" data-page="rag" onclick="showPage('rag')">
-                    <i class="ph ph-robot nav-icon"></i> <span class="nav-label">AI Assistant</span>
-                </a>
-                <a class="nav-item" data-page="automation" onclick="showPage('automation')">
-                    <i class="ph ph-lightning nav-icon"></i> <span class="nav-label">Automations</span>
-                </a>
-                <a class="nav-item" data-page="stitch" onclick="showPage('stitch')" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top:8px; padding-top:12px;">
-                    <i class="ph ph-palette nav-icon" style="color:#7c3aed"></i> <span class="nav-label" style="color:#a78bfa;">Stitch Designs</span>
-                </a>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="avatar">
-                        <img src="https://ui-avatars.com/api/?name=Ali+M&background=1e1e24&color=7c3aed" alt="User Avatar">
-                    </div>
-                    <div class="user-details">
-                        <p class="user-name">Ali M.</p>
-                        <p class="user-role">Administrator</p>
-                    </div>
-                    <button class="settings-btn" title="Settings"><i class="ph ph-gear"></i></button>
-                </div>
-            </div>
-        </aside>
+<body class="bg-background text-on-surface">
+<div class="flex h-screen overflow-hidden">
 
-        <!-- Main Content -->
-        <main class="main">
-            <!-- Top Bar -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <h2 id="page-title" class="page-title">Executive Dashboard</h2>
-                    <div class="live-badge">
-                        <span class="pulse-dot"></span> LIVE
-                    </div>
-                </div>
-                <div class="topbar-right">
-                    <div id="service-status-bar" class="service-status-bar" title="Backend Service Health">
-                        <span class="svc-badge svc-checking">Checking services...</span>
-                    </div>
-                    <div class="ask-ai-container">
-                        <i class="ph ph-sparkle ai-sparkle"></i>
-                        <input type="text" id="askAiInput" placeholder="Ask AI anything..." class="ask-ai-input">
-                        <button onclick="askAI()" class="ask-ai-btn">Ask</button>
-                    </div>
-                    <div class="notifications">
-                        <i class="ph ph-bell"></i>
-                        <span class="badge">3</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Scrollable Page Container -->
-            <div class="page-container">
-                <!-- Dashboard Page -->
-                <section id="page-dashboard" class="page active fade-in">
-                    <!-- KPI Cards Row -->
-                    <div class="kpi-row">
-                        <div class="kpi-card glass-panel">
-                            <div class="kpi-icon"><i class="ph ph-wallet"></i></div>
-                            <div class="kpi-content">
-                                <div class="kpi-label">Today's Revenue</div>
-                                <div class="kpi-value" id="todayRevenue">—</div>
-                                <div class="kpi-change positive"><i class="ph ph-trend-up"></i> vs yesterday</div>
-                            </div>
-                        </div>
-                        <div class="kpi-card glass-panel">
-                            <div class="kpi-icon"><i class="ph ph-chart-bar"></i></div>
-                            <div class="kpi-content">
-                                <div class="kpi-label">MTD Revenue</div>
-                                <div class="kpi-value" id="mtdRevenue">—</div>
-                                <div class="kpi-change positive"><i class="ph ph-trend-up"></i> 8% vs last month</div>
-                            </div>
-                        </div>
-                        <div class="kpi-card glass-panel accent-card">
-                            <div class="kpi-icon"><i class="ph ph-funnel"></i></div>
-                            <div class="kpi-content">
-                                <div class="kpi-label">Pipeline Value</div>
-                                <div class="kpi-value" id="pipelineValue">—</div>
-                                <div class="kpi-change neutral"><i class="ph ph-fire"></i> 15 hot leads</div>
-                            </div>
-                        </div>
-                        <div class="kpi-card glass-panel">
-                            <div class="kpi-icon"><i class="ph ph-piggy-bank"></i></div>
-                            <div class="kpi-content">
-                                <div class="kpi-label">Net Profit MTD</div>
-                                <div class="kpi-value" id="netProfit">—</div>
-                                <div class="kpi-change positive" id="grossMargin">—</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Second Row -->
-                    <div class="grid-2">
-                        <!-- AI Insights -->
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-sparkle text-accent"></i> AI Insights</h3>
-                                <button class="icon-btn"><i class="ph ph-dots-three"></i></button>
-                            </div>
-                            <div id="aiInsights" class="insights-list"></div>
-                        </div>
-                        <!-- Inventory Alerts -->
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-warning-circle text-warning"></i> Inventory Alerts</h3>
-                                <button class="icon-btn"><i class="ph ph-dots-three"></i></button>
-                            </div>
-                            <div id="inventoryAlerts" class="alerts-list"></div>
-                        </div>
-                    </div>
-
-                    <!-- Third Row -->
-                    <div class="grid-3">
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-target text-primary"></i> Lead Pipeline</h3>
-                            </div>
-                            <div class="pipeline">
-                                <div class="pipeline-item"><span class="dot hot"></span> Hot <strong id="hotLeads">—</strong></div>
-                                <div class="pipeline-item"><span class="dot warm"></span> Warm <strong id="warmLeads">—</strong></div>
-                                <div class="pipeline-item"><span class="dot cold"></span> Cold <strong id="coldLeads">—</strong></div>
-                            </div>
-                            <div class="metric-row">
-                                <span>Conversion Rate</span>
-                                <strong id="convRate">—</strong>
-                            </div>
-                            <div class="metric-row">
-                                <span>Avg Days to Close</span>
-                                <strong id="avgDays">—</strong>
-                            </div>
-                        </div>
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-chart-line-up text-success"></i> Marketing ROI</h3>
-                            </div>
-                            <div id="marketingROI" class="channel-list"></div>
-                        </div>
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-users-three text-info"></i> Top Performer</h3>
-                            </div>
-                            <div id="topPerformer" class="performer-card"></div>
-                        </div>
-                    </div>
-
-                    <!-- Ask AI Response -->
-                    <div class="card glass-panel glow" id="aiResponseCard" style="display:none;">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="ph-fill ph-robot text-accent"></i> AI Manager Response</h3>
-                            <button class="icon-btn" onclick="document.getElementById('aiResponseCard').style.display='none'"><i class="ph ph-x"></i></button>
-                        </div>
-                        <div id="aiResponse" class="ai-response"></div>
-                    </div>
-                </section>
-
-                <!-- Leads & CRM Page -->
-                <section id="page-leads" class="page fade-in">
-                    <div class="kpi-row">
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Leads</div><div class="kpi-value">87</div></div>
-                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Hot Leads</div><div class="kpi-value">15</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Deals Closed MTD</div><div class="kpi-value">12</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Avg Deal Size</div><div class="kpi-value">AED 237.5K</div></div>
-                    </div>
-                    <div class="card glass-panel">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3 class="card-title"><i class="ph-fill ph-clipboard-text"></i> Recent Leads</h3>
-                            <button class="btn-primary" onclick="triggerMakeLeadSync()"><i class="ph ph-arrows-clockwise"></i> Sync to ERP (Make.com)</button>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="data-table">
-                                <thead><tr><th>Name</th><th>Vehicle Interest</th><th>Source</th><th>AI Score</th><th>Priority</th><th>Status</th></tr></thead>
-                                <tbody id="leadsTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Inventory Page -->
-                <section id="page-inventory" class="page fade-in">
-                    <!-- Stitch Design Preview Toggle -->
-                    <div class="stitch-toggle-bar">
-                        <button class="stitch-toggle-btn active" id="inventory-live-btn" onclick="toggleStitchView('inventory','live')">
-                            <i class="ph ph-database"></i> Live Data View
-                        </button>
-                        <button class="stitch-toggle-btn" id="inventory-stitch-btn" onclick="toggleStitchView('inventory','stitch')">
-                            <i class="ph ph-palette"></i> Google Stitch Design
-                        </button>
-                    </div>
-                    <!-- Live Data View -->
-                    <div id="inventory-live-view">
-                        <div class="kpi-row">
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Vehicles</div><div class="kpi-value" id="invTotal">—</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Value</div><div class="kpi-value" id="invValue">—</div></div>
-                        <div class="kpi-card glass-panel warning-card"><div class="kpi-label">Holding Costs</div><div class="kpi-value" id="invHolding">—</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Potential Margin</div><div class="kpi-value" id="invMargin">—</div></div>
-                    </div>
-                    <div class="card glass-panel">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="ph-fill ph-car"></i> Vehicle Inventory</h3>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="data-table">
-                                <thead><tr><th>ID</th><th>Vehicle</th><th>Listing Price</th><th>Landed Cost</th><th>Margin</th><th>Days in Stock</th><th>AI Alert</th></tr></thead>
-                                <tbody id="inventoryTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card glass-panel">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="ph-fill ph-chart-bar"></i> Aging Report</h3>
-                        </div>
-                        </div>
-                        <div id="agingBars" class="aging-bars"></div>
-                    </div>
-                    </div>
-                    <!-- Stitch Design Iframe -->
-                    <div id="inventory-stitch-view" style="display:none;">
-                        <iframe src="stitch-inventory.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Inventory Intelligence - Google Stitch Design"></iframe>
-                    </div>
-                </section>
-
-                <!-- Marketing Page -->
-                <section id="page-marketing" class="page fade-in">
-                    <!-- Stitch Design Preview Toggle -->
-                    <div class="stitch-toggle-bar">
-                        <button class="stitch-toggle-btn active" id="mkt-live-btn" onclick="toggleStitchView('marketing','live')">
-                            <i class="ph ph-database"></i> Live Data View
-                        </button>
-                        <button class="stitch-toggle-btn" id="mkt-stitch-btn" onclick="toggleStitchView('marketing','stitch')">
-                            <i class="ph ph-palette"></i> Google Stitch Design
-                        </button>
-                    </div>
-                    <!-- Live Data View -->
-                    <div id="marketing-live-view">
-                        <div class="kpi-row">
-                            <div class="kpi-card glass-panel"><div class="kpi-label">Active Campaigns</div><div class="kpi-value">5</div></div>
-                            <div class="kpi-card glass-panel"><div class="kpi-label">Total Spend MTD</div><div class="kpi-value">AED 20.5K</div></div>
-                            <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Best Channel</div><div class="kpi-value">WhatsApp</div></div>
-                            <div class="kpi-card glass-panel"><div class="kpi-label">Cost Per Lead</div><div class="kpi-value">AED 394</div></div>
-                        </div>
-                    <div class="grid-2">
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-share-network"></i> Channel Attribution</h3>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="data-table">
-                                    <thead><tr><th>Channel</th><th>Spend</th><th>Leads</th><th>Deals</th><th>Revenue</th><th>ROI</th></tr></thead>
-                                    <tbody id="attributionTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="card glass-panel">
-                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                                <h3 class="card-title"><i class="ph-fill ph-storefront"></i> Competitor Intelligence</h3>
-                                <button class="btn-primary" onclick="triggerN8NIntel()"><i class="ph ph-robot"></i> Run AI Intel (n8n)</button>
-                            </div>
-                            <div id="competitorList"></div>
-                        </div>
-                        </div>
-                    </div>
-                    <!-- Stitch Design Iframe -->
-                    <div id="marketing-stitch-view" style="display:none;">
-                        <iframe src="stitch-marketing.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Marketing Intelligence - Google Stitch Design"></iframe>
-                    </div>
-                </section>
-
-                <!-- Finance Page -->
-                <section id="page-finance" class="page fade-in">
-                    <!-- Stitch Design Preview Toggle -->
-                    <div class="stitch-toggle-bar">
-                        <button class="stitch-toggle-btn active" id="finance-live-btn" onclick="toggleStitchView('finance','live')">
-                            <i class="ph ph-database"></i> Live Data View
-                        </button>
-                        <button class="stitch-toggle-btn" id="finance-stitch-btn" onclick="toggleStitchView('finance','stitch')">
-                            <i class="ph ph-palette"></i> Google Stitch Design
-                        </button>
-                    </div>
-                    <!-- Live Data View -->
-                    <div id="finance-live-view">
-                        <div class="kpi-row">
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Revenue</div><div class="kpi-value" id="finRevenue">—</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">COGS</div><div class="kpi-value" id="finCOGS">—</div></div>
-                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Gross Profit</div><div class="kpi-value" id="finGross">—</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Net Profit</div><div class="kpi-value" id="finNet">—</div></div>
-                    </div>
-                    <div class="card glass-panel">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="ph-fill ph-currency-dollar"></i> P&L Summary (Odoo ERP)</h3>
-                        </div>
-                        <div id="plSummary" class="pl-grid"></div>
-                    </div>
-                    <div class="card glass-panel">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="ph-fill ph-calculator"></i> Commission Calculator</h3>
-                        </div>
-                        <div class="calc-form">
-                            <select id="calcVehicle" class="input"><option value="VH-001">Toyota LC (VH-001)</option><option value="VH-002">Nissan Patrol (VH-002)</option><option value="VH-003">Porsche Cayenne (VH-003)</option><option value="VH-004">Lexus LX 600 (VH-004)</option></select>
-                            <input type="number" id="calcPrice" placeholder="Selling Price (AED)" class="input" value="420000">
-                            <input type="number" id="calcAccessories" placeholder="Accessories (AED)" class="input" value="5000">
-                            <input type="number" id="calcFinance" placeholder="Finance Approved (AED)" class="input" value="340000">
-                            <button onclick="calcCommission()" class="btn-primary"><i class="ph ph-calculator"></i> Calculate</button>
-                        </div>
-                        </div>
-                        <div id="commissionResult" class="commission-result"></div>
-                    </div>
-                    </div>
-                    <!-- Stitch Design Iframe -->
-                    <div id="finance-stitch-view" style="display:none;">
-                        <iframe src="stitch-finance.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Finance & P&L - Google Stitch Design"></iframe>
-                    </div>
-                </section>
-
-                <!-- AI Assistant (RAG) Page -->
-                <section id="page-rag" class="page fade-in">
-                    <div class="card glass-panel chat-card">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="ph-fill ph-robot text-accent"></i> AI Knowledge Assistant (Openclaw Agent)</h3>
-                        </div>
-                        <p class="card-subtitle">Ask about HR policies, warranty terms, sales SOPs, finance procedures</p>
-                        <div class="chat-messages" id="chatMessages">
-                            <div class="chat-msg bot">
-                                <div class="msg-avatar"><i class="ph-fill ph-robot"></i></div>
-                                <div class="msg-bubble">
-                                    <strong>Openclaw Agent</strong>
-                                    <p>Hello! I'm the Knowledge & Compliance Agent. Ask me about company policies, vehicle warranties, HR rules, or sales procedures. I'll provide cited answers from official documents.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="chat-input-row">
-                            <div class="chat-input-wrapper">
-                                <input type="text" id="ragInput" placeholder="e.g. What is the warranty coverage?" class="chat-input" onkeypress="if(event.key==='Enter')askRAG()">
-                                <button class="attachment-btn"><i class="ph ph-paperclip"></i></button>
-                            </div>
-                            <button onclick="askRAG()" class="btn-primary"><i class="ph ph-paper-plane-right"></i></button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Automations Page -->
-                <section id="page-automation" class="page fade-in">
-                    <!-- Stitch Design Preview Toggle -->
-                    <div class="stitch-toggle-bar">
-                        <button class="stitch-toggle-btn active" id="automation-live-btn" onclick="toggleStitchView('automation','live')">
-                            <i class="ph ph-database"></i> Live Data View
-                        </button>
-                        <button class="stitch-toggle-btn" id="automation-stitch-btn" onclick="toggleStitchView('automation','stitch')">
-                            <i class="ph ph-palette"></i> Google Stitch Design
-                        </button>
-                    </div>
-                    <!-- Live Data View -->
-                    <div id="automation-live-view">
-                        <div class="kpi-row">
-                        <div class="kpi-card glass-panel"><div class="kpi-label">n8n Workflows</div><div class="kpi-value">2</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Make Scenarios</div><div class="kpi-value">1</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Zapier Zaps</div><div class="kpi-value">1</div></div>
-                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Events Today</div><div class="kpi-value">47</div></div>
-                    </div>
-
-                    <!-- Manual Trigger Buttons -->
-                    <div class="card glass-panel" style="margin-bottom:24px;">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="ph-fill ph-play-circle text-accent"></i> Manual Workflow Triggers</h3>
-                        </div>
-                        <div style="display:flex; gap:12px; flex-wrap:wrap; padding:8px 0;">
-                            <button class="btn-primary" onclick="triggerN8NIntel()" id="btn-n8n">
-                                <i class="ph ph-robot"></i> Run Hermes Intel (n8n)
-                            </button>
-                            <button class="btn-primary" onclick="triggerMakeLeadSync()" id="btn-make" style="background: linear-gradient(135deg, #6b21a8, #7c3aed);">
-                                <i class="ph ph-arrows-clockwise"></i> Sync CRM → Odoo (Make)
-                            </button>
-                            <button class="btn-primary" onclick="triggerZapierEscalation('VH-003')" id="btn-zapier" style="background: linear-gradient(135deg, #b45309, #d97706);">
-                                <i class="ph ph-warning-circle"></i> Escalate Critical Stock (Zapier)
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-lightning text-warning"></i> Active Workflows</h3>
-                            </div>
-                            <div class="workflow-list">
-                                <div class="workflow-item"><span class="status-dot green pulse"></span><div class="wf-details"><strong>Lead → CRM Pipeline</strong><small>n8n | Webhook → AI Score → CRM → WhatsApp → Slack</small></div></div>
-                                <div class="workflow-item"><span class="status-dot green pulse"></span><div class="wf-details"><strong>Daily Competitor Intel</strong><small>n8n | Cron 6AM → Scrape → Hermes AI → Slack + CRM</small></div></div>
-                                <div class="workflow-item"><span class="status-dot blue pulse"></span><div class="wf-details"><strong>Google Sheets → CRM</strong><small>Make | Event leads sync every 5 min</small></div></div>
-                                <div class="workflow-item"><span class="status-dot purple pulse"></span><div class="wf-details"><strong>Gmail → AI → CRM Lead</strong><small>Zapier | Email parsed by Cowork Agent → CRM + Auto-reply</small></div></div>
-                            </div>
-                        </div>
-                        <div class="card glass-panel">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="ph-fill ph-broadcast text-info"></i> Event Bus (Live)</h3>
-                            </div>
-                            <div id="eventLog" class="event-log"></div>
-                        </div>
-                    </div>
-                    </div>
-                    <!-- Stitch Design Iframe -->
-                    <div id="automation-stitch-view" style="display:none;">
-                        <iframe src="stitch-automation.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Automation Command Center - Google Stitch Design"></iframe>
-                    </div>
-                </section>
-
-                <!-- Stitch Designs Showcase Page -->
-                <section id="page-stitch" class="page fade-in">
-                    <div style="margin-bottom:24px;">
-                        <h2 style="font-size:24px;font-weight:700;color:white;margin-bottom:8px;">
-                            <i class="ph-fill ph-palette" style="color:#a78bfa;"></i> Google Stitch UI Designs
-                        </h2>
-                        <p style="color:var(--text-secondary);font-size:14px;">Enterprise-grade UI screens designed using Google Stitch MCP — Indigo & Emerald design system</p>
-                    </div>
-
-                    <!-- Tab Selector -->
-                    <div class="stitch-tab-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="stitch-tab active" onclick="switchStitchTab('crm')" id="tab-crm">
-                            <i class="ph ph-target"></i> AI CRM Pipeline
-                        </button>
-                        <button class="stitch-tab" onclick="switchStitchTab('inventory')" id="tab-inventory">
-                            <i class="ph ph-car"></i> Inventory Intelligence
-                        </button>
-                        <button class="stitch-tab" onclick="switchStitchTab('marketing')" id="tab-marketing">
-                            <i class="ph ph-chart-line-up"></i> Marketing Intelligence
-                        </button>
-                        <button class="stitch-tab" onclick="switchStitchTab('finance')" id="tab-finance">
-                            <i class="ph ph-currency-dollar"></i> Finance & P&L
-                        </button>
-                        <button class="stitch-tab" onclick="switchStitchTab('rag')" id="tab-rag">
-                            <i class="ph ph-robot"></i> Knowledge RAG
-                        </button>
-                        <button class="stitch-tab" onclick="switchStitchTab('automation')" id="tab-automation">
-                            <i class="ph ph-lightning"></i> Automations
-                        </button>
-                    </div>
-
-                    <div id="stitch-frame-container" style="background:rgba(255,255,255,0.03);border-radius:16px;border:1px solid rgba(124,58,237,0.3);overflow:hidden;">
-                        <iframe id="stitch-main-frame" src="stitch-crm.html" style="width:100%;height:82vh;border:none;" title="Google Stitch Design Preview"></iframe>
-                    </div>
-                </section>
-            </div>
-        </main>
+  <!-- Sidebar -->
+  <aside class="w-64 shrink-0 bg-white border-r border-outline-variant flex flex-col">
+    <div class="px-6 py-6 border-b border-outline-variant">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+          <span class="material-symbols-outlined text-[20px]">directions_car</span>
+        </div>
+        <h1 class="text-lg font-bold text-on-surface">AutoDealer<span class="text-primary">AI</span></h1>
+      </div>
+      <p class="text-xs text-on-surface-variant mt-1 ml-0.5">Enterprise AI Platform</p>
     </div>
 
-    <script src="app.js"></script>
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <a class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-colors" data-page="dashboard" onclick="showPage('dashboard')">
+        <span class="material-symbols-outlined nav-icon text-[20px]">grid_view</span> Dashboard
+      </a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-colors" data-page="leads" onclick="showPage('leads')">
+        <span class="material-symbols-outlined nav-icon text-[20px]">target</span> Leads &amp; CRM
+      </a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-colors" data-page="inventory" onclick="showPage('inventory')">
+        <span class="material-symbols-outlined nav-icon text-[20px]">directions_car</span> Inventory
+      </a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-colors" data-page="marketing" onclick="showPage('marketing')">
+        <span class="material-symbols-outlined nav-icon text-[20px]">trending_up</span> Marketing
+      </a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-colors" data-page="finance" onclick="showPage('finance')">
+        <span class="material-symbols-outlined nav-icon text-[20px]">payments</span> Finance
+      </a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-colors" data-page="rag" onclick="showPage('rag')">
+        <span class="material-symbols-outlined nav-icon text-[20px]">smart_toy</span> AI Assistant
+      </a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-colors" data-page="automation" onclick="showPage('automation')">
+        <span class="material-symbols-outlined nav-icon text-[20px]">bolt</span> Automations
+      </a>
+    </nav>
+
+    <div class="px-4 py-4 border-t border-outline-variant">
+      <div class="flex items-center gap-3">
+        <img class="w-9 h-9 rounded-full border border-outline-variant" src="https://ui-avatars.com/api/?name=Ali+M&background=3525cd&color=fff" alt="User avatar">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-on-surface truncate">Ali M.</p>
+          <p class="text-xs text-on-surface-variant truncate">Administrator</p>
+        </div>
+        <button class="text-on-surface-variant hover:text-primary" title="Settings"><span class="material-symbols-outlined text-[20px]">settings</span></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col min-w-0">
+
+    <!-- Topbar -->
+    <header class="h-16 shrink-0 bg-white border-b border-outline-variant flex items-center justify-between px-6 gap-4">
+      <div class="flex items-center gap-3">
+        <h2 id="page-title" class="text-lg font-bold text-on-surface">Executive Dashboard</h2>
+        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full">
+          <span class="w-1.5 h-1.5 rounded-full bg-secondary pulse-dot"></span> LIVE
+        </span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="service-status-bar" class="hidden md:flex items-center gap-2 text-xs text-on-surface-variant">
+          <span>Checking services…</span>
+        </div>
+        <div class="relative hidden sm:flex items-center">
+          <span class="material-symbols-outlined absolute left-3 text-primary text-[18px]">auto_awesome</span>
+          <input id="askAiInput" type="text" placeholder="Ask AI anything…" class="pl-9 pr-20 py-2 w-64 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary-container">
+          <button onclick="askAI()" class="absolute right-1.5 text-xs font-semibold text-on-primary bg-primary px-2.5 py-1 rounded-md">Ask</button>
+        </div>
+        <button class="relative text-on-surface-variant hover:text-primary">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold text-white bg-error rounded-full">3</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scrollable page container -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <section id="page-dashboard" class="page active space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <div class="flex items-center gap-2 text-on-surface-variant text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span> Today's Revenue</div>
+            <div class="text-2xl font-bold text-on-surface" id="todayRevenue">—</div>
+            <div class="text-xs text-secondary font-medium mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> vs yesterday</div>
+          </div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <div class="flex items-center gap-2 text-on-surface-variant text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">bar_chart</span> MTD Revenue</div>
+            <div class="text-2xl font-bold text-on-surface" id="mtdRevenue">—</div>
+            <div class="text-xs text-secondary font-medium mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> 8% vs last month</div>
+          </div>
+          <div class="bg-primary rounded-xl p-5 text-on-primary">
+            <div class="flex items-center gap-2 text-on-primary-container text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">filter_alt</span> Pipeline Value</div>
+            <div class="text-2xl font-bold" id="pipelineValue">—</div>
+            <div class="text-xs text-on-primary-container font-medium mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">local_fire_department</span> 15 hot leads</div>
+          </div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <div class="flex items-center gap-2 text-on-surface-variant text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">savings</span> Net Profit MTD</div>
+            <div class="text-2xl font-bold text-on-surface" id="netProfit">—</div>
+            <div class="text-xs text-secondary font-medium mt-1" id="grossMargin">—</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">auto_awesome</span> AI Insights</h3>
+            <div id="aiInsights" class="space-y-3 text-sm"></div>
+          </div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">warning</span> Inventory Alerts</h3>
+            <div id="inventoryAlerts" class="space-y-3 text-sm"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">target</span> Lead Pipeline</h3>
+            <div class="flex items-center justify-between text-sm mb-1"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-error"></span>Hot</span><strong id="hotLeads">—</strong></div>
+            <div class="flex items-center justify-between text-sm mb-1"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span>Warm</span><strong id="warmLeads">—</strong></div>
+            <div class="flex items-center justify-between text-sm mb-3"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-outline"></span>Cold</span><strong id="coldLeads">—</strong></div>
+            <div class="border-t border-outline-variant pt-3 flex justify-between text-sm"><span class="text-on-surface-variant">Conversion Rate</span><strong id="convRate">—</strong></div>
+            <div class="flex justify-between text-sm mt-1"><span class="text-on-surface-variant">Avg Days to Close</span><strong id="avgDays">—</strong></div>
+          </div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[18px]">trending_up</span> Marketing ROI</h3>
+            <div id="marketingROI" class="space-y-2 text-sm"></div>
+          </div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">groups</span> Top Performer</h3>
+            <div id="topPerformer" class="text-sm space-y-1.5"></div>
+          </div>
+        </div>
+
+        <div id="aiResponseCard" class="bg-white rounded-xl border-2 border-primary p-5" style="display:none;">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">smart_toy</span> AI Manager Response</h3>
+            <button onclick="document.getElementById('aiResponseCard').style.display='none'" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined text-[18px]">close</span></button>
+          </div>
+          <div id="aiResponse" class="text-sm"></div>
+        </div>
+      </section>
+
+      <!-- ===================== LEADS & CRM ===================== -->
+      <section id="page-leads" class="page space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Total Leads</div><div class="text-2xl font-bold">87</div></div>
+          <div class="bg-primary rounded-xl p-5 text-on-primary"><div class="text-xs text-on-primary-container font-medium mb-1">Hot Leads</div><div class="text-2xl font-bold">15</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Deals Closed MTD</div><div class="text-2xl font-bold">12</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Avg Deal Size</div><div class="text-2xl font-bold">AED 237.5K</div></div>
+        </div>
+        <div class="bg-white rounded-xl border border-outline-variant overflow-hidden">
+          <div class="flex items-center justify-between p-5 border-b border-outline-variant">
+            <h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">assignment</span> Recent Leads</h3>
+            <button onclick="triggerMakeLeadSync()" class="flex items-center gap-1.5 text-xs font-semibold text-on-primary bg-primary px-3 py-2 rounded-lg hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">sync</span> Sync to ERP (Make.com)</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase">
+                <tr><th class="text-left px-5 py-3 font-semibold">Name</th><th class="text-left px-5 py-3 font-semibold">Vehicle Interest</th><th class="text-left px-5 py-3 font-semibold">Source</th><th class="text-left px-5 py-3 font-semibold">AI Score</th><th class="text-left px-5 py-3 font-semibold">Priority</th><th class="text-left px-5 py-3 font-semibold">Status</th></tr>
+              </thead>
+              <tbody id="leadsTable" class="divide-y divide-outline-variant"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== INVENTORY ===================== -->
+      <section id="page-inventory" class="page space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Total Vehicles</div><div class="text-2xl font-bold" id="invTotal">—</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Total Value</div><div class="text-2xl font-bold" id="invValue">—</div></div>
+          <div class="bg-tertiary-container rounded-xl p-5"><div class="text-xs text-tertiary font-medium mb-1">Holding Costs</div><div class="text-2xl font-bold text-tertiary" id="invHolding">—</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Potential Margin</div><div class="text-2xl font-bold" id="invMargin">—</div></div>
+        </div>
+        <div class="bg-white rounded-xl border border-outline-variant overflow-hidden">
+          <div class="p-5 border-b border-outline-variant"><h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">directions_car</span> Vehicle Inventory</h3></div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase">
+                <tr><th class="text-left px-5 py-3 font-semibold">ID</th><th class="text-left px-5 py-3 font-semibold">Vehicle</th><th class="text-left px-5 py-3 font-semibold">Listing Price</th><th class="text-left px-5 py-3 font-semibold">Landed Cost</th><th class="text-left px-5 py-3 font-semibold">Margin</th><th class="text-left px-5 py-3 font-semibold">Days in Stock</th><th class="text-left px-5 py-3 font-semibold">AI Alert</th></tr>
+              </thead>
+              <tbody id="inventoryTable" class="divide-y divide-outline-variant"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-outline-variant p-5">
+          <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">bar_chart</span> Aging Report</h3>
+          <div id="agingBars" class="space-y-3"></div>
+        </div>
+      </section>
+
+      <!-- ===================== MARKETING ===================== -->
+      <section id="page-marketing" class="page space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Active Campaigns</div><div class="text-2xl font-bold">5</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Total Spend MTD</div><div class="text-2xl font-bold">AED 20.5K</div></div>
+          <div class="bg-primary rounded-xl p-5 text-on-primary"><div class="text-xs text-on-primary-container font-medium mb-1">Best Channel</div><div class="text-2xl font-bold">WhatsApp</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Cost Per Lead</div><div class="text-2xl font-bold">AED 394</div></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant overflow-hidden">
+            <div class="p-5 border-b border-outline-variant"><h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">share</span> Channel Attribution</h3></div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase">
+                  <tr><th class="text-left px-4 py-3 font-semibold">Channel</th><th class="text-left px-4 py-3 font-semibold">Spend</th><th class="text-left px-4 py-3 font-semibold">Leads</th><th class="text-left px-4 py-3 font-semibold">Deals</th><th class="text-left px-4 py-3 font-semibold">Revenue</th><th class="text-left px-4 py-3 font-semibold">ROI</th></tr>
+                </thead>
+                <tbody id="attributionTable" class="divide-y divide-outline-variant"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">storefront</span> Competitor Intelligence</h3>
+              <button onclick="triggerN8NIntel()" class="flex items-center gap-1.5 text-xs font-semibold text-on-primary bg-primary px-3 py-2 rounded-lg hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">smart_toy</span> Run AI Intel (n8n)</button>
+            </div>
+            <div id="competitorList" class="space-y-3 text-sm"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== FINANCE ===================== -->
+      <section id="page-finance" class="page space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Revenue</div><div class="text-2xl font-bold" id="finRevenue">—</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">COGS</div><div class="text-2xl font-bold" id="finCOGS">—</div></div>
+          <div class="bg-primary rounded-xl p-5 text-on-primary"><div class="text-xs text-on-primary-container font-medium mb-1">Gross Profit</div><div class="text-2xl font-bold" id="finGross">—</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Net Profit</div><div class="text-2xl font-bold" id="finNet">—</div></div>
+        </div>
+        <div class="bg-white rounded-xl border border-outline-variant p-5">
+          <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">payments</span> P&amp;L Summary (Odoo ERP)</h3>
+          <div id="plSummary" class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm"></div>
+        </div>
+        <div class="bg-white rounded-xl border border-outline-variant p-5">
+          <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">calculate</span> Commission Calculator</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <select id="calcVehicle" class="bg-surface-container-low border-none rounded-lg text-sm px-3 py-2.5"><option value="VH-001">Toyota LC (VH-001)</option><option value="VH-002">Nissan Patrol (VH-002)</option><option value="VH-003">Porsche Cayenne (VH-003)</option><option value="VH-004">Lexus LX 600 (VH-004)</option></select>
+            <input type="number" id="calcPrice" placeholder="Selling Price (AED)" class="bg-surface-container-low border-none rounded-lg text-sm px-3 py-2.5" value="420000">
+            <input type="number" id="calcAccessories" placeholder="Accessories (AED)" class="bg-surface-container-low border-none rounded-lg text-sm px-3 py-2.5" value="5000">
+            <input type="number" id="calcFinance" placeholder="Finance Approved (AED)" class="bg-surface-container-low border-none rounded-lg text-sm px-3 py-2.5" value="340000">
+            <button onclick="calcCommission()" class="flex items-center justify-center gap-1.5 text-sm font-semibold text-on-primary bg-primary rounded-lg px-3 py-2.5 hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">calculate</span> Calculate</button>
+          </div>
+          <div id="commissionResult" class="mt-5"></div>
+        </div>
+      </section>
+
+      <!-- ===================== AI ASSISTANT (RAG) ===================== -->
+      <section id="page-rag" class="page">
+        <div class="bg-white rounded-xl border border-outline-variant flex flex-col h-[calc(100vh-140px)]">
+          <div class="p-5 border-b border-outline-variant">
+            <h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">smart_toy</span> AI Knowledge Assistant (Openclaw Agent)</h3>
+            <p class="text-xs text-on-surface-variant mt-1">Ask about HR policies, warranty terms, sales SOPs, finance procedures</p>
+          </div>
+          <div id="chatMessages" class="flex-1 overflow-y-auto p-5 space-y-4">
+            <div class="flex gap-3">
+              <div class="w-8 h-8 shrink-0 rounded-full bg-primary flex items-center justify-center text-on-primary"><span class="material-symbols-outlined text-[16px]">smart_toy</span></div>
+              <div class="bg-surface-container-low rounded-xl rounded-tl-none px-4 py-3 max-w-[80%] text-sm">
+                <strong class="block mb-1">Openclaw Agent</strong>
+                <p>Hello! I'm the Knowledge &amp; Compliance Agent. Ask me about company policies, vehicle warranties, HR rules, or sales procedures. I'll provide cited answers from official documents.</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 border-t border-outline-variant flex items-center gap-3">
+            <div class="flex-1 flex items-center bg-surface-container-low rounded-lg px-3">
+              <input type="text" id="ragInput" placeholder="e.g. What is the warranty coverage?" class="flex-1 bg-transparent border-none text-sm py-2.5 focus:ring-0" onkeypress="if(event.key==='Enter')askRAG()">
+              <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[18px]">attach_file</span></button>
+            </div>
+            <button onclick="askRAG()" class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-on-primary hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">send</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== AUTOMATIONS ===================== -->
+      <section id="page-automation" class="page space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">n8n Workflows</div><div class="text-2xl font-bold">2</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Make Scenarios</div><div class="text-2xl font-bold">1</div></div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5"><div class="text-xs text-on-surface-variant font-medium mb-1">Zapier Zaps</div><div class="text-2xl font-bold">1</div></div>
+          <div class="bg-primary rounded-xl p-5 text-on-primary"><div class="text-xs text-on-primary-container font-medium mb-1">Events Today</div><div class="text-2xl font-bold">47</div></div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-outline-variant p-5">
+          <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">play_circle</span> Manual Workflow Triggers</h3>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="triggerN8NIntel()" class="flex items-center gap-1.5 text-xs font-semibold text-on-primary bg-primary px-3 py-2.5 rounded-lg hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">smart_toy</span> Run Hermes Intel (n8n)</button>
+            <button onclick="triggerMakeLeadSync()" class="flex items-center gap-1.5 text-xs font-semibold text-white bg-secondary px-3 py-2.5 rounded-lg hover:opacity-90"><span class="material-symbols-outlined text-[16px]">sync</span> Sync CRM → Odoo (Make)</button>
+            <button onclick="triggerZapierEscalation('VH-003')" class="flex items-center gap-1.5 text-xs font-semibold text-white bg-tertiary px-3 py-2.5 rounded-lg hover:opacity-90"><span class="material-symbols-outlined text-[16px]">warning</span> Escalate Critical Stock (Zapier)</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">bolt</span> Active Workflows</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex items-start gap-3"><span class="w-2 h-2 mt-1.5 rounded-full bg-secondary status-dot pulse"></span><div><strong class="block">Lead → CRM Pipeline</strong><span class="text-xs text-on-surface-variant">n8n | Webhook → AI Score → CRM → WhatsApp → Slack</span></div></div>
+              <div class="flex items-start gap-3"><span class="w-2 h-2 mt-1.5 rounded-full bg-secondary status-dot pulse"></span><div><strong class="block">Daily Competitor Intel</strong><span class="text-xs text-on-surface-variant">n8n | Cron 6AM → Scrape → Hermes AI → Slack + CRM</span></div></div>
+              <div class="flex items-start gap-3"><span class="w-2 h-2 mt-1.5 rounded-full bg-primary status-dot pulse"></span><div><strong class="block">Google Sheets → CRM</strong><span class="text-xs text-on-surface-variant">Make | Event leads sync every 5 min</span></div></div>
+              <div class="flex items-start gap-3"><span class="w-2 h-2 mt-1.5 rounded-full bg-tertiary status-dot pulse"></span><div><strong class="block">Gmail → AI → CRM Lead</strong><span class="text-xs text-on-surface-variant">Zapier | Email parsed by Cowork Agent → CRM + Auto-reply</span></div></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-outline-variant p-5">
+            <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">podcasts</span> Event Bus (Live)</h3>
+            <div id="eventLog" class="space-y-2 text-xs max-h-96 overflow-y-auto"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
