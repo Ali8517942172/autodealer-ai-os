@@ -13,6 +13,8 @@ services:
         sync: false
       - key: ENVIRONMENT
         value: production
+      - key: PYTHON_VERSION
+        value: 3.11.9
     rootDir: apps/ai-gateway
     healthCheckPath: /api/health
 
@@ -93,5 +95,7 @@ services:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.9
     rootDir: apps/enterprise-rag
     healthCheckPath: /api/health
