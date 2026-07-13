@@ -897,3 +897,49 @@ body::after {
     box-shadow: 0 0 30px rgba(124, 58, 237, 0.15);
     border-color: rgba(124, 58, 237, 0.3);
 }
+
+/* Service Status Bar */
+.service-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.svc-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 100px;
+    letter-spacing: 0.3px;
+    font-family: 'Outfit', monospace;
+}
+
+.svc-online {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.svc-offline {
+    background: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.svc-checking {
+    background: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Chat typing indicator */
+.chat-msg .msg-bubble em {
+    animation: pulse-opacity 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-opacity {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+

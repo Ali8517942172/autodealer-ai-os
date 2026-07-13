@@ -75,6 +75,9 @@
                     </div>
                 </div>
                 <div class="topbar-right">
+                    <div id="service-status-bar" class="service-status-bar" title="Backend Service Health">
+                        <span class="svc-badge svc-checking">Checking services...</span>
+                    </div>
                     <div class="ask-ai-container">
                         <i class="ph ph-sparkle ai-sparkle"></i>
                         <input type="text" id="askAiInput" placeholder="Ask AI anything..." class="ask-ai-input">
@@ -333,6 +336,25 @@
                         <div class="kpi-card glass-panel"><div class="kpi-label">Zapier Zaps</div><div class="kpi-value">1</div></div>
                         <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Events Today</div><div class="kpi-value">47</div></div>
                     </div>
+
+                    <!-- Manual Trigger Buttons -->
+                    <div class="card glass-panel" style="margin-bottom:24px;">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="ph-fill ph-play-circle text-accent"></i> Manual Workflow Triggers</h3>
+                        </div>
+                        <div style="display:flex; gap:12px; flex-wrap:wrap; padding:8px 0;">
+                            <button class="btn-primary" onclick="triggerN8NIntel()" id="btn-n8n">
+                                <i class="ph ph-robot"></i> Run Hermes Intel (n8n)
+                            </button>
+                            <button class="btn-primary" onclick="triggerMakeLeadSync()" id="btn-make" style="background: linear-gradient(135deg, #6b21a8, #7c3aed);">
+                                <i class="ph ph-arrows-clockwise"></i> Sync CRM → Odoo (Make)
+                            </button>
+                            <button class="btn-primary" onclick="triggerZapierEscalation('VH-003')" id="btn-zapier" style="background: linear-gradient(135deg, #b45309, #d97706);">
+                                <i class="ph ph-warning-circle"></i> Escalate Critical Stock (Zapier)
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="grid-2">
                         <div class="card glass-panel">
                             <div class="card-header">

@@ -1,5 +1,6 @@
 // AutoDealer AI OS - Dashboard Frontend JavaScript
 // Connects to all backend services — production (Render) or local dev
+// VERSION: 2.0 — Production Ready with full integration
 
 const IS_PROD = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
@@ -12,6 +13,30 @@ const API = {
     dashboard: IS_PROD ? 'https://autodealer-dashboard.onrender.com' : 'http://127.0.0.1:5005',
     gateway:   IS_PROD ? 'https://autodealer-gateway.onrender.com'   : 'http://127.0.0.1:5010'
 };
+
+// ==========================================
+// SERVICE STATUS MONITOR
+// ==========================================
+async function checkServiceHealth() {
+    const statusEl = document.getElementById('service-status-bar');
+    if (!statusEl) return;
+    
+    const services = [
+        { name: 'Dashboard', key: 'dashboard' },
+        { name: 'CRM', key: 'crm' },
+        { name: 'Marketing', key: 'marketing' },
+        { name: 'RAG', key: 'rag' }
+    ];
+    
+    const checks = await Promise.allSettled(
+        services.map(s => fetch(`${API[s.key]}/api/health`, { signal: AbortSignal.timeout(3000) }))
+    );
+    
+    statusEl.innerHTML = services.map((s, i) => {
+        const ok = checks[i].status === 'fulfilled' && checks[i].value.ok;
+        return `<span class="svc-badge ${ok ? 'svc-online' : 'svc-offline'}">${s.name}: ${ok ? '●' : '○'}</span>`;
+    }).join(' ');
+}
 
 
 // ==========================================
@@ -239,7 +264,8 @@ async function loadFinancePage() {
 // ==========================================
 async function loadLeadsPage() {
     try {
-        const res = await fetch(`${API.crm}/api/leads`);
+        // Fixed: correct endpoint is /api/v1/leads
+        const res = await fetch(`${API.crm}/api/v1/leads`);
         const liveLeads = await res.json();
         
         const dummyLeads = [
@@ -317,21 +343,41 @@ async function askRAG() {
     input.value = '';
     messages.scrollTop = messages.scrollHeight;
 
-    // Demo responses for common questions
-    const ragResponses = {
-        'warranty': 'Based on our Warranty Policy (Section 3.1):\n\n• **Standard Warranty:** 3 years / 100,000 km (whichever comes first)\n• **Extended Warranty:** Available for additional 2 years\n• **Powertrain:** 5 years / 150,000 km\n• **Battery (hybrid):** 8 years / 160,000 km\n\n⚠️ Warranty is void if service intervals are not followed per manufacturer guidelines.\n\n📄 Source: warranty_policy_v4.2.pdf, Page 12',
-        'leave': 'Based on HR Policy (Section 5.2 - Leave Entitlement):\n\n• **Annual Leave:** 30 calendar days per year\n• **Sick Leave:** 15 days (first 45 days full pay, next 45 half pay)\n• **Maternity:** 60 days\n• **Hajj Leave:** 30 days (once during tenure)\n• **Carry Forward:** Max 15 days to next year\n\n📄 Source: hr_handbook_2026.pdf, Section 5',
-        'commission': 'Based on Sales Compensation Policy (Section 2.1):\n\n• **Margin < AED 10K:** 3% commission\n• **Margin AED 10K-25K:** 5% commission\n• **Margin AED 25K-50K:** 7% commission\n• **Margin > AED 50K:** 10% commission\n• **Bonus:** +AED 200 per extended warranty sold\n• **Bonus:** +15% on accessories sold\n\n📄 Source: sales_compensation_policy.pdf, Page 4',
-        'trade': 'Based on Trade-In Appraisal SOP (Section 7.1):\n\n1. Physical inspection (30 min)\n2. OBD diagnostic scan\n3. Market value check (3 sources)\n4. Deduction matrix applied\n5. Manager approval required for offers > AED 100K\n6. Valid for 48 hours\n\n📄 Source: trade_in_appraisal_sop.pdf, Page 8',
-        'default': 'I searched our document database and found relevant information. In a production deployment, I would use pgvector embeddings to find the most relevant document chunks and provide cited answers.\n\nPlease try asking about: warranty coverage, leave policy, commission structure, or trade-in process.\n\n📄 Agent: Openclaw (Knowledge & Compliance)'
-    };
+    // Typing indicator
+    const typingId = 'typing-' + Date.now();
+    messages.innerHTML += `<div class="chat-msg bot" id="${typingId}"><div class="msg-avatar"><i class="ph-fill ph-robot"></i></div><div class="msg-bubble"><em style="color:var(--text-muted)">Openclaw is thinking...</em></div></div>`;
+    messages.scrollTop = messages.scrollHeight;
 
-    const key = Object.keys(ragResponses).find(k => question.toLowerCase().includes(k)) || 'default';
-
-    setTimeout(() => {
-        messages.innerHTML += `<div class="chat-msg bot"><div class="msg-avatar"><i class="ph-fill ph-robot"></i></div><div class="msg-bubble"><strong>Openclaw Agent</strong><p>${ragResponses[key].replace(/\n/g, '<br>')}</p></div></div>`;
-        messages.scrollTop = messages.scrollHeight;
-    }, 800);
+    // Try REAL RAG API first, fallback to demo
+    try {
+        const res = await fetch(`${API.rag}/api/query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, top_k: 3 }),
+            signal: AbortSignal.timeout(8000)
+        });
+        if (!res.ok) throw new Error('RAG API offline');
+        const data = await res.json();
+        const answer = data.answer || data.response || JSON.stringify(data);
+        const source = data.sources ? `\n\n📄 Sources: ${data.sources.join(', ')}` : '';
+        document.getElementById(typingId).querySelector('.msg-bubble').innerHTML = 
+            `<strong>Openclaw Agent</strong><p>${(answer + source).replace(/\n/g, '<br>')}</p>
+            <small style="color:var(--accent-secondary);font-size:11px;">✓ Live RAG Response</small>`;
+    } catch (err) {
+        // Demo responses for common questions (fallback when RAG API is offline)
+        const ragResponses = {
+            'warranty': 'Based on our Warranty Policy (Section 3.1):\n\n• **Standard Warranty:** 3 years / 100,000 km (whichever comes first)\n• **Extended Warranty:** Available for additional 2 years\n• **Powertrain:** 5 years / 150,000 km\n• **Battery (hybrid):** 8 years / 160,000 km\n\n⚠️ Warranty is void if service intervals are not followed per manufacturer guidelines.\n\n📄 Source: warranty_policy_v4.2.pdf, Page 12',
+            'leave': 'Based on HR Policy (Section 5.2 - Leave Entitlement):\n\n• **Annual Leave:** 30 calendar days per year\n• **Sick Leave:** 15 days\n• **Maternity:** 60 days\n• **Hajj Leave:** 30 days (once during tenure)\n\n📄 Source: hr_handbook_2026.pdf, Section 5',
+            'commission': 'Based on Sales Compensation Policy (Section 2.1):\n\n• **Margin < AED 10K:** 3%\n• **Margin AED 10K-25K:** 5%\n• **Margin AED 25K-50K:** 7%\n• **Margin > AED 50K:** 10%\n\n📄 Source: sales_compensation_policy.pdf, Page 4',
+            'trade': 'Based on Trade-In Appraisal SOP (Section 7.1):\n\n1. Physical inspection (30 min)\n2. OBD diagnostic scan\n3. Market value check (3 sources)\n4. Manager approval required for offers > AED 100K\n\n📄 Source: trade_in_appraisal_sop.pdf, Page 8',
+            'default': 'I searched our knowledge base. In full production, pgvector embeddings provide cited, accurate answers.\n\nTry asking about: warranty coverage, leave policy, commission structure, or trade-in process.\n\n📄 Agent: Openclaw (Knowledge & Compliance) — Demo Mode'
+        };
+        const key = Object.keys(ragResponses).find(k => question.toLowerCase().includes(k)) || 'default';
+        document.getElementById(typingId).querySelector('.msg-bubble').innerHTML = 
+            `<strong>Openclaw Agent</strong><p>${ragResponses[key].replace(/\n/g, '<br>')}</p>
+            <small style="color:var(--text-muted);font-size:11px;">⚡ Demo Mode (RAG API connecting...)</small>`;
+    }
+    messages.scrollTop = messages.scrollHeight;
 }
 
 // ==========================================
@@ -441,32 +487,32 @@ async function triggerZapierEscalation(vehicleId) {
 }
 
 async function triggerMakeLeadSync() {
-    addLiveEvent('MAKE_TRIGGER', 'Syncing CRM leads with Odoo ERP...');
+    addLiveEvent('MAKE_TRIGGER', 'Syncing CRM leads with Odoo ERP via Make.com...');
     try {
-        const res = await fetch(\`\${API.dashboard}/api/v1/workflows/trigger-make\`, {
+        const res = await fetch(`${API.dashboard}/api/v1/workflows/trigger-make`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sync_type: 'FULL_CRM', timestamp: Date.now() })
         });
         const data = await res.json();
-        addLiveEvent('MAKE_SUCCESS', data.message || 'ERP sync complete');
+        addLiveEvent('MAKE_SUCCESS', data.message || 'Make.com ERP sync triggered successfully');
     } catch (e) {
-        addLiveEvent('MAKE_ERROR', e.message);
+        addLiveEvent('MAKE_ERROR', `Make.com: ${e.message}`);
     }
 }
 
 async function triggerN8NIntel() {
-    addLiveEvent('N8N_TRIGGER', 'Starting Hermes Agent Competitor Scrape...');
+    addLiveEvent('N8N_TRIGGER', 'Starting Hermes Agent Competitor Scrape via n8n...');
     try {
-        const res = await fetch(\`\${API.dashboard}/api/v1/workflows/trigger-n8n\`, {
+        const res = await fetch(`${API.dashboard}/api/v1/workflows/trigger-n8n`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target_competitors: ['Al Futtaim', 'Arabian Automobiles'] })
+            body: JSON.stringify({ target_competitors: ['Al Futtaim', 'Arabian Automobiles', 'Al Habtoor Motors'] })
         });
         const data = await res.json();
-        addLiveEvent('N8N_SUCCESS', data.message || 'Intel pipeline running in background');
+        addLiveEvent('N8N_SUCCESS', data.message || 'n8n Hermes Agent running competitor intelligence...');
     } catch (e) {
-        addLiveEvent('N8N_ERROR', e.message);
+        addLiveEvent('N8N_ERROR', `n8n: ${e.message}`);
     }
 }
 
@@ -475,9 +521,15 @@ async function triggerN8NIntel() {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     loadDashboard();
+    // Check service health every 30 seconds
+    checkServiceHealth();
+    setInterval(checkServiceHealth, 30000);
+    // Load event log on init
+    loadEventLog();
 });
 
 // Enter key for Ask AI
 document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && document.activeElement.id === 'askAiInput') askAI();
+    if (e.key === 'Enter' && document.activeElement.id === 'ragInput') askRAG();
 });
