@@ -359,7 +359,9 @@ async function askRAG() {
         if (!res.ok) throw new Error('RAG API offline');
         const data = await res.json();
         const answer = data.answer || data.response || JSON.stringify(data);
-        const source = data.sources ? `\n\n📄 Sources: ${data.sources.join(', ')}` : '';
+        const source = (data.sources && data.sources.length)
+            ? '\n\n📄 Sources: ' + data.sources.map(s => `${s.title} (${s.source_file}, p.${s.page})`).join(' | ')
+            : '';
         document.getElementById(typingId).querySelector('.msg-bubble').innerHTML = 
             `<strong>Openclaw Agent</strong><p>${(answer + source).replace(/\n/g, '<br>')}</p>
             <small style="color:#3525cd;font-size:11px;">✓ Live RAG Response</small>`;

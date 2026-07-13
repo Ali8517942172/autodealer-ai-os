@@ -1,42 +1,29 @@
 /**
  * AutoDealer Marketing Intelligence OS - API Server
- * 
+ *
  * Enterprise marketing platform for automotive dealerships.
- * Connects to MongoDB for lead/campaign storage and integrates
+ * Connects to Supabase for real competitor pricing data and integrates
  * with the Hermes AI agent for automated campaign generation.
- * 
+ *
  * Architecture:
- *   MongoDB -> Express API -> Hermes Agent -> n8n/Make -> CRM
+ *   Supabase (competitors table, populated by n8n Hermes workflow) -> Express API -> Dashboard
  */
 
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { MongoClient } = require('mongodb');
 const cron = require('node-cron');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const port = process.env.PORT || 5001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-const mongoUrl = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const dbName = 'alba_marketing';
-let db;
-
-async function connectDB() {
-    try {
-        const client = new MongoClient(mongoUrl);
-        await client.connect();
-        db = client.db(dbName);
-        console.log('[MongoDB] Connected to alba_marketing database');
-    } catch (err) {
-        console.error('[MongoDB] Connection failed:', err.message);
-    }
-}
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'placeholder_key';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
 // Health Check
@@ -51,44 +38,46 @@ app.get('/api/health', (req, res) => {
 
 /**
  * GET /api/competitors
- * Returns latest competitor pricing data from MongoDB.
- * In production, this is populated by the daily cron scraper.
+ * Returns latest competitor pricing data from Supabase.
+ * Populated by the n8n Hermes Competitor Intel workflow.
  */
 app.get('/api/competitors', async (req, res) => {
     try {
-        if (db) {
-            const data = await db.collection('competitor_pricing').find().sort({ scraped_at: -1 }).limit(50).toArray();
-            return res.json(data);
-        }
-        // Fallback mock data for demo/interview
-        res.json([
-            {
-                competitor: 'Al Futtaim Motors',
-                model: 'Toyota Land Cruiser',
-                price_aed: 215000,
-                scraped_at: new Date().toISOString(),
-                source: 'website',
-                ai_recommendation: 'Competitor is AED 5,000 below our listing. Consider matching or adding free service package.'
-            },
-            {
-                competitor: 'Arabian Automobiles',
-                model: 'Nissan Patrol',
-                price_aed: 275000,
-                scraped_at: new Date().toISOString(),
-                source: 'dubizzle',
-                ai_recommendation: 'Our price is competitive. Maintain current listing.'
-            },
-            {
-                competitor: 'Al Nabooda',
-                model: 'Porsche Cayenne',
-                price_aed: 320000,
-                scraped_at: new Date().toISOString(),
-                source: 'website',
-                ai_recommendation: 'High demand model. Consider increasing price by AED 8,000.'
-            }
-        ]);
+        const { data, error } = await supabase
+            .from('competitors')
+            .select('*')
+            .order('scraped_at', { ascending: false })
+            .limit(50);
+        if (error) throw error;
+        res.json(data);
     } catch (err) {
+        console.error('[Marketing] Supabase competitors fetch error:', err.message);
         res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * POST /api/competitors
+ * Receives competitor pricing data from the n8n Hermes Competitor Intel
+ * workflow and stores it in Supabase.
+ */
+app.post('/api/competitors', async (req, res) => {
+    try {
+        const payload = Array.isArray(req.body) ? req.body : [req.body];
+        const rows = payload.map(p => ({
+            competitor: p.competitor || 'Unknown',
+            model: p.model || null,
+            price_aed: p.price_aed || null,
+            our_price_aed: p.our_price_aed || null,
+            price_diff_aed: p.our_price_aed && p.price_aed ? (p.our_price_aed - p.price_aed) : null,
+            ai_recommendation: p.ai_recommendation || null
+        }));
+        const { data, error } = await supabase.from('competitors').insert(rows).select();
+        if (error) throw error;
+        res.json({ success: true, inserted: data.length, data });
+    } catch (err) {
+        console.error('[Marketing] Supabase competitors insert error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
@@ -104,8 +93,6 @@ app.get('/api/competitors', async (req, res) => {
 app.post('/api/campaigns/generate', async (req, res) => {
     const { target_model, budget_aed, channels } = req.body;
 
-    // Hermes Agent simulation
-    // In production: calls OpenRouter/Claude API with dealership context
     const campaign = {
         id: `CAMP-${Date.now()}`,
         target_model: target_model || 'Toyota Land Cruiser Prado',
@@ -139,10 +126,6 @@ app.post('/api/campaigns/generate', async (req, res) => {
             roi_percentage: ((5 * 210000 - (budget_aed || 5000)) / (budget_aed || 5000) * 100).toFixed(1)
         }
     };
-
-    if (db) {
-        await db.collection('campaigns').insertOne(campaign);
-    }
 
     res.json(campaign);
 });
@@ -199,11 +182,6 @@ app.get('/api/attribution', async (req, res) => {
 // LEAD NURTURING (Hermes Agent)
 // ==========================================
 
-/**
- * POST /api/nurture/trigger
- * Triggers automated lead nurturing sequence for inactive leads.
- * Integrates with n8n/Make for multi-step workflows.
- */
 app.post('/api/nurture/trigger', async (req, res) => {
     const { lead_id, inactive_days } = req.body;
 
@@ -219,7 +197,6 @@ app.post('/api/nurture/trigger', async (req, res) => {
             { day: 7, channel: 'crm_task', action: 'Assign salesperson for personal follow-up call' },
             { day: 14, channel: 'whatsapp', action: 'Send exclusive discount code (5% off)' }
         ],
-        n8n_webhook: process.env.N8N_WEBHOOK_URL || 'https://n8n.albacars.internal/webhook/nurture',
         status: 'activated'
     };
 
@@ -227,13 +204,12 @@ app.post('/api/nurture/trigger', async (req, res) => {
 });
 
 // ==========================================
-// DAILY CRON: Competitor Price Scraper
+// DAILY CRON: Competitor Price Scraper reminder
 // ==========================================
-// Runs every day at 6 AM to scrape competitor prices
+// The actual scraping + AI analysis is done by the n8n Hermes Competitor
+// Intel workflow, which writes directly into the Supabase 'competitors' table.
 cron.schedule('0 6 * * *', async () => {
-    console.log('[Cron] Running daily competitor price scraper...');
-    // In production: calls scripts/competitor_scraper.js
-    // Stores results in MongoDB competitor_pricing collection
+    console.log('[Cron] Daily competitor intel reminder — see n8n workflow "Alba Competitor Intelligence".');
 });
 
 // ==========================================
@@ -242,13 +218,14 @@ cron.schedule('0 6 * * *', async () => {
 
 async function forwardToCRM(leadData) {
     try {
-        const response = await fetch('http://localhost:5000/api/leads', {
+        const crmUrl = process.env.CRM_API_URL || 'https://autodealer-crm-api.onrender.com';
+        const response = await fetch(`${crmUrl}/api/v1/leads`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(leadData)
         });
         const result = await response.json();
-        console.log('[Marketing -> CRM] Forwarded lead successfully:', result.id);
+        console.log('[Marketing -> CRM] Forwarded lead successfully');
         return result;
     } catch (err) {
         console.error('[Marketing -> CRM] Error forwarding lead:', err.message);
@@ -257,47 +234,34 @@ async function forwardToCRM(leadData) {
 
 app.post('/api/webhooks/zapier', async (req, res) => {
     console.log('[Zapier Webhook] Received Lead:', req.body);
-    // Transform Zapier payload to CRM lead format
     const leadData = {
         name: req.body.full_name || 'Zapier Lead',
-        email: req.body.email || 'zapier@example.com',
+        email: req.body.email || null,
         source: 'Zapier (Facebook Ads)',
-        status: 'New',
-        vehicle: req.body.vehicle_interest || 'Unknown'
+        vehicle_interest: req.body.vehicle_interest || 'Unknown',
+        budget_aed: req.body.budget_aed || null
     };
-    
-    // Calculate True ROI / Score here if needed
-    leadData.score = 85;
-    leadData.priority = 'hot';
-
     await forwardToCRM(leadData);
     res.json({ status: 'success', message: 'Lead received from Zapier and forwarded to CRM.' });
 });
 
 app.post('/api/webhooks/make', async (req, res) => {
     console.log('[Make.com Webhook] Received Lead:', req.body);
-    // Transform Make.com payload to CRM lead format
     const leadData = {
         name: req.body.lead_name || 'Make.com Lead',
-        email: req.body.contact_email || 'make@example.com',
+        email: req.body.contact_email || null,
         source: 'Make.com (Google Forms)',
-        status: 'New',
-        vehicle: req.body.car_model || 'Unknown'
+        vehicle_interest: req.body.car_model || 'Unknown',
+        budget_aed: req.body.budget_aed || null
     };
-    
-    // Calculate True ROI / Score here if needed
-    leadData.score = 90;
-    leadData.priority = 'hot';
-
     await forwardToCRM(leadData);
     res.json({ status: 'success', message: 'Lead received from Make.com and forwarded to CRM.' });
 });
 
 // Start Server
-connectDB().then(() => {
-    app.listen(port, () => {
-        console.log(`[Enterprise API] AutoDealer Marketing OS listening on port ${port}`);
-    });
+app.listen(port, () => {
+    console.log(`[Enterprise API] AutoDealer Marketing OS listening on port ${port}`);
+    console.log(`[Enterprise API] Data source: Supabase (real persistent storage)`);
 });
 
 module.exports = app;

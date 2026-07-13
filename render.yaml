@@ -76,6 +76,10 @@ services:
         value: https://autodealer-gateway.onrender.com
       - key: CRM_API_URL
         value: https://autodealer-crm-api.onrender.com
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
     rootDir: apps/marketing-os
     healthCheckPath: /api/health
 
