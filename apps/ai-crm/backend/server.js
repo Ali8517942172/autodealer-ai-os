@@ -379,7 +379,7 @@ app.get('/api/inventory', (req, res) => res.redirect('/api/v1/inventory'));
 // Start Server
 // ─────────────────────────────────────────────────────────────────────────────
 app.listen(port, () => {
-    console.log(`[Enterprise API] Alba AI CRM Backend running on port ${port}`);
+    console.log(`[Enterprise API] AutoDealer AI CRM Backend running on port ${port}`);
     console.log(`[Enterprise API] Health check: http://localhost:${port}/api/health`);
     console.log(`[Enterprise API] Environment: ${process.env.NODE_ENV || 'development'}`);
 });

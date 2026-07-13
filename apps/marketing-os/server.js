@@ -1,5 +1,5 @@
 /**
- * Alba Marketing Intelligence OS - API Server
+ * AutoDealer Marketing Intelligence OS - API Server
  * 
  * Enterprise marketing platform for automotive dealerships.
  * Connects to MongoDB for lead/campaign storage and integrates
@@ -42,7 +42,7 @@ async function connectDB() {
 // Health Check
 // ==========================================
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', service: 'Alba Marketing Intelligence OS' });
+    res.json({ status: 'OK', service: 'AutoDealer Marketing Intelligence OS' });
 });
 
 // ==========================================
@@ -118,10 +118,10 @@ app.post('/api/campaigns/generate', async (req, res) => {
             google_ads: {
                 headline: `Best Price on ${target_model || 'Toyota Prado'} in UAE`,
                 description: 'Certified pre-owned. Full warranty. Finance available from AED 2,500/month.',
-                keywords: ['buy toyota prado uae', 'best car deals dubai', 'alba cars']
+                keywords: ['buy toyota prado uae', 'best car deals dubai', 'autodealer cars']
             },
             meta_ads: {
-                primary_text: `Looking for a ${target_model || 'Toyota Prado'}? Alba Cars has the best prices in the UAE. Visit us today!`,
+                primary_text: `Looking for a ${target_model || 'Toyota Prado'}? AutoDealer Cars has the best prices in the UAE. Visit us today!`,
                 cta: 'LEARN_MORE',
                 audience: 'UAE residents, Age 25-55, Interest: Cars, Luxury'
             },
@@ -296,7 +296,7 @@ app.post('/api/webhooks/make', async (req, res) => {
 // Start Server
 connectDB().then(() => {
     app.listen(port, () => {
-        console.log(`[Enterprise API] Alba Marketing OS listening on port ${port}`);
+        console.log(`[Enterprise API] AutoDealer Marketing OS listening on port ${port}`);
     });
 });
 

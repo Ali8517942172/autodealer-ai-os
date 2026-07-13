@@ -32,8 +32,8 @@ graph TD
     Auth --> Mongo
 
     %% Business Modules (Apps)
-    subgraph "Alba AI OS Modules"
-        CRM[Alba AI CRM]
+    subgraph "AutoDealer AI OS Modules"
+        CRM[AutoDealer AI CRM]
         Mktg[Marketing Intelligence OS]
         RAG[Enterprise Knowledge RAG]
         Inv[Inventory Intelligence]

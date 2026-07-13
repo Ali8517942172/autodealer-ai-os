@@ -1,7 +1,7 @@
 {
-  "name": "alba-marketing-os",
+  "name": "autodealer-ai-os-marketing",
   "version": "1.0.0",
-  "description": "Alba AI Marketing Intelligence Platform - Competitor scraping, AI campaign generation, and attribution analytics",
+  "description": "AutoDealer AI Marketing Intelligence Platform - Competitor scraping, AI campaign generation, and attribution analytics",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

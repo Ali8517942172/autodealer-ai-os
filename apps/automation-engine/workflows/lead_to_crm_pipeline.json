@@ -56,7 +56,7 @@
     {
       "parameters": {
         "phoneNumber": "={{$json[\"phone\"]}}",
-        "message": "Thank you for your interest in {{$json[\"vehicle_interest\"]}}! Our team will contact you within 1 hour. - Alba Cars"
+        "message": "Thank you for your interest in {{$json[\"vehicle_interest\"]}}! Our team will contact you within 1 hour. - AutoDealer Cars"
       },
       "name": "Send WhatsApp Confirmation",
       "type": "n8n-nodes-base.whatsapp",
@@ -87,7 +87,7 @@
     {
       "parameters": {
         "to": "={{$json[\"email\"]}}",
-        "subject": "Welcome to Alba Cars!",
+        "subject": "Welcome to AutoDealer Cars!",
         "html": "<h2>Thank you for your interest!</h2><p>We received your inquiry about {{$json[\"vehicle_interest\"]}}. A member of our team will be in touch shortly.</p>"
       },
       "name": "Send Welcome Email",

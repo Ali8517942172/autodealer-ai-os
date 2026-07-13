@@ -1,5 +1,5 @@
 {
-  "name": "Alba CRM — Lead Ingestion Pipeline",
+  "name": "AutoDealer CRM — Lead Ingestion Pipeline",
   "nodes": [
     {
       "parameters": {
@@ -15,7 +15,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [250, 300],
-      "webhookId": "alba-lead-webhook"
+      "webhookId": "autodealer-lead-webhook"
     },
     {
       "parameters": {
@@ -140,7 +140,7 @@
     "saveDataSuccessExecution": "last"
   },
   "staticData": null,
-  "tags": ["alba-corp", "crm", "leads", "webhook"],
+  "tags": ["autodealer-corp", "crm", "leads", "webhook"],
   "active": true,
   "versionId": "2.0.0"
 }

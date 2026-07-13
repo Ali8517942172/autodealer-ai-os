@@ -1,7 +1,7 @@
 {
-  "name": "alba-ai-crm-backend",
+  "name": "autodealer-ai-crm-backend",
   "version": "1.0.0",
-  "description": "Enterprise Node.js API Gateway for Alba AI CRM",
+  "description": "Enterprise Node.js API Gateway for AutoDealer AI CRM",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

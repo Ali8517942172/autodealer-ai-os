@@ -1,5 +1,5 @@
 /**
- * Alba Marketing OS - Competitor Price Scraper
+ * AutoDealer Marketing OS - Competitor Price Scraper
  * 
  * Production-grade scraper that runs daily via cron.
  * Scrapes competitor dealership websites and classifieds
@@ -102,7 +102,7 @@ function generateRecommendation(competitorPrice, ourPrice, model) {
  * Main scraper execution
  */
 async function runScraper() {
-    console.log('=== Alba Competitor Intelligence Scraper ===');
+    console.log('=== AutoDealer Competitor Intelligence Scraper ===');
     console.log(`Started at: ${new Date().toISOString()}`);
     console.log(`Monitoring ${COMPETITORS.length} competitors across ${TARGET_MODELS.length} models\n`);
 

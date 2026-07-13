@@ -4,7 +4,7 @@
 
 The platform is designed to increase dealership profitability, reduce operational overhead, improve lead conversion, and enable AI-assisted decision making across every department.
 
-> *Reference implementation created for the Alba Corp AI Engineer portfolio challenge.*
+> *Reference implementation created for the AutoDealer Corp AI Engineer portfolio challenge.*
 
 ---
 
@@ -162,7 +162,7 @@ The platform is designed as a SaaS product adaptable to any dealership:
 
 ```
 /customers
-  ├── alba-cars/
+  ├── autodealer-cars/
   ├── toyota-dubai/
   ├── nissan-uae/
   └── bmw-abudhabi/
@@ -196,7 +196,7 @@ autodealer-ai-os/
 
 ## Complete JD Requirements Mapping
 
-Every requirement from the Alba Corp AI Engineer (Vibe Coder) job description is implemented:
+Every requirement from the AutoDealer Corp AI Engineer (Vibe Coder) job description is implemented:
 
 | JD Requirement | Where It's Implemented | How |
 |---------------|----------------------|-----|

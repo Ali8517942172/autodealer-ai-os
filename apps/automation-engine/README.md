@@ -1,6 +1,6 @@
-# Alba AI Automation Engine
+# AutoDealer AI Automation Engine
 
-Central nervous system that connects all Alba AI OS modules through event-driven workflows.
+Central nervous system that connects all AutoDealer AI OS modules through event-driven workflows.
 
 ## Automation Stack
 - **n8n** - Primary workflow automation (self-hosted)

@@ -2,11 +2,11 @@
 
 Traditional AI developers focus heavily on the technology (RAG, LLMs, Agents) but often fail to connect the technology to the underlying business mechanics. 
 
-**Alba AI OS is built differently. It is built by an engineer who understands both advanced AI agents and core business accounting.**
+**AutoDealer AI OS is built differently. It is built by an engineer who understands both advanced AI agents and core business accounting.**
 
 ## 1. Dealership Financial Intelligence
 
-Every transaction tracked within the **Alba AI CRM** integrates directly with robust financial modeling.
+Every transaction tracked within the **AutoDealer AI CRM** integrates directly with robust financial modeling.
 
 ### Core Metrics Tracked
 - **Gross Profit Margin:** Real-time calculation of revenue minus the exact landed cost of the vehicle.
@@ -26,9 +26,9 @@ Sales teams operate on incentives. The AI Copilot removes the friction of manual
 
 ## 3. Lead Conversion to Revenue Mapping
 
-The **Alba Marketing OS** doesn't just track clicks—it tracks revenue attribution.
+The **AutoDealer Marketing OS** doesn't just track clicks—it tracks revenue attribution.
 - Connects marketing spend directly to Closed-Won deals in the CRM.
 - AI calculates True ROI: `(Gross Profit from Cohort - Marketing Spend for Cohort) / Marketing Spend`.
 
 ---
-*By embedding these accounting and financial workflows directly into the AI logic, Alba AI OS transforms from a simple productivity tool into a core revenue optimization engine for the dealership.*
+*By embedding these accounting and financial workflows directly into the AI logic, AutoDealer AI OS transforms from a simple productivity tool into a core revenue optimization engine for the dealership.*

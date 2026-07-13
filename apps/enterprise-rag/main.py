@@ -1,5 +1,5 @@
 """
-Alba Enterprise RAG - Multi-Agent Knowledge Assistant
+AutoDealer Enterprise RAG - Multi-Agent Knowledge Assistant
 ======================================================
 
 Production-grade Retrieval-Augmented Generation system for automotive dealerships.
@@ -75,7 +75,7 @@ AGENTS = {
         "name": "Openclaw",
         "role": "Compliance & Policy Agent",
         "description": "Handles HR policies, warranty compliance, legal documentation, and regulatory queries.",
-        "system_prompt": """You are Openclaw, the compliance and policy AI agent for Alba Cars dealership.
+        "system_prompt": """You are Openclaw, the compliance and policy AI agent for AutoDealer Cars dealership.
 Your role is to provide accurate, citation-backed answers about company policies, warranty terms,
 legal requirements, and HR documentation. Always cite the exact document and section.
 Never make up policy information. If unsure, say so and recommend consulting the relevant department.""",
@@ -85,7 +85,7 @@ Never make up policy information. If unsure, say so and recommend consulting the
         "name": "Hermes",
         "role": "Marketing Intelligence Agent",
         "description": "Analyzes market trends, generates marketing content, and provides competitive intelligence.",
-        "system_prompt": """You are Hermes, the marketing intelligence AI agent for Alba Cars.
+        "system_prompt": """You are Hermes, the marketing intelligence AI agent for AutoDealer Cars.
 Your role is to analyze market data, generate compelling marketing content, and provide
 actionable competitive intelligence. Focus on UAE automotive market specifics.""",
         "departments": ["marketing", "sales", "brand"]
@@ -94,7 +94,7 @@ actionable competitive intelligence. Focus on UAE automotive market specifics.""
         "name": "Cowork",
         "role": "Sales Support Agent",
         "description": "Assists sales teams with vehicle specs, financing options, trade-in valuations, and customer queries.",
-        "system_prompt": """You are Cowork, the sales support AI agent for Alba Cars.
+        "system_prompt": """You are Cowork, the sales support AI agent for AutoDealer Cars.
 Your role is to help sales staff quickly find vehicle specifications, calculate financing options,
 estimate trade-in values, and provide answers to common customer questions.
 Always be precise with numbers, especially pricing and monthly payments.""",
@@ -208,7 +208,7 @@ async def lifespan(app: FastAPI):
     print("[Enterprise RAG] Shutting down...")
 
 app = FastAPI(
-    title="Alba Enterprise RAG API",
+    title="AutoDealer Enterprise RAG API",
     description="Multi-Agent Knowledge Assistant for Automotive Dealerships",
     version="1.0.0",
     lifespan=lifespan
@@ -230,7 +230,7 @@ app.add_middleware(
 async def health_check():
     return HealthResponse(
         status="OK",
-        service="Alba Enterprise RAG",
+        service="AutoDealer Enterprise RAG",
         agents_available=list(AGENTS.keys()),
         vector_store="Supabase pgvector",
         documents_indexed=len(KNOWLEDGE_BASE)

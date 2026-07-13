@@ -1,6 +1,6 @@
-# Alba Cars - JD Mapping (Portfolio)
+# AutoDealer Cars - JD Mapping (Portfolio)
 
-This document maps the implementation of the Alba Cars Enterprise Platform to the specific technical requirements mentioned in the Alba Corp "AI Engineer" Job Description.
+This document maps the implementation of the AutoDealer Cars Enterprise Platform to the specific technical requirements mentioned in the AutoDealer Corp "AI Engineer" Job Description.
 
 JD Requirement:
 n8n Automation
