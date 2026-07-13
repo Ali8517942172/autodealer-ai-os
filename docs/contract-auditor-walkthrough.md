@@ -1,8 +1,8 @@
-# Alba Contract Error Auditor — Walkthrough
+# AutoDealer Contract Error Auditor — Walkthrough
 
 ## What this solves
 
-Alba Cars customers have complained (Reddit, r/dubai) that registration fees on invoices don't match the official RTA receipt — e.g. AED 1,899 charged vs AED 570 actual RTA fee, with the difference billed as unexplained "handling fees."
+AutoDealer AI OS customers have complained (Reddit, r/dubai) that registration fees on invoices don't match the official RTA receipt — e.g. AED 1,899 charged vs AED 570 actual RTA fee, with the difference billed as unexplained "handling fees."
 
 This tool lets a customer upload their contract/invoice **before paying**, and instantly see if the registration fee matches the official rate.
 
@@ -14,7 +14,7 @@ This tool lets a customer upload their contract/invoice **before paying**, and i
 4. A Code node compares the extracted registration fee against the **official UAE RTA fee (AED 570)**
 5. The result — itemized fees, and a clear flag if there's a discrepancy — is returned to the page instantly
 
-## Demo script (for pitching to Alba Cars)
+## Demo script (for pitching to AutoDealer AI OS)
 
 1. Open the web page
 2. Upload a sample contract image with an inflated registration fee (e.g. AED 1,899)
@@ -37,4 +37,4 @@ This tool lets a customer upload their contract/invoice **before paying**, and i
 ## Files in this solution
 
 - `apps/contract-auditor/index.html` — customer-facing upload page
-- n8n workflow: "Alba Contract Error Auditor - Transparency Agent" (workflow ID `25DDrhmAmxMp7JiD`)
+- n8n workflow: "AutoDealer Contract Error Auditor - Transparency Agent" (workflow ID `25DDrhmAmxMp7JiD`)
