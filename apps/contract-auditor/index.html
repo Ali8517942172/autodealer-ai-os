@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alba Cars — Contract Transparency Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0B1F2E;
+    --ink-soft: #16324a;
+    --paper: #F5F1E6;
+    --paper-line: #ded6c2;
+    --gold: #C89B3C;
+    --gold-bright: #E4B85A;
+    --red-flag: #A8402F;
+    --green-ok: #3E6B4F;
+    --font-display: 'Newsreader', serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--ink);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(200,155,60,0.08), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(200,155,60,0.06), transparent 40%);
+    color: var(--paper);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .wrap { max-width: 620px; width: 100%; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(32px, 6vw, 46px);
+    line-height: 1.12;
+    color: var(--paper);
+    margin-bottom: 14px;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--gold-bright);
+  }
+
+  .sub {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: #c9d2d9;
+    max-width: 46ch;
+    margin-bottom: 40px;
+  }
+
+  /* the "document" card */
+  .doc {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 3px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.55), 0 2px 0 rgba(200,155,60,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .doc::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--ink) 0%, var(--gold) 50%, var(--ink) 100%);
+  }
+
+  .doc-inner { padding: 38px 34px 34px; }
+
+  .doc-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px dashed var(--paper-line);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+  .doc-head .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #7a7360;
+  }
+  .doc-head .ref {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #7a7360;
+  }
+
+  #dropzone {
+    border: 1.5px dashed #a99f80;
+    border-radius: 2px;
+    padding: 44px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  #dropzone:hover, #dropzone.drag {
+    border-color: var(--ink);
+    background: rgba(11,31,46,0.03);
+  }
+  #dropzone .icon {
+    font-family: var(--font-display);
+    font-size: 30px;
+    margin-bottom: 10px;
+    color: var(--ink-soft);
+  }
+  #dropzone .primary {
+    font-family: var(--font-display);
+    font-size: 19px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  #dropzone .secondary {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #8a8265;
+  }
+  input[type=file] { display: none; }
+
+  .filename-chip {
+    display: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 8px 14px;
+    border-radius: 2px;
+    margin-top: 16px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .filename-chip.show { display: flex; }
+  .filename-chip button {
+    background: none; border: none; color: var(--gold-bright);
+    font-family: var(--font-mono); cursor: pointer; font-size: 13px;
+  }
+
+  #submitBtn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  #submitBtn:hover:not(:disabled) { background: var(--ink-soft); }
+  #submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* results */
+  #results { display: none; margin-top: 26px; }
+  #results.show { display: block; animation: rise 0.4s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+    transform: rotate(-2deg);
+    margin-bottom: 20px;
+  }
+  .stamp.flag { color: var(--red-flag); }
+  .stamp.ok { color: var(--green-ok); }
+
+  .line-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--paper-line);
+    font-size: 14.5px;
+  }
+  .line-item .amt { font-family: var(--font-mono); }
+
+  .verdict {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 2px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .verdict.flag { background: rgba(168,64,47,0.08); border-left: 3px solid var(--red-flag); }
+  .verdict.ok { background: rgba(62,107,79,0.08); border-left: 3px solid var(--green-ok); }
+
+  .fee-compare {
+    display: flex;
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .fee-box { flex: 1; padding: 14px; background: #efe9d8; border-radius: 2px; }
+  .fee-box .k { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: #7a7360; margin-bottom: 6px; }
+  .fee-box .v { font-family: var(--font-mono); font-size: 20px; color: var(--ink); }
+
+  #errorMsg {
+    display: none;
+    color: var(--red-flag);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    margin-top: 14px;
+  }
+
+  .foot {
+    margin-top: 28px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #6f7d88;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Alba Cars · Transparency Agent</div>
+  <h1>Know exactly what<br>you're <em>paying for.</em></h1>
+  <p class="sub">Upload your sale contract or RTA invoice. We cross-check every registration charge against the official RTA rate — no jargon, no guessing.</p>
+
+  <div class="doc">
+    <div class="doc-inner">
+      <div class="doc-head">
+        <span class="label">Contract Audit Request</span>
+        <span class="ref" id="refNum"></span>
+      </div>
+
+      <div id="dropzone">
+        <div class="icon">✦</div>
+        <div class="primary">Drop your contract here</div>
+        <div class="secondary">or click to browse · JPG, PNG or PDF page</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,.pdf">
+      <div class="filename-chip" id="fileChip">
+        <span id="fileName"></span>
+        <button id="clearFile">remove</button>
+      </div>
+
+      <button id="submitBtn" disabled>Run Audit</button>
+      <div id="errorMsg"></div>
+
+      <div id="results">
+        <div id="stampEl" class="stamp"></div>
+        <div id="lineItems"></div>
+        <div class="fee-compare">
+          <div class="fee-box">
+            <div class="k">Charged</div>
+            <div class="v" id="chargedVal">—</div>
+          </div>
+          <div class="fee-box">
+            <div class="k">Official RTA Rate</div>
+            <div class="v" id="officialVal">—</div>
+          </div>
+        </div>
+        <div id="verdictBox" class="verdict"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">POWERED BY ALBA AI PLATFORM — YOUR DATA IS ANALYZED, NOT STORED</div>
+</div>
+
+<script>
+  // Point this at your deployed n8n webhook URL
+  // Points at the Executive Dashboard backend, which proxies to the n8n workflow
+  // (keeps the raw n8n URL hidden from the client, same pattern as the other workflows)
+  const WEBHOOK_URL = "https://autodealer-dashboard.onrender.com/api/v1/workflows/trigger-contract-audit";
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileChip = document.getElementById('fileChip');
+  const fileNameEl = document.getElementById('fileName');
+  const clearFile = document.getElementById('clearFile');
+  const submitBtn = document.getElementById('submitBtn');
+  const results = document.getElementById('results');
+  const errorMsg = document.getElementById('errorMsg');
+  const refNum = document.getElementById('refNum');
+
+  let selectedFile = null;
+  refNum.textContent = 'REF-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) setFile(fileInput.files[0]);
+  });
+  clearFile.addEventListener('click', e => {
+    e.stopPropagation();
+    selectedFile = null;
+    fileChip.classList.remove('show');
+    submitBtn.disabled = true;
+    results.classList.remove('show');
+  });
+
+  function setFile(file) {
+    selectedFile = file;
+    fileNameEl.textContent = file.name;
+    fileChip.classList.add('show');
+    submitBtn.disabled = false;
+    errorMsg.style.display = 'none';
+  }
+
+  submitBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Auditing…';
+    errorMsg.style.display = 'none';
+    results.classList.remove('show');
+
+    const formData = new FormData();
+    formData.append('data', selectedFile);
+
+    try {
+      const res = await fetch(WEBHOOK_URL, { method: 'POST', body: formData });
+      const data = await res.json();
+      renderResults(data);
+    } catch (err) {
+      errorMsg.textContent = 'Could not reach the audit service. Please try again.';
+      errorMsg.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Run Audit';
+    }
+  });
+
+  function renderResults(data) {
+    if (data.status === 'error') {
+      errorMsg.textContent = data.message || 'Could not read this document. Try a clearer photo.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    const stampEl = document.getElementById('stampEl');
+    const hidden = data.hidden_fee_aed || 0;
+    stampEl.className = 'stamp ' + (hidden > 0 ? 'flag' : 'ok');
+    stampEl.textContent = hidden > 0 ? '⚠ Discrepancy Found' : '✓ Verified Clean';
+
+    const lineItemsEl = document.getElementById('lineItems');
+    lineItemsEl.innerHTML = '';
+    (data.line_items || []).forEach(li => {
+      const row = document.createElement('div');
+      row.className = 'line-item';
+      row.innerHTML = `<span>${li.label}</span><span class="amt">AED ${li.amount_aed}</span>`;
+      lineItemsEl.appendChild(row);
+    });
+
+    document.getElementById('chargedVal').textContent = 'AED ' + (data.registration_fee_charged_aed ?? '—');
+    document.getElementById('officialVal').textContent = 'AED ' + (data.official_rta_fee_aed ?? '—');
+
+    const verdictBox = document.getElementById('verdictBox');
+    verdictBox.className = 'verdict ' + (hidden > 0 ? 'flag' : 'ok');
+    verdictBox.textContent = data.alert || '';
+
+    results.classList.add('show');
+  }
+</script>
+</body>
+</html>

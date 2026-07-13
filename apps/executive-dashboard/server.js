@@ -32,6 +32,9 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
+const multer = require('multer');
+const FormData = require('form-data');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB max
 
 const app = express();
 const port = process.env.PORT || 5005;
@@ -305,7 +308,8 @@ app.get('/api/v1/dashboard/services', async (req, res) => {
 const WEBHOOK_URLS = {
     escalation: process.env.ESCALATION_WEBHOOK_URL || 'https://hook.eu1.make.com/i7w3h8xccfhnfkh7nl431nk2oe7fyq75',
     make: process.env.MAKE_WEBHOOK_URL || 'https://hook.eu1.make.com/ptx1qx6rw7esr3pk50k4jch5fwg44ifz',
-    n8n: process.env.N8N_WEBHOOK_URL || 'https://desktop-l3an0ma.tail2141f7.ts.net/webhook/competitor-intel'
+    n8n: process.env.N8N_WEBHOOK_URL || 'https://desktop-l3an0ma.tail2141f7.ts.net/webhook/competitor-intel',
+    contractAudit: process.env.CONTRACT_AUDIT_WEBHOOK_URL || 'https://desktop-l3an0ma.tail2141f7.ts.net/webhook/contract-audit'
 };
 
 /**
@@ -354,6 +358,35 @@ app.post('/api/v1/workflows/trigger-n8n', async (req, res) => {
         res.json({ success: true, message: 'n8n Competitor Intel pipeline started', platform: 'n8n' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to trigger n8n workflow', details: err.message });
+    }
+});
+
+/**
+ * POST /api/v1/workflows/trigger-contract-audit
+ * Transparency Agent - forwards an uploaded contract image/PDF to the
+ * n8n Contract Error Auditor workflow and returns its analysis.
+ */
+app.post('/api/v1/workflows/trigger-contract-audit', upload.single('data'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded. Attach the contract as form-data field "data".' });
+        }
+
+        const forwardForm = new FormData();
+        forwardForm.append('data', req.file.buffer, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype
+        });
+
+        const n8nResponse = await axios.post(WEBHOOK_URLS.contractAudit, forwardForm, {
+            headers: forwardForm.getHeaders(),
+            maxBodyLength: Infinity
+        });
+
+        console.log(`[Contract Audit Webhook Triggered] File: ${req.file.originalname}`);
+        res.json(n8nResponse.data);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to run contract audit', details: err.message });
     }
 });
 
