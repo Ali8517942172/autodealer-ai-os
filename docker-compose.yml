@@ -83,7 +83,9 @@ services:
       - "5678:5678"
     environment:
       - N8N_BASIC_AUTH_ACTIVE=false
-      - WEBHOOK_URL=http://localhost:5678/
+      - WEBHOOK_URL=https://desktop-l3an0ma.tail2141f7.ts.net/
+      - N8N_EDITOR_BASE_URL=https://desktop-l3an0ma.tail2141f7.ts.net/
+      - N8N_TRUST_PROXY=true
     volumes:
       - n8n_data:/home/node/.n8n
     restart: always

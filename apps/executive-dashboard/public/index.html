@@ -4,273 +4,358 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoDealer AI OS — Executive Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <span class="logo-icon">🚗</span>
-                <h1>AutoDealer<span class="accent">AI</span></h1>
-            </div>
-            <p class="tagline">Enterprise AI OS</p>
-        </div>
-        <nav class="nav">
-            <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
-                <span class="nav-icon">📊</span> Dashboard
-            </a>
-            <a class="nav-item" data-page="leads" onclick="showPage('leads')">
-                <span class="nav-icon">🎯</span> Leads & CRM
-            </a>
-            <a class="nav-item" data-page="inventory" onclick="showPage('inventory')">
-                <span class="nav-icon">🚘</span> Inventory
-            </a>
-            <a class="nav-item" data-page="marketing" onclick="showPage('marketing')">
-                <span class="nav-icon">📈</span> Marketing
-            </a>
-            <a class="nav-item" data-page="finance" onclick="showPage('finance')">
-                <span class="nav-icon">💰</span> Finance
-            </a>
-            <a class="nav-item" data-page="rag" onclick="showPage('rag')">
-                <span class="nav-icon">🤖</span> AI Assistant
-            </a>
-            <a class="nav-item" data-page="automation" onclick="showPage('automation')">
-                <span class="nav-icon">⚡</span> Automations
-            </a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="avatar">AM</div>
-                <div>
-                    <p class="user-name">Ali M.</p>
-                    <p class="user-role">Admin</p>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main">
-        <!-- Top Bar -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <h2 id="page-title">Executive Dashboard</h2>
-                <span class="live-badge">● LIVE</span>
-            </div>
-            <div class="topbar-right">
-                <div class="ask-ai-container">
-                    <input type="text" id="askAiInput" placeholder="Ask AI anything..." class="ask-ai-input">
-                    <button onclick="askAI()" class="ask-ai-btn">Ask</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Dashboard Page -->
-        <section id="page-dashboard" class="page active">
-            <!-- KPI Cards Row -->
-            <div class="kpi-row">
-                <div class="kpi-card">
-                    <div class="kpi-label">Today's Revenue</div>
-                    <div class="kpi-value" id="todayRevenue">—</div>
-                    <div class="kpi-change positive">↑ vs yesterday</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">MTD Revenue</div>
-                    <div class="kpi-value" id="mtdRevenue">—</div>
-                    <div class="kpi-change positive">↑ 8% vs last month</div>
-                </div>
-                <div class="kpi-card accent">
-                    <div class="kpi-label">Pipeline Value</div>
-                    <div class="kpi-value" id="pipelineValue">—</div>
-                    <div class="kpi-change">15 hot leads</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Net Profit MTD</div>
-                    <div class="kpi-value" id="netProfit">—</div>
-                    <div class="kpi-change positive" id="grossMargin">—</div>
-                </div>
-            </div>
-
-            <!-- Second Row -->
-            <div class="grid-2">
-                <!-- AI Insights -->
-                <div class="card">
-                    <h3 class="card-title">🤖 AI Insights</h3>
-                    <div id="aiInsights" class="insights-list"></div>
-                </div>
-                <!-- Inventory Alerts -->
-                <div class="card">
-                    <h3 class="card-title">🚘 Inventory Alerts</h3>
-                    <div id="inventoryAlerts" class="alerts-list"></div>
-                </div>
-            </div>
-
-            <!-- Third Row -->
-            <div class="grid-3">
-                <div class="card">
-                    <h3 class="card-title">🎯 Lead Pipeline</h3>
-                    <div class="pipeline">
-                        <div class="pipeline-item"><span class="dot hot"></span> Hot <strong id="hotLeads">—</strong></div>
-                        <div class="pipeline-item"><span class="dot warm"></span> Warm <strong id="warmLeads">—</strong></div>
-                        <div class="pipeline-item"><span class="dot cold"></span> Cold <strong id="coldLeads">—</strong></div>
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon-wrapper">
+                        <i class="ph-fill ph-car-profile"></i>
                     </div>
-                    <div class="metric-row">
-                        <span>Conversion Rate</span>
-                        <strong id="convRate">—</strong>
+                    <h1>AutoDealer<span class="accent">AI</span></h1>
+                </div>
+                <p class="tagline">Enterprise AI Platform</p>
+            </div>
+            
+            <nav class="nav">
+                <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+                    <i class="ph ph-squares-four nav-icon"></i> <span class="nav-label">Dashboard</span>
+                </a>
+                <a class="nav-item" data-page="leads" onclick="showPage('leads')">
+                    <i class="ph ph-target nav-icon"></i> <span class="nav-label">Leads & CRM</span>
+                </a>
+                <a class="nav-item" data-page="inventory" onclick="showPage('inventory')">
+                    <i class="ph ph-car nav-icon"></i> <span class="nav-label">Inventory</span>
+                </a>
+                <a class="nav-item" data-page="marketing" onclick="showPage('marketing')">
+                    <i class="ph ph-chart-line-up nav-icon"></i> <span class="nav-label">Marketing</span>
+                </a>
+                <a class="nav-item" data-page="finance" onclick="showPage('finance')">
+                    <i class="ph ph-currency-dollar nav-icon"></i> <span class="nav-label">Finance</span>
+                </a>
+                <a class="nav-item" data-page="rag" onclick="showPage('rag')">
+                    <i class="ph ph-robot nav-icon"></i> <span class="nav-label">AI Assistant</span>
+                </a>
+                <a class="nav-item" data-page="automation" onclick="showPage('automation')">
+                    <i class="ph ph-lightning nav-icon"></i> <span class="nav-label">Automations</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=Ali+M&background=1e1e24&color=7c3aed" alt="User Avatar">
                     </div>
-                    <div class="metric-row">
-                        <span>Avg Days to Close</span>
-                        <strong id="avgDays">—</strong>
+                    <div class="user-details">
+                        <p class="user-name">Ali M.</p>
+                        <p class="user-role">Administrator</p>
+                    </div>
+                    <button class="settings-btn" title="Settings"><i class="ph ph-gear"></i></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h2 id="page-title" class="page-title">Executive Dashboard</h2>
+                    <div class="live-badge">
+                        <span class="pulse-dot"></span> LIVE
                     </div>
                 </div>
-                <div class="card">
-                    <h3 class="card-title">📈 Marketing ROI</h3>
-                    <div id="marketingROI" class="channel-list"></div>
-                </div>
-                <div class="card">
-                    <h3 class="card-title">👥 Top Performer</h3>
-                    <div id="topPerformer" class="performer-card"></div>
-                </div>
-            </div>
-
-            <!-- Ask AI Response -->
-            <div class="card" id="aiResponseCard" style="display:none;">
-                <h3 class="card-title">🤖 AI Manager Response</h3>
-                <div id="aiResponse" class="ai-response"></div>
-            </div>
-        </section>
-
-        <!-- Leads & CRM Page -->
-        <section id="page-leads" class="page">
-            <div class="kpi-row">
-                <div class="kpi-card"><div class="kpi-label">Total Leads</div><div class="kpi-value">87</div></div>
-                <div class="kpi-card accent"><div class="kpi-label">Hot Leads</div><div class="kpi-value">15</div></div>
-                <div class="kpi-card"><div class="kpi-label">Deals Closed MTD</div><div class="kpi-value">12</div></div>
-                <div class="kpi-card"><div class="kpi-label">Avg Deal Size</div><div class="kpi-value">AED 237.5K</div></div>
-            </div>
-            <div class="card">
-                <h3 class="card-title">📋 Recent Leads</h3>
-                <table class="data-table">
-                    <thead><tr><th>Name</th><th>Vehicle Interest</th><th>Source</th><th>AI Score</th><th>Priority</th><th>Status</th></tr></thead>
-                    <tbody id="leadsTable"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Inventory Page -->
-        <section id="page-inventory" class="page">
-            <div class="kpi-row">
-                <div class="kpi-card"><div class="kpi-label">Total Vehicles</div><div class="kpi-value" id="invTotal">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Total Value</div><div class="kpi-value" id="invValue">—</div></div>
-                <div class="kpi-card warning"><div class="kpi-label">Holding Costs</div><div class="kpi-value" id="invHolding">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Potential Margin</div><div class="kpi-value" id="invMargin">—</div></div>
-            </div>
-            <div class="card">
-                <h3 class="card-title">🚘 Vehicle Inventory</h3>
-                <table class="data-table">
-                    <thead><tr><th>ID</th><th>Vehicle</th><th>Listing Price</th><th>Landed Cost</th><th>Margin</th><th>Days in Stock</th><th>AI Alert</th></tr></thead>
-                    <tbody id="inventoryTable"></tbody>
-                </table>
-            </div>
-            <div class="card">
-                <h3 class="card-title">📊 Aging Report</h3>
-                <div id="agingBars" class="aging-bars"></div>
-            </div>
-        </section>
-
-        <!-- Marketing Page -->
-        <section id="page-marketing" class="page">
-            <div class="kpi-row">
-                <div class="kpi-card"><div class="kpi-label">Active Campaigns</div><div class="kpi-value">5</div></div>
-                <div class="kpi-card"><div class="kpi-label">Total Spend MTD</div><div class="kpi-value">AED 20.5K</div></div>
-                <div class="kpi-card accent"><div class="kpi-label">Best Channel</div><div class="kpi-value">WhatsApp</div></div>
-                <div class="kpi-card"><div class="kpi-label">Cost Per Lead</div><div class="kpi-value">AED 394</div></div>
-            </div>
-            <div class="grid-2">
-                <div class="card">
-                    <h3 class="card-title">📊 Channel Attribution</h3>
-                    <table class="data-table">
-                        <thead><tr><th>Channel</th><th>Spend</th><th>Leads</th><th>Deals</th><th>Revenue</th><th>ROI</th></tr></thead>
-                        <tbody id="attributionTable"></tbody>
-                    </table>
-                </div>
-                <div class="card">
-                    <h3 class="card-title">🏪 Competitor Intelligence</h3>
-                    <div id="competitorList"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Finance Page -->
-        <section id="page-finance" class="page">
-            <div class="kpi-row">
-                <div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-value" id="finRevenue">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">COGS</div><div class="kpi-value" id="finCOGS">—</div></div>
-                <div class="kpi-card accent"><div class="kpi-label">Gross Profit</div><div class="kpi-value" id="finGross">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Net Profit</div><div class="kpi-value" id="finNet">—</div></div>
-            </div>
-            <div class="card">
-                <h3 class="card-title">💰 P&L Summary (Odoo ERP)</h3>
-                <div id="plSummary" class="pl-grid"></div>
-            </div>
-            <div class="card">
-                <h3 class="card-title">🧮 Commission Calculator</h3>
-                <div class="calc-form">
-                    <select id="calcVehicle" class="input"><option value="VH-001">Toyota LC (VH-001)</option><option value="VH-002">Nissan Patrol (VH-002)</option><option value="VH-003">Porsche Cayenne (VH-003)</option><option value="VH-004">Lexus LX 600 (VH-004)</option></select>
-                    <input type="number" id="calcPrice" placeholder="Selling Price (AED)" class="input" value="420000">
-                    <input type="number" id="calcAccessories" placeholder="Accessories (AED)" class="input" value="5000">
-                    <input type="number" id="calcFinance" placeholder="Finance Approved (AED)" class="input" value="340000">
-                    <button onclick="calcCommission()" class="btn-primary">Calculate</button>
-                </div>
-                <div id="commissionResult" class="commission-result"></div>
-            </div>
-        </section>
-
-        <!-- AI Assistant (RAG) Page -->
-        <section id="page-rag" class="page">
-            <div class="card chat-card">
-                <h3 class="card-title">🤖 AI Knowledge Assistant (Openclaw Agent)</h3>
-                <p class="card-subtitle">Ask about HR policies, warranty terms, sales SOPs, finance procedures</p>
-                <div class="chat-messages" id="chatMessages">
-                    <div class="chat-msg bot">
-                        <strong>Openclaw Agent</strong>
-                        <p>Hello! I'm the Knowledge & Compliance Agent. Ask me about company policies, vehicle warranties, HR rules, or sales procedures. I'll provide cited answers from official documents.</p>
+                <div class="topbar-right">
+                    <div class="ask-ai-container">
+                        <i class="ph ph-sparkle ai-sparkle"></i>
+                        <input type="text" id="askAiInput" placeholder="Ask AI anything..." class="ask-ai-input">
+                        <button onclick="askAI()" class="ask-ai-btn">Ask</button>
+                    </div>
+                    <div class="notifications">
+                        <i class="ph ph-bell"></i>
+                        <span class="badge">3</span>
                     </div>
                 </div>
-                <div class="chat-input-row">
-                    <input type="text" id="ragInput" placeholder="e.g. What is the warranty coverage?" class="chat-input" onkeypress="if(event.key==='Enter')askRAG()">
-                    <button onclick="askRAG()" class="btn-primary">Send</button>
-                </div>
-            </div>
-        </section>
+            </header>
 
-        <!-- Automations Page -->
-        <section id="page-automation" class="page">
-            <div class="kpi-row">
-                <div class="kpi-card"><div class="kpi-label">n8n Workflows</div><div class="kpi-value">2</div></div>
-                <div class="kpi-card"><div class="kpi-label">Make Scenarios</div><div class="kpi-value">1</div></div>
-                <div class="kpi-card"><div class="kpi-label">Zapier Zaps</div><div class="kpi-value">1</div></div>
-                <div class="kpi-card accent"><div class="kpi-label">Events Today</div><div class="kpi-value">47</div></div>
-            </div>
-            <div class="grid-2">
-                <div class="card">
-                    <h3 class="card-title">⚡ Active Workflows</h3>
-                    <div class="workflow-list">
-                        <div class="workflow-item"><span class="status-dot green"></span><strong>Lead → CRM Pipeline</strong><br><small>n8n | Webhook → AI Score → CRM → WhatsApp → Slack</small></div>
-                        <div class="workflow-item"><span class="status-dot green"></span><strong>Daily Competitor Intel</strong><br><small>n8n | Cron 6AM → Scrape → Hermes AI → Slack + CRM</small></div>
-                        <div class="workflow-item"><span class="status-dot blue"></span><strong>Google Sheets → CRM</strong><br><small>Make | Event leads sync every 5 min</small></div>
-                        <div class="workflow-item"><span class="status-dot purple"></span><strong>Gmail → AI → CRM Lead</strong><br><small>Zapier | Email parsed by Cowork Agent → CRM + Auto-reply</small></div>
+            <!-- Scrollable Page Container -->
+            <div class="page-container">
+                <!-- Dashboard Page -->
+                <section id="page-dashboard" class="page active fade-in">
+                    <!-- KPI Cards Row -->
+                    <div class="kpi-row">
+                        <div class="kpi-card glass-panel">
+                            <div class="kpi-icon"><i class="ph ph-wallet"></i></div>
+                            <div class="kpi-content">
+                                <div class="kpi-label">Today's Revenue</div>
+                                <div class="kpi-value" id="todayRevenue">—</div>
+                                <div class="kpi-change positive"><i class="ph ph-trend-up"></i> vs yesterday</div>
+                            </div>
+                        </div>
+                        <div class="kpi-card glass-panel">
+                            <div class="kpi-icon"><i class="ph ph-chart-bar"></i></div>
+                            <div class="kpi-content">
+                                <div class="kpi-label">MTD Revenue</div>
+                                <div class="kpi-value" id="mtdRevenue">—</div>
+                                <div class="kpi-change positive"><i class="ph ph-trend-up"></i> 8% vs last month</div>
+                            </div>
+                        </div>
+                        <div class="kpi-card glass-panel accent-card">
+                            <div class="kpi-icon"><i class="ph ph-funnel"></i></div>
+                            <div class="kpi-content">
+                                <div class="kpi-label">Pipeline Value</div>
+                                <div class="kpi-value" id="pipelineValue">—</div>
+                                <div class="kpi-change neutral"><i class="ph ph-fire"></i> 15 hot leads</div>
+                            </div>
+                        </div>
+                        <div class="kpi-card glass-panel">
+                            <div class="kpi-icon"><i class="ph ph-piggy-bank"></i></div>
+                            <div class="kpi-content">
+                                <div class="kpi-label">Net Profit MTD</div>
+                                <div class="kpi-value" id="netProfit">—</div>
+                                <div class="kpi-change positive" id="grossMargin">—</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="card">
-                    <h3 class="card-title">📡 Event Bus (Live)</h3>
-                    <div id="eventLog" class="event-log"></div>
-                </div>
+
+                    <!-- Second Row -->
+                    <div class="grid-2">
+                        <!-- AI Insights -->
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-sparkle text-accent"></i> AI Insights</h3>
+                                <button class="icon-btn"><i class="ph ph-dots-three"></i></button>
+                            </div>
+                            <div id="aiInsights" class="insights-list"></div>
+                        </div>
+                        <!-- Inventory Alerts -->
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-warning-circle text-warning"></i> Inventory Alerts</h3>
+                                <button class="icon-btn"><i class="ph ph-dots-three"></i></button>
+                            </div>
+                            <div id="inventoryAlerts" class="alerts-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Third Row -->
+                    <div class="grid-3">
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-target text-primary"></i> Lead Pipeline</h3>
+                            </div>
+                            <div class="pipeline">
+                                <div class="pipeline-item"><span class="dot hot"></span> Hot <strong id="hotLeads">—</strong></div>
+                                <div class="pipeline-item"><span class="dot warm"></span> Warm <strong id="warmLeads">—</strong></div>
+                                <div class="pipeline-item"><span class="dot cold"></span> Cold <strong id="coldLeads">—</strong></div>
+                            </div>
+                            <div class="metric-row">
+                                <span>Conversion Rate</span>
+                                <strong id="convRate">—</strong>
+                            </div>
+                            <div class="metric-row">
+                                <span>Avg Days to Close</span>
+                                <strong id="avgDays">—</strong>
+                            </div>
+                        </div>
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-chart-line-up text-success"></i> Marketing ROI</h3>
+                            </div>
+                            <div id="marketingROI" class="channel-list"></div>
+                        </div>
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-users-three text-info"></i> Top Performer</h3>
+                            </div>
+                            <div id="topPerformer" class="performer-card"></div>
+                        </div>
+                    </div>
+
+                    <!-- Ask AI Response -->
+                    <div class="card glass-panel glow" id="aiResponseCard" style="display:none;">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="ph-fill ph-robot text-accent"></i> AI Manager Response</h3>
+                            <button class="icon-btn" onclick="document.getElementById('aiResponseCard').style.display='none'"><i class="ph ph-x"></i></button>
+                        </div>
+                        <div id="aiResponse" class="ai-response"></div>
+                    </div>
+                </section>
+
+                <!-- Leads & CRM Page -->
+                <section id="page-leads" class="page fade-in">
+                    <div class="kpi-row">
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Leads</div><div class="kpi-value">87</div></div>
+                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Hot Leads</div><div class="kpi-value">15</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Deals Closed MTD</div><div class="kpi-value">12</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Avg Deal Size</div><div class="kpi-value">AED 237.5K</div></div>
+                    </div>
+                    <div class="card glass-panel">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 class="card-title"><i class="ph-fill ph-clipboard-text"></i> Recent Leads</h3>
+                            <button class="btn-primary" onclick="triggerMakeLeadSync()"><i class="ph ph-arrows-clockwise"></i> Sync to ERP (Make.com)</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead><tr><th>Name</th><th>Vehicle Interest</th><th>Source</th><th>AI Score</th><th>Priority</th><th>Status</th></tr></thead>
+                                <tbody id="leadsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Inventory Page -->
+                <section id="page-inventory" class="page fade-in">
+                    <div class="kpi-row">
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Vehicles</div><div class="kpi-value" id="invTotal">—</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Value</div><div class="kpi-value" id="invValue">—</div></div>
+                        <div class="kpi-card glass-panel warning-card"><div class="kpi-label">Holding Costs</div><div class="kpi-value" id="invHolding">—</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Potential Margin</div><div class="kpi-value" id="invMargin">—</div></div>
+                    </div>
+                    <div class="card glass-panel">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="ph-fill ph-car"></i> Vehicle Inventory</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead><tr><th>ID</th><th>Vehicle</th><th>Listing Price</th><th>Landed Cost</th><th>Margin</th><th>Days in Stock</th><th>AI Alert</th></tr></thead>
+                                <tbody id="inventoryTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card glass-panel">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="ph-fill ph-chart-bar"></i> Aging Report</h3>
+                        </div>
+                        <div id="agingBars" class="aging-bars"></div>
+                    </div>
+                </section>
+
+                <!-- Marketing Page -->
+                <section id="page-marketing" class="page fade-in">
+                    <div class="kpi-row">
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Active Campaigns</div><div class="kpi-value">5</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Spend MTD</div><div class="kpi-value">AED 20.5K</div></div>
+                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Best Channel</div><div class="kpi-value">WhatsApp</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Cost Per Lead</div><div class="kpi-value">AED 394</div></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-share-network"></i> Channel Attribution</h3>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead><tr><th>Channel</th><th>Spend</th><th>Leads</th><th>Deals</th><th>Revenue</th><th>ROI</th></tr></thead>
+                                    <tbody id="attributionTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card glass-panel">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 class="card-title"><i class="ph-fill ph-storefront"></i> Competitor Intelligence</h3>
+                                <button class="btn-primary" onclick="triggerN8NIntel()"><i class="ph ph-robot"></i> Run AI Intel (n8n)</button>
+                            </div>
+                            <div id="competitorList"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Finance Page -->
+                <section id="page-finance" class="page fade-in">
+                    <div class="kpi-row">
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Revenue</div><div class="kpi-value" id="finRevenue">—</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">COGS</div><div class="kpi-value" id="finCOGS">—</div></div>
+                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Gross Profit</div><div class="kpi-value" id="finGross">—</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Net Profit</div><div class="kpi-value" id="finNet">—</div></div>
+                    </div>
+                    <div class="card glass-panel">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="ph-fill ph-currency-dollar"></i> P&L Summary (Odoo ERP)</h3>
+                        </div>
+                        <div id="plSummary" class="pl-grid"></div>
+                    </div>
+                    <div class="card glass-panel">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="ph-fill ph-calculator"></i> Commission Calculator</h3>
+                        </div>
+                        <div class="calc-form">
+                            <select id="calcVehicle" class="input"><option value="VH-001">Toyota LC (VH-001)</option><option value="VH-002">Nissan Patrol (VH-002)</option><option value="VH-003">Porsche Cayenne (VH-003)</option><option value="VH-004">Lexus LX 600 (VH-004)</option></select>
+                            <input type="number" id="calcPrice" placeholder="Selling Price (AED)" class="input" value="420000">
+                            <input type="number" id="calcAccessories" placeholder="Accessories (AED)" class="input" value="5000">
+                            <input type="number" id="calcFinance" placeholder="Finance Approved (AED)" class="input" value="340000">
+                            <button onclick="calcCommission()" class="btn-primary"><i class="ph ph-calculator"></i> Calculate</button>
+                        </div>
+                        <div id="commissionResult" class="commission-result"></div>
+                    </div>
+                </section>
+
+                <!-- AI Assistant (RAG) Page -->
+                <section id="page-rag" class="page fade-in">
+                    <div class="card glass-panel chat-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="ph-fill ph-robot text-accent"></i> AI Knowledge Assistant (Openclaw Agent)</h3>
+                        </div>
+                        <p class="card-subtitle">Ask about HR policies, warranty terms, sales SOPs, finance procedures</p>
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-msg bot">
+                                <div class="msg-avatar"><i class="ph-fill ph-robot"></i></div>
+                                <div class="msg-bubble">
+                                    <strong>Openclaw Agent</strong>
+                                    <p>Hello! I'm the Knowledge & Compliance Agent. Ask me about company policies, vehicle warranties, HR rules, or sales procedures. I'll provide cited answers from official documents.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-row">
+                            <div class="chat-input-wrapper">
+                                <input type="text" id="ragInput" placeholder="e.g. What is the warranty coverage?" class="chat-input" onkeypress="if(event.key==='Enter')askRAG()">
+                                <button class="attachment-btn"><i class="ph ph-paperclip"></i></button>
+                            </div>
+                            <button onclick="askRAG()" class="btn-primary"><i class="ph ph-paper-plane-right"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Automations Page -->
+                <section id="page-automation" class="page fade-in">
+                    <div class="kpi-row">
+                        <div class="kpi-card glass-panel"><div class="kpi-label">n8n Workflows</div><div class="kpi-value">2</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Make Scenarios</div><div class="kpi-value">1</div></div>
+                        <div class="kpi-card glass-panel"><div class="kpi-label">Zapier Zaps</div><div class="kpi-value">1</div></div>
+                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Events Today</div><div class="kpi-value">47</div></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-lightning text-warning"></i> Active Workflows</h3>
+                            </div>
+                            <div class="workflow-list">
+                                <div class="workflow-item"><span class="status-dot green pulse"></span><div class="wf-details"><strong>Lead → CRM Pipeline</strong><small>n8n | Webhook → AI Score → CRM → WhatsApp → Slack</small></div></div>
+                                <div class="workflow-item"><span class="status-dot green pulse"></span><div class="wf-details"><strong>Daily Competitor Intel</strong><small>n8n | Cron 6AM → Scrape → Hermes AI → Slack + CRM</small></div></div>
+                                <div class="workflow-item"><span class="status-dot blue pulse"></span><div class="wf-details"><strong>Google Sheets → CRM</strong><small>Make | Event leads sync every 5 min</small></div></div>
+                                <div class="workflow-item"><span class="status-dot purple pulse"></span><div class="wf-details"><strong>Gmail → AI → CRM Lead</strong><small>Zapier | Email parsed by Cowork Agent → CRM + Auto-reply</small></div></div>
+                            </div>
+                        </div>
+                        <div class="card glass-panel">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="ph-fill ph-broadcast text-info"></i> Event Bus (Live)</h3>
+                            </div>
+                            <div id="eventLog" class="event-log"></div>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </section>
-    </main>
+        </main>
+    </div>
 
     <script src="app.js"></script>
 </body>

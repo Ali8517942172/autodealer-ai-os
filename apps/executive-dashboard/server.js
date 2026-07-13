@@ -295,6 +295,68 @@ app.get('/api/v1/dashboard/services', async (req, res) => {
     });
 });
 
+// ==========================================
+// WORKFLOW AUTOMATION WEBHOOKS
+// ==========================================
+
+// These endpoints proxy the frontend requests to actual SaaS Webhook URLs.
+// This hides the webhook URLs from the client and provides a single integration point.
+
+const WEBHOOK_URLS = {
+    escalation: process.env.ESCALATION_WEBHOOK_URL || 'https://hook.eu1.make.com/i7w3h8xccfhnfkh7nl431nk2oe7fyq75',
+    make: process.env.MAKE_WEBHOOK_URL || 'https://hook.eu1.make.com/ptx1qx6rw7esr3pk50k4jch5fwg44ifz',
+    n8n: process.env.N8N_WEBHOOK_URL || 'https://desktop-l3an0ma.tail2141f7.ts.net/webhook/competitor-intel'
+};
+
+/**
+ * POST /api/v1/workflows/trigger-zapier
+ * Escalate inventory alerts via Cowork Agent on Zapier
+ */
+app.post('/api/v1/workflows/trigger-escalation', async (req, res) => {
+    try {
+        const payload = req.body;
+        // Actually trigger the Escalation webhook
+        await axios.post(WEBHOOK_URLS.escalation, payload);
+        
+        console.log(`[Escalation Webhook Triggered] Payload:`, payload);
+        res.json({ success: true, message: 'Escalate workflow triggered successfully', platform: 'make' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to trigger Escalation workflow', details: err.message });
+    }
+});
+
+/**
+ * POST /api/v1/workflows/trigger-make
+ * Sync Leads to Odoo ERP and enrich via Supabase DB through Make.com
+ */
+app.post('/api/v1/workflows/trigger-make', async (req, res) => {
+    try {
+        const payload = req.body;
+        await axios.post(WEBHOOK_URLS.make, payload);
+        
+        console.log(`[Make.com Webhook Triggered] Payload:`, payload);
+        res.json({ success: true, message: 'Make.com Lead Sync & Enrichment triggered', platform: 'make' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to trigger Make.com workflow', details: err.message });
+    }
+});
+
+/**
+ * POST /api/v1/workflows/trigger-n8n
+ * Run Competitor Intelligence pipeline via Hermes Agent on n8n
+ */
+app.post('/api/v1/workflows/trigger-n8n', async (req, res) => {
+    try {
+        const payload = req.body;
+        await axios.post(WEBHOOK_URLS.n8n, payload);
+        
+        console.log(`[n8n Webhook Triggered] Payload:`, payload);
+        res.json({ success: true, message: 'n8n Competitor Intel pipeline started', platform: 'n8n' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to trigger n8n workflow', details: err.message });
+    }
+});
+
 // Start Server
 app.listen(port, () => {
     console.log(`[Enterprise API] Executive Dashboard on port ${port}`);
