@@ -232,3 +232,6 @@ Every requirement from the AutoDealer Corp AI Engineer (Vibe Coder) job descript
 | OpenRouter (Free Models) | Free |
 | GitHub | Free |
 | **Total** | **$0** |
+
+---
+_Contract Auditor (Phase 1) added — see `docs/contract-auditor-walkthrough.md` for demo script._
