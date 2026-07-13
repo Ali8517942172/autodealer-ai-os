@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoOS Intel | Vehicle Inventory Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#005236",
+                    "surface-bright": "#faf8ff",
+                    "surface": "#faf8ff",
+                    "border-dark": "#334155",
+                    "error": "#ba1a1a",
+                    "inverse-primary": "#c3c0ff",
+                    "secondary-container": "#6cf8bb",
+                    "on-surface-variant": "#464555",
+                    "on-secondary-fixed": "#002113",
+                    "bg-light-subtle": "#F8FAFC",
+                    "tertiary-fixed": "#ffdbcc",
+                    "primary-container": "#4f46e5",
+                    "bg-dark": "#0F172A",
+                    "inverse-on-surface": "#eef0ff",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "background": "#faf8ff",
+                    "surface-container": "#eaedff",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb695",
+                    "bg-dark-subtle": "#1E293B",
+                    "border-light": "#E2E8F0",
+                    "on-tertiary-container": "#ffd2be",
+                    "primary-fixed": "#e2dfff",
+                    "on-error-container": "#93000a",
+                    "surface-container-low": "#f2f3ff",
+                    "surface-tint": "#4d44e3",
+                    "on-background": "#131b2e",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#dae2fd",
+                    "on-secondary-container": "#00714d",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#4edea3",
+                    "tertiary-container": "#a44100",
+                    "on-primary-fixed": "#0f0069",
+                    "inverse-surface": "#283044",
+                    "on-surface": "#131b2e",
+                    "on-tertiary": "#ffffff",
+                    "outline-variant": "#c7c4d8",
+                    "surface-container-high": "#e2e7ff",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-tertiary-fixed": "#351000",
+                    "secondary": "#006c49",
+                    "tertiary": "#7e3000",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "surface-variant": "#dae2fd",
+                    "primary": "#3525cd",
+                    "bg-light": "#FFFFFF",
+                    "on-tertiary-fixed-variant": "#7b2f00",
+                    "on-primary-container": "#dad7ff",
+                    "surface-dim": "#d2d9f4",
+                    "outline": "#777587"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "4px",
+                    "container-max": "1440px",
+                    "margin-desktop": "32px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #faf8ff;
+        font-family: 'Inter', sans-serif;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(226, 232, 240, 0.5);
+      }
+      .custom-shadow {
+        box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.05);
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .chart-bar {
+        transition: height 1s ease-out;
+      }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-bg-light border-r border-border-light flex flex-col h-full py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-headline-lg font-headline-lg text-primary">AutoOS Intel</h1>
+<p class="text-label-md font-label-md text-on-surface-variant opacity-70">Enterprise Tier</p>
+</div>
+<nav class="flex-grow space-y-1">
+<!-- Active: Inventory -->
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-l-2 border-primary bg-primary-fixed/10 cursor-pointer transition-all duration-200">
+<span class="material-symbols-outlined">directions_car</span>
+<span class="text-label-md font-label-md">Inventory</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-label-md hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer">
+<span class="material-symbols-outlined">insert_chart</span>
+<span class="text-label-md font-label-md">Analytics</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-label-md hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span class="text-label-md font-label-md">Aging</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-label-md hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="text-label-md font-label-md">Recommendations</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-label-md hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer">
+<span class="material-symbols-outlined">description</span>
+<span class="text-label-md font-label-md">Reports</span>
+</div>
+</nav>
+<div class="mt-auto space-y-4">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-xl font-label-md text-label-md hover:brightness-110 active:scale-95 transition-all">
+                Upgrade Plan
+            </button>
+<div class="pt-4 border-t border-border-light space-y-1">
+<div class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant font-label-md hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+<span class="text-label-md font-label-md">Support</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant font-label-md hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-label-md font-label-md">Sign Out</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="ml-[260px] flex-grow flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="w-full h-16 bg-bg-light border-b border-border-light flex justify-between items-center px-margin-desktop sticky top-0 z-40">
+<div class="flex items-center gap-6">
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-50">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-border-light rounded-full text-body-md focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Search fleet or VIN..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-bg-light-subtle rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-bg-light-subtle rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-border-light">
+<img class="w-full h-full object-cover" data-alt="A professional high-resolution executive headshot for a corporate software platform user profile. The subject is a confident professional against a neutral, minimalist gray studio background. The lighting is soft and even, reflecting a premium enterprise SaaS aesthetic with bright, crisp details and natural skin tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIZt-VCYvd3yUUiSUlsJ8ztdEei2uThjd0O3cr4QWaMrqKC3KLUeGDFkZFyabW8YTsTybptnTGc8WWq5cZ-aty4q9XoVsGUbTjhKM7P6kq2beVrmljRpLDoWJ0CAGe2JQ_6YJkEOUHuie95gKxzGE-KZLjCzouSzejxogljd7LlAifPjlE3So_6Pvn_KdaGW4e_t1x5RAZNYJstoy5E0ZlHXkTB0qMkUNX7CSCNWTCKFt0lh-zG4rxj4GDE2yHJyZyqpH4mJW8KQY"/>
+</div>
+</div>
+</header>
+<!-- Scrollable Content -->
+<section class="p-margin-desktop space-y-12 max-w-[container-max] mx-auto w-full">
+<!-- Welcome Header -->
+<div class="flex items-end justify-between">
+<div>
+<h2 class="text-headline-xl font-headline-xl text-on-surface">Inventory Intelligence Overview</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant mt-1">Real-time valuation and stock performance metrics for your luxury fleet.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-border-light rounded-xl text-label-md font-label-md text-on-surface hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                        Last 30 Days
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        New Listing
+                    </button>
+</div>
+</div>
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Card 1 -->
+<div class="glass-card p-6 rounded-xl border border-border-light custom-shadow group hover:border-primary/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-fixed/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant opacity-60">Fleet Volume</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface">142 Units</div>
+<div class="text-label-md font-label-md text-on-surface-variant mt-1">Stock capacity: 84%</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card p-6 rounded-xl border border-border-light custom-shadow group hover:border-secondary/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-secondary-container/20 rounded-lg text-secondary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-secondary-fixed-variant opacity-60">Portfolio Value</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface">AED 28,450,000</div>
+<div class="flex items-center gap-1 text-label-md font-label-md text-secondary mt-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                        +4.2% vs last month
+                    </div>
+</div>
+<!-- Card 3 -->
+<div class="glass-card p-6 rounded-xl border border-border-light custom-shadow group hover:border-error/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-error-container/20 rounded-lg text-error">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant opacity-60">Burn Rate</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface">AED 12,500 <span class="text-body-md font-body-md text-on-surface-variant">/day</span></div>
+<div class="text-label-md font-label-md text-on-surface-variant mt-1">Holding costs accrued</div>
+</div>
+<!-- Card 4 -->
+<div class="glass-card p-6 rounded-xl border border-border-light custom-shadow group hover:border-tertiary-container/30 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-tertiary-fixed/20 rounded-lg text-tertiary">
+<span class="material-symbols-outlined">pie_chart</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant opacity-60">Avg. Margin</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface">18.4%</div>
+<div class="text-label-md font-label-md text-on-surface-variant mt-1">Market benchmark: 14.2%</div>
+</div>
+</div>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Aging Distribution Chart (Bento Column) -->
+<div class="col-span-12 lg:col-span-4 glass-card p-8 rounded-xl border border-border-light custom-shadow">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface">Aging Distribution</h3>
+<p class="text-label-md font-label-md text-on-surface-variant">Days in stock analysis</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-40">info</span>
+</div>
+<div class="flex items-end justify-between h-48 gap-4 px-4">
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-secondary-container/30 rounded-t-lg relative group overflow-hidden" style="height: 40%;">
+<div class="absolute inset-0 bg-secondary chart-bar origin-bottom"></div>
+<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">62</div>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">0-30d</span>
+</div>
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-primary-container/30 rounded-t-lg relative group overflow-hidden" style="height: 75%;">
+<div class="absolute inset-0 bg-primary chart-bar origin-bottom"></div>
+<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">48</div>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">31-60d</span>
+</div>
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-tertiary-container/30 rounded-t-lg relative group overflow-hidden" style="height: 30%;">
+<div class="absolute inset-0 bg-orange-500 chart-bar origin-bottom"></div>
+<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">22</div>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">61-90d</span>
+</div>
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-error-container/30 rounded-t-lg relative group overflow-hidden" style="height: 15%;">
+<div class="absolute inset-0 bg-error chart-bar origin-bottom"></div>
+<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">10</div>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">91+ d</span>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-border-light grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-container-low rounded-lg">
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Fastest Mover</div>
+<div class="text-body-md font-headline-md text-on-surface">Porsche 911</div>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg">
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Critical Aging</div>
+<div class="text-body-md font-headline-md text-error">7.2% Total</div>
+</div>
+</div>
+</div>
+<!-- Main Inventory Table -->
+<div class="col-span-12 lg:col-span-8 glass-card rounded-xl border border-border-light custom-shadow overflow-hidden">
+<div class="p-6 border-b border-border-light flex items-center justify-between">
+<h3 class="text-headline-md font-headline-md text-on-surface">Live Inventory Performance</h3>
+<div class="flex gap-2">
+<button class="p-2 text-on-surface-variant border border-border-light rounded-lg hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="p-2 text-on-surface-variant border border-border-light rounded-lg hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">Make / Model</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">Listing Price</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase text-center">Days</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">AI Alert</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-light">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-8 rounded bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A sleek profile shot of a 2024 Porsche Taycan in a modern metallic Frozen Blue. The car is shot in a high-key studio with soft professional lighting, emphasizing the aerodynamic lines and luxury finish of the electric sports car. Minimalist background to fit a corporate dashboard aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYwhl4_hfrS1V5D-ZR3teEr8Uq3bR5MPAuKNDRrDZwlMDqaFcoKJBV_tOoQd-_TF83jHMtI5FywuMQfMANF8eA5JsxaV_m5xBn58WL8pszzuaOFsNpRepr6ZPHnFixpo8h1cfWLktgzGGqEW9DvhjdiRkI3x5s_zYf3DKGkJx5iTWBMwB_Knve3NrBNOnK3tBp4FpquF39jhYdHjx0OBFc9DKNfs1ekrAEIqIKz7Ou-PgalJEKcw0cLpYhpdptYzWxHlRas_1dSP4"/>
+</div>
+<div>
+<div class="text-body-md font-bold text-on-surface">2024 Porsche Taycan</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant opacity-60">VIN: WP0AA2Y1X...</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="text-body-md font-bold text-on-surface">AED 542,000</div>
+<div class="text-label-sm font-label-sm text-secondary">Margin: 12.4%</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="text-body-md font-medium text-on-surface">12</span>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-secondary/10 text-secondary text-label-sm font-label-sm rounded-full border border-secondary/20">SAFE</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 bg-surface-container-low text-primary text-label-md font-label-md rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-white transition-all active:scale-95">
+                                            Manage
+                                        </button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-8 rounded bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A dramatic front-three-quarter view of a 2023 Lamborghini Urus in Giallo Auge yellow. The car is positioned in a minimalist architectural space with sharp, high-contrast lighting that highlights the aggressive facets and luxury design. Clean, high-end automotive photography for a professional SaaS interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqYvLO6ofec7IGRTyniHozEZ0pmAYvhtBr5j8wTNjruBXT0P6z5cpFEJiAJV-V6cE5TXVkkPeXEJtswYqw3c4QE-Z6bndpDLSv5uvaVrT2CvohXbWZ04XCq-4i4ddgSbOTIm2UR_mgPbf0lMYGcsj1onDsClKSFtA4FRiu4xbMv7gFN6QiWV8khOSu4mG2mEdVvCM6rCnULnIUX_8_Q_Ic-qU3_0AB2fCmeDyYHOz3NUHyfZXQcuG4VKXSScJgdP48mb3nNLwvrVk"/>
+</div>
+<div>
+<div class="text-body-md font-bold text-on-surface">2023 Lamborghini Urus</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant opacity-60">VIN: ZHWUA...</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="text-body-md font-bold text-on-surface">AED 1,280,000</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Margin: 9.1%</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="text-body-md font-medium text-on-surface">48</span>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-primary/10 text-primary text-label-sm font-label-sm rounded-full border border-primary/20">MONITOR</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 bg-primary/5 text-primary text-label-md font-label-md rounded-lg opacity-100 hover:bg-primary hover:text-white transition-all active:scale-95">
+                                            Price Review
+                                        </button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-8 rounded bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up detail of a 2022 Mercedes-Benz S-Class in Obsidian Black. The focus is on the headlight and grille, showcasing refined luxury and German engineering. The lighting is sophisticated and moody, with subtle reflections of a modern city at night. Perfectly aligned with a premium corporate dashboard design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmuHuHUh1Z06u7DL1kTZZ3fUw0mnbfOjNfhTOF7VHUZ8OV4ZBxnZUyHv0660Q60zpk8JPme13h-RCNp3v2ntJYwgEZCON1ihLsoa7VhCPoyB_xjsEWyt4io8fUTm7a_0EnGlwK-HAPQ2dT_tDLdh6w-qqLB4zpCAI_ZyfD_JprPuceo0ka4Nk9DU_b4C6c3NCVya43lujWYUlOmveiXx0XU66Qu27CVfHrTsahOnd0debBGoah2sQGSrFlXnR43O2xSvLRBoyLEWM"/>
+</div>
+<div>
+<div class="text-body-md font-bold text-on-surface">2022 Mercedes-Benz S-Class</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant opacity-60">VIN: W1K2...</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="text-body-md font-bold text-on-surface">AED 415,000</div>
+<div class="text-label-sm font-label-sm text-error">Margin: 4.2%</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="text-body-md font-medium text-error font-bold">84</span>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-orange-100 text-orange-600 text-label-sm font-label-sm rounded-full border border-orange-200">WARNING</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 bg-orange-500 text-white text-label-md font-label-md rounded-lg opacity-100 shadow-lg shadow-orange-500/20 hover:brightness-110 transition-all active:scale-95">
+                                            Reduce Price
+                                        </button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-8 rounded bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A wide angle studio photograph of a 2021 Range Rover Autobiography in Carpathian Grey. The SUV is perfectly centered on a white reflective floor in a spacious studio. The lighting is balanced and clean, emphasizing the prestige and scale of the vehicle. High-quality automotive asset for enterprise software." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJWDfv2Oldd-DbpQo9uHYNenz_1zxOdnZKfBtUvJ5xlDDSraKcmlYpd3MSb80fYpxQxroWbBgzzEhEj0KMRFMuKd1cUYRyFjjADS6SRqTEVR2XcBDL13K0c43LFS5DPAUtz3VKO0alDMmLmJvl7vlHuetHBsoi06cjlEDNPWz5TeSGy9pMKP7w-8a17_-0-8ELiX3H3NXW38m37OzW4h8X6DF5mgru2XvEHbcT9hX7LFXvhkIWaQkoIPq0Ynto-jgIgjU76xNxLTQ"/>
+</div>
+<div>
+<div class="text-body-md font-bold text-on-surface">2021 Range Rover Autobiography</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant opacity-60">VIN: SALA...</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="text-body-md font-bold text-on-surface">AED 385,000</div>
+<div class="text-label-sm font-label-sm text-error font-bold">-2.1% Loss</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="text-body-md font-medium text-error font-extrabold">102</span>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-error/10 text-error text-label-sm font-label-sm rounded-full border border-error/20">CRITICAL</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 bg-error text-on-error text-label-md font-label-md rounded-lg opacity-100 hover:brightness-110 transition-all active:scale-95">
+                                            Auction Move
+                                        </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Recommendation Engine -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mt-12 pb-12">
+<div class="bg-primary/5 p-6 rounded-xl border border-primary/10 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-500">
+<span class="material-symbols-outlined text-[64px]">auto_awesome</span>
+</div>
+<div class="relative z-10">
+<h4 class="text-label-md font-bold text-primary uppercase mb-2">AI Suggestion</h4>
+<p class="text-body-md font-medium text-on-surface mb-4">Stock #294: The Porsche Taycan is currently 15% undervalued compared to the regional market trend.</p>
+<button class="text-label-md font-bold text-primary flex items-center gap-1 hover:gap-2 transition-all">
+                            Review Pricing Strategy <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-secondary/5 p-6 rounded-xl border border-secondary/10 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-500">
+<span class="material-symbols-outlined text-[64px]">insights</span>
+</div>
+<div class="relative z-10">
+<h4 class="text-label-md font-bold text-secondary uppercase mb-2">Market Alert</h4>
+<p class="text-body-md font-medium text-on-surface mb-4">Demand for SUVs priced between AED 300k - 500k has increased by 12% in Dubai this week.</p>
+<button class="text-label-md font-bold text-secondary flex items-center gap-1 hover:gap-2 transition-all">
+                            View Hot Inventory <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-on-surface-variant/5 p-6 rounded-xl border border-border-light relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-500">
+<span class="material-symbols-outlined text-[64px]">monitoring</span>
+</div>
+<div class="relative z-10">
+<h4 class="text-label-md font-bold text-on-surface-variant uppercase mb-2">Cost Analysis</h4>
+<p class="text-body-md font-medium text-on-surface mb-4">Transferring 5 units from Warehouse A to Showroom B could reduce holding costs by 8%.</p>
+<button class="text-label-md font-bold text-on-surface-variant flex items-center gap-1 hover:gap-2 transition-all">
+                            Optimize Logistics <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Hover effects for the aging bars
+        document.querySelectorAll('.chart-bar').forEach(bar => {
+            bar.addEventListener('mouseenter', () => {
+                bar.style.filter = 'brightness(1.2)';
+            });
+            bar.addEventListener('mouseleave', () => {
+                bar.style.filter = 'brightness(1)';
+            });
+        });
+
+        // Simulating price reduction click
+        function triggerReduction(vin) {
+            const confirmed = confirm(`Are you sure you want to trigger an AI-assisted price reduction for VIN ${vin}? This will update your listing across all connected portals.`);
+            if(confirmed) {
+                alert("Processing... Marketplace updates in progress.");
+            }
+        }
+    </script>
+</body></html>
+

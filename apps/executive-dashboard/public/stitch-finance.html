@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoFinance OS - Metro Motors P&L</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ba1a1a",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-highest": "#dae2fd",
+                    "on-secondary-container": "#00714d",
+                    "on-surface": "#131b2e",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#4f46e5",
+                    "surface-variant": "#dae2fd",
+                    "border-dark": "#334155",
+                    "surface-bright": "#faf8ff",
+                    "surface-tint": "#4d44e3",
+                    "surface-container-lowest": "#ffffff",
+                    "bg-dark": "#0F172A",
+                    "on-tertiary-container": "#ffd2be",
+                    "on-surface-variant": "#464555",
+                    "primary": "#3525cd",
+                    "on-tertiary-fixed": "#351000",
+                    "surface-dim": "#d2d9f4",
+                    "surface-container": "#eaedff",
+                    "inverse-surface": "#283044",
+                    "secondary-fixed-dim": "#4edea3",
+                    "bg-light": "#FFFFFF",
+                    "outline": "#777587",
+                    "secondary-container": "#6cf8bb",
+                    "tertiary-fixed-dim": "#ffb695",
+                    "primary-fixed": "#e2dfff",
+                    "on-secondary-fixed": "#002113",
+                    "bg-light-subtle": "#F8FAFC",
+                    "surface-container-high": "#e2e7ff",
+                    "on-tertiary-fixed-variant": "#7b2f00",
+                    "border-light": "#E2E8F0",
+                    "outline-variant": "#c7c4d8",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "on-primary-container": "#dad7ff",
+                    "bg-dark-subtle": "#1E293B",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#c3c0ff",
+                    "secondary-fixed": "#6ffbbe",
+                    "surface-container-low": "#f2f3ff",
+                    "on-secondary-fixed-variant": "#005236",
+                    "on-primary-fixed": "#0f0069",
+                    "background": "#faf8ff",
+                    "surface": "#faf8ff",
+                    "on-error-container": "#93000a",
+                    "on-background": "#131b2e",
+                    "tertiary-container": "#a44100",
+                    "tertiary": "#7e3000",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "tertiary-fixed": "#ffdbcc",
+                    "on-primary": "#ffffff",
+                    "secondary": "#006c49",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#eef0ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "4px",
+                    "container-max": "1440px",
+                    "gutter": "24px",
+                    "margin-desktop": "32px"
+            },
+            "fontFamily": {
+                    "headline-xl": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-xl-mobile": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                    "headline-xl-mobile": ["30px", {"lineHeight": "38px", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #faf8ff; }
+        .pnl-row:nth-child(even) { background-color: rgba(242, 243, 255, 0.4); }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(8px); border: 1px solid #E2E8F0; }
+    </style>
+</head>
+<body class="flex min-h-screen text-on-surface">
+<!-- SideNavBar (from JSON component metadata) -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 z-50 bg-bg-light border-r border-border-light flex flex-col py-margin-desktop">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Metro Motors</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Financial Division</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</a>
+<!-- Active Tab: P&L -->
+<a class="flex items-center gap-3 text-primary bg-primary-fixed/20 border-l-2 border-primary px-4 py-3 duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-label-md text-label-md">P&L</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Commissions</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-md text-label-md">Tax/VAT</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-border-light pt-6 space-y-1">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-[260px] relative">
+<!-- TopNavBar (from JSON component metadata) -->
+<header class="w-full h-16 sticky top-0 z-40 bg-bg-light border-b border-border-light flex justify-between items-center px-margin-desktop">
+<div class="flex items-center gap-4">
+<div class="font-headline-lg text-headline-lg font-bold text-primary">AutoFinance OS</div>
+<div class="h-6 w-[1px] bg-border-light mx-2"></div>
+<div class="flex items-center bg-surface-container-low rounded-full px-4 py-1.5 border border-border-light">
+<span class="material-symbols-outlined text-[20px] text-outline" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md font-body-md placeholder:text-outline w-64" placeholder="Global search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative hover:bg-surface-container-low p-2 rounded-full transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="hover:bg-surface-container-low p-2 rounded-full transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-border-light">
+<div class="text-right">
+<p class="font-label-md text-label-md font-bold text-on-surface">Alex Mercer</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">General Manager</p>
+</div>
+<img class="w-10 h-10 rounded-full border border-border-light object-cover" data-alt="Manager Profile Picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8qNx6n0QRJ_Dicc8QvvCn_mK84JFdhKlHxTU4Gbjg-IT-trFPMbxJswVeoVQWZi-s6b9XVt07jdprNcsJl-XtD8eMl_Wvbm8dRFTGpYKp65aMrqyrni1YsnyKP3fiFb5AIfqUT-XZMb7R6jrE_zpe4D3SJmJn6qQi5wWmJlRXzVgHd3vTwSu8t7nwu2vUkYRXmdEuErWIx-XZcG0Qa_CzXLg0icvxMcZ59yuzBc6NL2tpwIzlvRE3InT1TxvMDjrBcgxpQ1BPVPI"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop space-y-margin-desktop">
+<!-- Top Row: KPI Cards -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Total Revenue -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant mb-2">Total Revenue</span>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">AED 2.85M</span>
+<span class="text-secondary font-label-md mb-1 flex items-center">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span> 12%
+                            </span>
+</div>
+</div>
+</div>
+<!-- COGS -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-error/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant mb-2">COGS</span>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface">AED 2.27M</span>
+<span class="text-error font-label-md mb-1 flex items-center">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_down">trending_down</span> 4%
+                            </span>
+</div>
+</div>
+</div>
+<!-- Gross Profit -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group border-l-4 border-l-secondary">
+<div class="absolute top-0 right-0 w-24 h-24 bg-secondary/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant mb-2">Gross Profit</span>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-secondary">AED 584K</span>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-[11px] font-bold mb-1">19.9% MARGIN</span>
+</div>
+</div>
+</div>
+<!-- Net Profit -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group bg-primary text-on-primary">
+<div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-primary-container mb-2">Net Profit</span>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold">AED 326K</span>
+<span class="material-symbols-outlined text-on-primary-container" data-icon="stars" data-weight="fill" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Middle Section: Two Column Grid -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left: P&L Statement -->
+<div class="lg:col-span-8 glass-card rounded-xl overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-border-light flex justify-between items-center bg-surface-container-low/50">
+<h2 class="font-headline-md text-headline-md text-on-surface">P&L Detailed Breakdown</h2>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 text-label-md font-label-md border border-border-light rounded-lg hover:bg-bg-light-subtle">
+                                Jan 2024 - Dec 2024 <span class="material-symbols-outlined text-[16px] align-middle" data-icon="calendar_today">calendar_today</span>
+</button>
+<button class="p-1.5 text-primary hover:bg-primary-fixed/20 rounded-lg">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-border-light">
+<th class="px-6 py-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Line Item</th>
+<th class="px-6 py-3 font-label-sm text-label-sm text-on-surface-variant uppercase text-right">Actuals (AED)</th>
+<th class="px-6 py-3 font-label-sm text-label-sm text-on-surface-variant uppercase text-right">Budget (AED)</th>
+<th class="px-6 py-3 font-label-sm text-label-sm text-on-surface-variant uppercase text-right">Variance</th>
+</tr>
+</thead>
+<tbody class="text-body-md">
+<!-- Revenue Section -->
+<tr class="bg-bg-light-subtle/80">
+<td class="px-6 py-2 font-bold text-primary text-label-md" colspan="4">REVENUE</td>
+</tr>
+<tr class="pnl-row">
+<td class="px-6 py-3">Vehicle Sales</td>
+<td class="px-6 py-3 text-right">2,450,000</td>
+<td class="px-6 py-3 text-right">2,200,000</td>
+<td class="px-6 py-3 text-right text-secondary">+11.4%</td>
+</tr>
+<tr class="pnl-row">
+<td class="px-6 py-3">Accessories & Parts</td>
+<td class="px-6 py-3 text-right">185,000</td>
+<td class="px-6 py-3 text-right">150,000</td>
+<td class="px-6 py-3 text-right text-secondary">+23.3%</td>
+</tr>
+<tr class="pnl-row">
+<td class="px-6 py-3">Warranty Extensions</td>
+<td class="px-6 py-3 text-right">92,000</td>
+<td class="px-6 py-3 text-right">100,000</td>
+<td class="px-6 py-3 text-right text-error">-8.0%</td>
+</tr>
+<tr class="pnl-row border-b border-border-light">
+<td class="px-6 py-3">Finance Commission</td>
+<td class="px-6 py-3 text-right">123,000</td>
+<td class="px-6 py-3 text-right">110,000</td>
+<td class="px-6 py-3 text-right text-secondary">+11.8%</td>
+</tr>
+<!-- Expenses Section -->
+<tr class="bg-bg-light-subtle/80">
+<td class="px-6 py-2 font-bold text-error text-label-md" colspan="4">EXPENSES</td>
+</tr>
+<tr class="pnl-row">
+<td class="px-6 py-3">Salaries & Benefits</td>
+<td class="px-6 py-3 text-right">450,000</td>
+<td class="px-6 py-3 text-right">440,000</td>
+<td class="px-6 py-3 text-right text-error">+2.2%</td>
+</tr>
+<tr class="pnl-row">
+<td class="px-6 py-3">Marketing Spend</td>
+<td class="px-6 py-3 text-right">120,000</td>
+<td class="px-6 py-3 text-right">135,000</td>
+<td class="px-6 py-3 text-right text-secondary">-11.1%</td>
+</tr>
+<tr class="pnl-row">
+<td class="px-6 py-3">VAT (5%)</td>
+<td class="px-6 py-3 text-right">142,500</td>
+<td class="px-6 py-3 text-right">128,000</td>
+<td class="px-6 py-3 text-right text-error">+11.3%</td>
+</tr>
+<tr class="pnl-row">
+<td class="px-6 py-3">Sales Commissions</td>
+<td class="px-6 py-3 text-right">88,000</td>
+<td class="px-6 py-3 text-right">80,000</td>
+<td class="px-6 py-3 text-right text-error">+10.0%</td>
+</tr>
+<!-- Totals -->
+<tr class="bg-surface-container font-bold border-t-2 border-primary/20">
+<td class="px-6 py-4">NET OPERATING INCOME</td>
+<td class="px-6 py-4 text-right text-primary">326,000</td>
+<td class="px-6 py-4 text-right">295,000</td>
+<td class="px-6 py-4 text-right text-secondary">+10.5%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right: Commission Calculator -->
+<div class="lg:col-span-4 space-y-gutter">
+<div class="glass-card rounded-xl p-6 shadow-sm border-t-4 border-t-primary">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="calculate">calculate</span>
+<h2 class="font-headline-md text-headline-md">Deal Calculator</h2>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Model Selection</label>
+<select class="w-full bg-surface-container-low border border-border-light rounded-lg px-4 py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none">
+<option>2024 Mercedes-Benz GLE 450</option>
+<option>2024 BMW X5 xDrive40i</option>
+<option>2023 Audi Q7 55 TFSI</option>
+<option>2024 Porsche Cayenne S</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Selling Price</label>
+<div class="relative">
+<span class="absolute left-3 top-2.5 text-outline text-label-md">AED</span>
+<input class="w-full pl-12 bg-surface-container-low border border-border-light rounded-lg py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Accessories</label>
+<div class="relative">
+<span class="absolute left-3 top-2.5 text-outline text-label-md">AED</span>
+<input class="w-full pl-12 bg-surface-container-low border border-border-light rounded-lg py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="0.00" type="number"/>
+</div>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Finance Amount</label>
+<div class="relative">
+<span class="absolute left-3 top-2.5 text-outline text-label-md">AED</span>
+<input class="w-full pl-12 bg-surface-container-low border border-border-light rounded-lg py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="0.00" type="number"/>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-3.5 rounded-lg font-bold text-body-md shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98] mt-4" id="calcBtn">
+                                Calculate Profitability
+                            </button>
+<!-- Results Area -->
+<div class="mt-6 p-4 rounded-xl bg-surface-container-low border border-border-light border-dashed">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">AI Profit Forecast</p>
+<h3 class="text-headline-md font-bold text-on-surface">AED 42,850.00</h3>
+</div>
+<div class="bg-secondary/10 text-secondary px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span>
+<span class="font-label-sm font-bold">HEALTHY</span>
+</div>
+</div>
+<div class="w-full bg-outline-variant h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[82%]" id="profit-meter"></div>
+</div>
+<p class="text-label-sm text-on-surface-variant mt-2 italic">Dealer margin is 8.2% above fleet average for this model.</p>
+</div>
+</div>
+</div>
+<!-- Small Secondary Card -->
+<div class="glass-card rounded-xl p-5 border border-secondary/20 bg-secondary/5">
+<div class="flex gap-4 items-center">
+<div class="w-12 h-12 rounded-lg bg-secondary text-on-secondary flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div>
+<h4 class="font-label-md font-bold text-secondary">Margin Optimization Tip</h4>
+<p class="text-body-md text-on-surface-variant">Finance commission currently yielding 12% higher on BMW models. Suggest upselling GAP insurance.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- FAB for New Entry (Transactional suppressed but Dashboard appropriate) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-[28px]" data-icon="add">add</span>
+</button>
+</main>
+<script>
+        // Micro-interaction for Calculate button
+        const calcBtn = document.getElementById('calcBtn');
+        const profitMeter = document.getElementById('profit-meter');
+
+        calcBtn.addEventListener('click', () => {
+            calcBtn.innerText = "Calculating...";
+            profitMeter.style.width = '0%';
+            
+            setTimeout(() => {
+                calcBtn.innerText = "Calculate Profitability";
+                profitMeter.style.transition = 'width 1s ease-out';
+                profitMeter.style.width = '82%';
+            }, 800);
+        });
+
+        // Simulating some numbers highlighting on hover
+        document.querySelectorAll('.pnl-row').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.classList.add('transition-all', 'duration-300', 'translate-x-1');
+            });
+            row.addEventListener('mouseleave', () => {
+                row.classList.remove('translate-x-1');
+            });
+        });
+    </script>
+</body></html>
+

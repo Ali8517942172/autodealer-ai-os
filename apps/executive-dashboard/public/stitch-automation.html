@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoCommand - AI Enterprise OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#dae2fd",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#6cf8bb",
+                    "outline": "#777587",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#e2e7ff",
+                    "background": "#faf8ff",
+                    "inverse-primary": "#c3c0ff",
+                    "border-dark": "#334155",
+                    "border-light": "#E2E8F0",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-background": "#131b2e",
+                    "primary-fixed": "#e2dfff",
+                    "on-secondary-fixed-variant": "#005236",
+                    "surface-bright": "#faf8ff",
+                    "tertiary-fixed": "#ffdbcc",
+                    "on-primary-container": "#dad7ff",
+                    "outline-variant": "#c7c4d8",
+                    "on-surface-variant": "#464555",
+                    "bg-light-subtle": "#F8FAFC",
+                    "bg-light": "#FFFFFF",
+                    "tertiary-fixed-dim": "#ffb695",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#351000",
+                    "surface-container-low": "#f2f3ff",
+                    "secondary": "#006c49",
+                    "bg-dark-subtle": "#1E293B",
+                    "tertiary-container": "#a44100",
+                    "surface-dim": "#d2d9f4",
+                    "on-secondary": "#ffffff",
+                    "primary-container": "#4f46e5",
+                    "on-surface": "#131b2e",
+                    "surface-variant": "#dae2fd",
+                    "bg-dark": "#0F172A",
+                    "surface-tint": "#4d44e3",
+                    "secondary-fixed-dim": "#4edea3",
+                    "surface": "#faf8ff",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#7e3000",
+                    "inverse-surface": "#283044",
+                    "on-secondary-container": "#00714d",
+                    "on-secondary-fixed": "#002113",
+                    "primary": "#3525cd",
+                    "on-primary-fixed": "#0f0069",
+                    "on-tertiary-fixed-variant": "#7b2f00",
+                    "surface-container": "#eaedff",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#eef0ff",
+                    "error": "#ba1a1a",
+                    "on-tertiary-container": "#ffd2be",
+                    "primary-fixed-dim": "#c3c0ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "4px",
+                    "gutter": "24px",
+                    "margin-desktop": "32px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-xl-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-xl-mobile": ["30px", {"lineHeight": "38px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #faf8ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-bg-light border-r border-border-light flex flex-col py-8 z-50">
+<div class="px-6 mb-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">AutoCommand</h1>
+<p class="text-label-md font-label-md text-outline">AI Enterprise OS</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1 px-4">
+<!-- Overview - ACTIVE -->
+<a class="flex items-center gap-3 px-4 py-3 text-primary border-l-2 border-primary bg-primary/10 rounded-r-lg transition-all duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-bg-light-subtle rounded-lg transition-all duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-body-md text-body-md">Workflows</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-bg-light-subtle rounded-lg transition-all duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-body-md text-body-md">Logs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-bg-light-subtle rounded-lg transition-all duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="extension">extension</span>
+<span class="font-body-md text-body-md">Integrations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-bg-light-subtle rounded-lg transition-all duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<button class="w-full py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Workflow
+            </button>
+<div class="mt-6 flex items-center gap-3 p-3 bg-surface-container-low rounded-xl">
+<img class="w-10 h-10 rounded-full border-2 border-white shadow-sm" data-alt="A professional headshot of a sleek AI engineer wearing minimalist glasses, clean-shaven, in a bright studio environment with soft blue and white highlights. Modern corporate portrait style, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQxjZFU-izBGrtUJYco8TxOGivYiBuebVDfmADNsu0DxvK7MmXSvmMGDtoeSzIFE_vuLodeV7NXTtcT5iwbgYOf2saK2Gq1IT5K8DwbPDsO6jL_K9L3Ux8hQdWSVq_MERCkuxq9VBclqkwS9AUTfyzn5GOBu6avIoKl9xilxEoJyVXHfwxgAUKbTHFe3oZ19QdkMHxdW0OCjWeuxIQzajDVM_z2Y4-ScMGaOU1kqGfg1Uy4Ln5qChojNPDRz5b6uK5i-SrrBgjc9Q"/>
+<div class="overflow-hidden">
+<p class="font-label-md text-label-md text-on-surface truncate">Alex Rivera</p>
+<p class="text-[10px] text-outline truncate">Chief AI Architect</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-[260px] min-h-screen flex flex-col">
+<!-- TopNavBar (Authority: JSON) -->
+<header class="h-16 bg-bg-light border-b border-border-light sticky top-0 z-40 px-margin-desktop flex justify-between items-center">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-2 text-body-md font-body-md focus:ring-2 focus:ring-primary/20" placeholder="Search operations..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface font-extrabold tracking-tight">AutoOS Automation</span>
+</div>
+</div>
+<div class="flex items-center gap-4 w-1/3 justify-end">
+<button class="p-2 text-outline hover:bg-bg-light-subtle rounded-lg transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+</button>
+<button class="p-2 text-outline hover:bg-bg-light-subtle rounded-lg transition-all duration-200 relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<div class="h-8 w-[1px] bg-border-light mx-2"></div>
+<img class="w-8 h-8 rounded-lg" data-alt="A clean, minimalist circular avatar placeholder showing a high-tech robotic iris with vibrant indigo and emerald accents, reflecting a sophisticated AI persona. Macro lens perspective, studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAj5psMf7Tb9WXitmDH6flwvZe3pfFGc1J8QRmAOk73xUj9oFy89A4QxSeO7BtM6lby71TtprOvZ51RbTGhtq9YZs95rrXsL54ShOm9h4Bu9BkEYYnX70KYDlzlsMEkI8ws2u6x_gm4fROUYo926vk-qvCC5UjNzPW02Y8dBg5HKhO2f_BIAnhn6FVsxWp8jMP5H3YOJMvZ97cn87z9donSJcRLKwMkIoXlFFt6WSU8BBMmLG4g3XtHmGad5eFcHFt2iKmzoK1igzo"/>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-margin-desktop space-y-12">
+<!-- Hero Animation Area -->
+<section class="relative h-48 rounded-3xl overflow-hidden shadow-sm">
+
+<div class="absolute inset-0 bg-gradient-to-r from-bg-light via-transparent to-transparent flex items-center px-12">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-primary mb-2">Systems Nominal.</h2>
+<p class="font-body-lg text-body-lg text-outline max-w-md">All 42 active autonomous agents are reporting healthy heartbeat signals and low latency.</p>
+</div>
+</div>
+</section>
+<!-- Stats Row -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="bg-white p-6 rounded-2xl border border-border-light flex items-center gap-5 transition-transform hover:-translate-y-1">
+<div class="w-14 h-14 bg-surface-container-low rounded-2xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[32px]">event_repeat</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-outline uppercase tracking-wider">Events Today</p>
+<h3 class="text-headline-xl font-headline-xl text-on-surface">47</h3>
+</div>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-border-light flex items-center gap-5 transition-transform hover:-translate-y-1">
+<div class="w-14 h-14 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-outline uppercase tracking-wider">Success Rate</p>
+<h3 class="text-headline-xl font-headline-xl text-secondary">98.2%</h3>
+</div>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-border-light flex items-center gap-5 transition-transform hover:-translate-y-1">
+<div class="w-14 h-14 bg-surface-container-low rounded-2xl flex items-center justify-center text-outline">
+<span class="material-symbols-outlined text-[32px]">speed</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-outline uppercase tracking-wider">Avg Response</p>
+<h3 class="text-headline-xl font-headline-xl text-on-surface">1.2s</h3>
+</div>
+</div>
+</section>
+<!-- Platform Cards -->
+<section>
+<div class="flex justify-between items-end mb-6">
+<h2 class="font-headline-lg text-headline-lg">Active Platform Workflows</h2>
+<button class="text-primary font-label-md text-label-md flex items-center gap-1 hover:underline">
+                        View Connectivity Matrix <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- n8n Card -->
+<div class="bg-white rounded-2xl border border-border-light overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="h-2 w-full bg-primary"></div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/5 rounded-lg">
+<span class="material-symbols-outlined text-primary">hub</span>
+</div>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-sm font-label-sm uppercase">Active</span>
+</div>
+<h4 class="font-headline-md text-headline-md mb-1">n8n</h4>
+<p class="text-body-md text-on-surface-variant mb-6">Lead Routing Workflow</p>
+<div class="flex items-center gap-2 mb-8 text-outline text-label-md">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Executed 2m ago</span>
+</div>
+<button class="w-full py-3 border border-primary text-primary rounded-xl font-label-md text-label-md hover:bg-primary hover:text-white transition-all group-hover:shadow-md">
+                                Run Hermes Intel
+                            </button>
+</div>
+</div>
+<!-- Make.com Card -->
+<div class="bg-white rounded-2xl border border-border-light overflow-hidden group hover:shadow-xl hover:shadow-secondary/5 transition-all">
+<div class="h-2 w-full bg-secondary"></div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-secondary/5 rounded-lg">
+<span class="material-symbols-outlined text-secondary">sync_alt</span>
+</div>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-sm font-label-sm uppercase">Active</span>
+</div>
+<h4 class="font-headline-md text-headline-md mb-1">Make.com</h4>
+<p class="text-body-md text-on-surface-variant mb-6">Sync CRM to Odoo</p>
+<div class="flex items-center gap-2 mb-8 text-outline text-label-md">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Executed 14m ago</span>
+</div>
+<button class="w-full py-3 border border-secondary text-secondary rounded-xl font-label-md text-label-md hover:bg-secondary hover:text-white transition-all group-hover:shadow-md">
+                                Sync CRM→Odoo
+                            </button>
+</div>
+</div>
+<!-- Zapier Card -->
+<div class="bg-white rounded-2xl border border-border-light overflow-hidden group hover:shadow-xl hover:shadow-orange-500/5 transition-all">
+<div class="h-2 w-full bg-[#ff9900]"></div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-orange-50 rounded-lg">
+<span class="material-symbols-outlined text-[#ff9900]">bolt</span>
+</div>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-sm font-label-sm uppercase">Active</span>
+</div>
+<h4 class="font-headline-md text-headline-md mb-1">Zapier</h4>
+<p class="text-body-md text-on-surface-variant mb-6">Stock Escalation Zap</p>
+<div class="flex items-center gap-2 mb-8 text-outline text-label-md">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Executed 1h ago</span>
+</div>
+<button class="w-full py-3 border border-[#ff9900] text-[#ff9900] rounded-xl font-label-md text-label-md hover:bg-[#ff9900] hover:text-white transition-all group-hover:shadow-md">
+                                Escalate Critical Stock
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Live Event Bus -->
+<section>
+<div class="bg-white rounded-3xl border border-border-light overflow-hidden shadow-sm">
+<div class="px-8 py-6 border-b border-border-light flex justify-between items-center bg-surface-container-low/30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">data_array</span>
+<h3 class="font-headline-md text-headline-md">Live Event Bus</h3>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+<span class="text-label-md font-label-md text-outline">Streaming Live</span>
+</div>
+</div>
+<div class="p-4 overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-label-sm font-label-sm text-outline border-b border-border-light">
+<th class="px-4 py-3 uppercase tracking-wider">Timestamp</th>
+<th class="px-4 py-3 uppercase tracking-wider">Event ID</th>
+<th class="px-4 py-3 uppercase tracking-wider">Type</th>
+<th class="px-4 py-3 uppercase tracking-wider">Source</th>
+<th class="px-4 py-3 uppercase tracking-wider">Status</th>
+<th class="px-4 py-3"></th>
+</tr>
+</thead>
+<tbody class="text-body-md font-body-md divide-y divide-border-light/50">
+<tr class="hover:bg-bg-light-subtle transition-colors">
+<td class="px-4 py-4 text-outline">12:04:22</td>
+<td class="px-4 py-4 font-mono font-medium">EVT_88291</td>
+<td class="px-4 py-4">
+<span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-label-sm font-bold">LEAD_CREATED</span>
+</td>
+<td class="px-4 py-4">Salesforce API</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+                                            Processed
+                                        </div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="p-2 text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">open_in_new</span></button>
+</td>
+</tr>
+<tr class="hover:bg-bg-light-subtle transition-colors">
+<td class="px-4 py-4 text-outline">12:03:10</td>
+<td class="px-4 py-4 font-mono font-medium">EVT_88290</td>
+<td class="px-4 py-4">
+<span class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-md text-label-sm font-bold">AI_SCORED</span>
+</td>
+<td class="px-4 py-4">LLM-Router-v4</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+                                            Processed
+                                        </div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="p-2 text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">open_in_new</span></button>
+</td>
+</tr>
+<tr class="hover:bg-bg-light-subtle transition-colors">
+<td class="px-4 py-4 text-outline">12:01:45</td>
+<td class="px-4 py-4 font-mono font-medium">EVT_88289</td>
+<td class="px-4 py-4">
+<span class="px-3 py-1 bg-red-50 text-red-700 rounded-md text-label-sm font-bold">COMPETITOR_ALERT</span>
+</td>
+<td class="px-4 py-4">WebScraper_Bot</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-orange-600">
+<span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-ping"></span>
+                                            Escalated
+                                        </div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="p-2 text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">open_in_new</span></button>
+</td>
+</tr>
+<tr class="hover:bg-bg-light-subtle transition-colors">
+<td class="px-4 py-4 text-outline">11:58:12</td>
+<td class="px-4 py-4 font-mono font-medium">EVT_88288</td>
+<td class="px-4 py-4">
+<span class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-label-sm font-bold">DEAL_CLOSED</span>
+</td>
+<td class="px-4 py-4">HubSpot-Webhooks</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+                                            Archived
+                                        </div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="p-2 text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">open_in_new</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 text-center border-t border-border-light">
+<button class="text-outline text-label-md font-label-md hover:text-primary transition-colors">Show 240+ More Logs</button>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="mt-auto p-margin-desktop border-t border-border-light flex justify-between items-center text-outline text-label-sm">
+<p>© 2024 AutoOS Automation Engineering. System Version 4.2.1-stable.</p>
+<div class="flex gap-4">
+<a class="hover:text-primary" href="#">Documentation</a>
+<a class="hover:text-primary" href="#">API Reference</a>
+<a class="hover:text-primary" href="#">Status</a>
+</div>
+</footer>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple hover effect for dashboard metrics
+        document.querySelectorAll('.bg-white').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.borderColor = 'rgba(53, 37, 205, 0.2)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.borderColor = 'rgba(226, 232, 240, 0.8)';
+            });
+        });
+
+        // Search Bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+        });
+    </script>
+</body></html>
+

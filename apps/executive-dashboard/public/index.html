@@ -48,6 +48,9 @@
                 <a class="nav-item" data-page="automation" onclick="showPage('automation')">
                     <i class="ph ph-lightning nav-icon"></i> <span class="nav-label">Automations</span>
                 </a>
+                <a class="nav-item" data-page="stitch" onclick="showPage('stitch')" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top:8px; padding-top:12px;">
+                    <i class="ph ph-palette nav-icon" style="color:#7c3aed"></i> <span class="nav-label" style="color:#a78bfa;">Stitch Designs</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
@@ -218,7 +221,18 @@
 
                 <!-- Inventory Page -->
                 <section id="page-inventory" class="page fade-in">
-                    <div class="kpi-row">
+                    <!-- Stitch Design Preview Toggle -->
+                    <div class="stitch-toggle-bar">
+                        <button class="stitch-toggle-btn active" id="inventory-live-btn" onclick="toggleStitchView('inventory','live')">
+                            <i class="ph ph-database"></i> Live Data View
+                        </button>
+                        <button class="stitch-toggle-btn" id="inventory-stitch-btn" onclick="toggleStitchView('inventory','stitch')">
+                            <i class="ph ph-palette"></i> Google Stitch Design
+                        </button>
+                    </div>
+                    <!-- Live Data View -->
+                    <div id="inventory-live-view">
+                        <div class="kpi-row">
                         <div class="kpi-card glass-panel"><div class="kpi-label">Total Vehicles</div><div class="kpi-value" id="invTotal">—</div></div>
                         <div class="kpi-card glass-panel"><div class="kpi-label">Total Value</div><div class="kpi-value" id="invValue">—</div></div>
                         <div class="kpi-card glass-panel warning-card"><div class="kpi-label">Holding Costs</div><div class="kpi-value" id="invHolding">—</div></div>
@@ -239,18 +253,35 @@
                         <div class="card-header">
                             <h3 class="card-title"><i class="ph-fill ph-chart-bar"></i> Aging Report</h3>
                         </div>
+                        </div>
                         <div id="agingBars" class="aging-bars"></div>
+                    </div>
+                    </div>
+                    <!-- Stitch Design Iframe -->
+                    <div id="inventory-stitch-view" style="display:none;">
+                        <iframe src="stitch-inventory.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Inventory Intelligence - Google Stitch Design"></iframe>
                     </div>
                 </section>
 
                 <!-- Marketing Page -->
                 <section id="page-marketing" class="page fade-in">
-                    <div class="kpi-row">
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Active Campaigns</div><div class="kpi-value">5</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Total Spend MTD</div><div class="kpi-value">AED 20.5K</div></div>
-                        <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Best Channel</div><div class="kpi-value">WhatsApp</div></div>
-                        <div class="kpi-card glass-panel"><div class="kpi-label">Cost Per Lead</div><div class="kpi-value">AED 394</div></div>
+                    <!-- Stitch Design Preview Toggle -->
+                    <div class="stitch-toggle-bar">
+                        <button class="stitch-toggle-btn active" id="mkt-live-btn" onclick="toggleStitchView('marketing','live')">
+                            <i class="ph ph-database"></i> Live Data View
+                        </button>
+                        <button class="stitch-toggle-btn" id="mkt-stitch-btn" onclick="toggleStitchView('marketing','stitch')">
+                            <i class="ph ph-palette"></i> Google Stitch Design
+                        </button>
                     </div>
+                    <!-- Live Data View -->
+                    <div id="marketing-live-view">
+                        <div class="kpi-row">
+                            <div class="kpi-card glass-panel"><div class="kpi-label">Active Campaigns</div><div class="kpi-value">5</div></div>
+                            <div class="kpi-card glass-panel"><div class="kpi-label">Total Spend MTD</div><div class="kpi-value">AED 20.5K</div></div>
+                            <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Best Channel</div><div class="kpi-value">WhatsApp</div></div>
+                            <div class="kpi-card glass-panel"><div class="kpi-label">Cost Per Lead</div><div class="kpi-value">AED 394</div></div>
+                        </div>
                     <div class="grid-2">
                         <div class="card glass-panel">
                             <div class="card-header">
@@ -270,12 +301,28 @@
                             </div>
                             <div id="competitorList"></div>
                         </div>
+                        </div>
+                    </div>
+                    <!-- Stitch Design Iframe -->
+                    <div id="marketing-stitch-view" style="display:none;">
+                        <iframe src="stitch-marketing.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Marketing Intelligence - Google Stitch Design"></iframe>
                     </div>
                 </section>
 
                 <!-- Finance Page -->
                 <section id="page-finance" class="page fade-in">
-                    <div class="kpi-row">
+                    <!-- Stitch Design Preview Toggle -->
+                    <div class="stitch-toggle-bar">
+                        <button class="stitch-toggle-btn active" id="finance-live-btn" onclick="toggleStitchView('finance','live')">
+                            <i class="ph ph-database"></i> Live Data View
+                        </button>
+                        <button class="stitch-toggle-btn" id="finance-stitch-btn" onclick="toggleStitchView('finance','stitch')">
+                            <i class="ph ph-palette"></i> Google Stitch Design
+                        </button>
+                    </div>
+                    <!-- Live Data View -->
+                    <div id="finance-live-view">
+                        <div class="kpi-row">
                         <div class="kpi-card glass-panel"><div class="kpi-label">Revenue</div><div class="kpi-value" id="finRevenue">—</div></div>
                         <div class="kpi-card glass-panel"><div class="kpi-label">COGS</div><div class="kpi-value" id="finCOGS">—</div></div>
                         <div class="kpi-card glass-panel accent-card"><div class="kpi-label">Gross Profit</div><div class="kpi-value" id="finGross">—</div></div>
@@ -298,7 +345,13 @@
                             <input type="number" id="calcFinance" placeholder="Finance Approved (AED)" class="input" value="340000">
                             <button onclick="calcCommission()" class="btn-primary"><i class="ph ph-calculator"></i> Calculate</button>
                         </div>
+                        </div>
                         <div id="commissionResult" class="commission-result"></div>
+                    </div>
+                    </div>
+                    <!-- Stitch Design Iframe -->
+                    <div id="finance-stitch-view" style="display:none;">
+                        <iframe src="stitch-finance.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Finance & P&L - Google Stitch Design"></iframe>
                     </div>
                 </section>
 
@@ -330,7 +383,18 @@
 
                 <!-- Automations Page -->
                 <section id="page-automation" class="page fade-in">
-                    <div class="kpi-row">
+                    <!-- Stitch Design Preview Toggle -->
+                    <div class="stitch-toggle-bar">
+                        <button class="stitch-toggle-btn active" id="automation-live-btn" onclick="toggleStitchView('automation','live')">
+                            <i class="ph ph-database"></i> Live Data View
+                        </button>
+                        <button class="stitch-toggle-btn" id="automation-stitch-btn" onclick="toggleStitchView('automation','stitch')">
+                            <i class="ph ph-palette"></i> Google Stitch Design
+                        </button>
+                    </div>
+                    <!-- Live Data View -->
+                    <div id="automation-live-view">
+                        <div class="kpi-row">
                         <div class="kpi-card glass-panel"><div class="kpi-label">n8n Workflows</div><div class="kpi-value">2</div></div>
                         <div class="kpi-card glass-panel"><div class="kpi-label">Make Scenarios</div><div class="kpi-value">1</div></div>
                         <div class="kpi-card glass-panel"><div class="kpi-label">Zapier Zaps</div><div class="kpi-value">1</div></div>
@@ -373,6 +437,47 @@
                             </div>
                             <div id="eventLog" class="event-log"></div>
                         </div>
+                    </div>
+                    </div>
+                    <!-- Stitch Design Iframe -->
+                    <div id="automation-stitch-view" style="display:none;">
+                        <iframe src="stitch-automation.html" style="width:100%;height:80vh;border:none;border-radius:16px;" title="Automation Command Center - Google Stitch Design"></iframe>
+                    </div>
+                </section>
+
+                <!-- Stitch Designs Showcase Page -->
+                <section id="page-stitch" class="page fade-in">
+                    <div style="margin-bottom:24px;">
+                        <h2 style="font-size:24px;font-weight:700;color:white;margin-bottom:8px;">
+                            <i class="ph-fill ph-palette" style="color:#a78bfa;"></i> Google Stitch UI Designs
+                        </h2>
+                        <p style="color:var(--text-secondary);font-size:14px;">Enterprise-grade UI screens designed using Google Stitch MCP — Indigo & Emerald design system</p>
+                    </div>
+
+                    <!-- Tab Selector -->
+                    <div class="stitch-tab-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="stitch-tab active" onclick="switchStitchTab('crm')" id="tab-crm">
+                            <i class="ph ph-target"></i> AI CRM Pipeline
+                        </button>
+                        <button class="stitch-tab" onclick="switchStitchTab('inventory')" id="tab-inventory">
+                            <i class="ph ph-car"></i> Inventory Intelligence
+                        </button>
+                        <button class="stitch-tab" onclick="switchStitchTab('marketing')" id="tab-marketing">
+                            <i class="ph ph-chart-line-up"></i> Marketing Intelligence
+                        </button>
+                        <button class="stitch-tab" onclick="switchStitchTab('finance')" id="tab-finance">
+                            <i class="ph ph-currency-dollar"></i> Finance & P&L
+                        </button>
+                        <button class="stitch-tab" onclick="switchStitchTab('rag')" id="tab-rag">
+                            <i class="ph ph-robot"></i> Knowledge RAG
+                        </button>
+                        <button class="stitch-tab" onclick="switchStitchTab('automation')" id="tab-automation">
+                            <i class="ph ph-lightning"></i> Automations
+                        </button>
+                    </div>
+
+                    <div id="stitch-frame-container" style="background:rgba(255,255,255,0.03);border-radius:16px;border:1px solid rgba(124,58,237,0.3);overflow:hidden;">
+                        <iframe id="stitch-main-frame" src="stitch-crm.html" style="width:100%;height:82vh;border:none;" title="Google Stitch Design Preview"></iframe>
                     </div>
                 </section>
             </div>

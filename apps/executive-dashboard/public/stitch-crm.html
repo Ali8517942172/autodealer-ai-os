@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Auto CRM | Lead Management Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-high": "#e2e7ff",
+                        "on-secondary-container": "#00714d",
+                        "surface-container-low": "#f2f3ff",
+                        "outline": "#777587",
+                        "surface-variant": "#dae2fd",
+                        "bg-dark-subtle": "#1E293B",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "surface-dim": "#d2d9f4",
+                        "secondary-fixed-dim": "#4edea3",
+                        "bg-light": "#FFFFFF",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary": "#ffffff",
+                        "bg-dark": "#0F172A",
+                        "surface-container-highest": "#dae2fd",
+                        "outline-variant": "#c7c4d8",
+                        "inverse-on-surface": "#eef0ff",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "tertiary-container": "#a44100",
+                        "tertiary": "#7e3000",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "bg-light-subtle": "#F8FAFC",
+                        "on-surface": "#131b2e",
+                        "on-tertiary-fixed": "#351000",
+                        "surface-tint": "#4d44e3",
+                        "surface-bright": "#faf8ff",
+                        "primary-container": "#4f46e5",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#005236",
+                        "inverse-primary": "#c3c0ff",
+                        "inverse-surface": "#283044",
+                        "background": "#faf8ff",
+                        "on-error-container": "#93000a",
+                        "surface": "#faf8ff",
+                        "border-dark": "#334155",
+                        "primary": "#3525cd",
+                        "secondary": "#006c49",
+                        "on-primary-container": "#dad7ff",
+                        "border-light": "#E2E8F0",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-surface-variant": "#464555",
+                        "on-tertiary-container": "#ffd2be",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#eaedff",
+                        "secondary-container": "#6cf8bb",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-fixed": "#0f0069",
+                        "on-background": "#131b2e",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 20px;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .kanban-column { min-width: 280px; width: 100%; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface overflow-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full h-16 flex justify-between items-center px-margin-desktop bg-surface border-b border-outline-variant z-50">
+<div class="flex items-center gap-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Kinetic Auto CRM</h1>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-primary font-bold border-b-2 border-primary py-5" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors py-5" href="#">Inventory</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors py-5" href="#">Leads</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-body-md focus:ring-2 focus:ring-primary-container w-64" placeholder="Search leads..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant cursor-pointer p-2 hover:bg-surface-container-low rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant cursor-pointer p-2 hover:bg-surface-container-low rounded-full transition-colors">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist portrait of a modern professional, soft natural lighting, high-end corporate photography style with a blurred office background, neutral color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCeDDqeXBur2n29VORkFjth0drd-HeDbi-9zpFfk4BZT9dglu2JMuqMo9I-6uy5clS2sj7kzapmHq3vikrm1xoPjtEiXZweFXU1nPV3KHasdIATpvpdyK-rVS2QtZnLtmrBEWmrvJeyA-HqDYkBSud7p2LeiXsLvOiLjbOrFZMW7HGEYXIHkYrIiq_7qFDaGXOkG7fv4aI5WFN6mIg_9lpPgKNQuMXjgLohVg2A-P6U9thFFZdkW7uVzMebObI4m7mxr4D8gBP0_c"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface border-r border-outline-variant py-6 flex flex-col z-40 mt-16">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 bg-primary-container flex items-center justify-center rounded-lg text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary leading-tight">Kinetic</h2>
+<p class="text-label-sm text-outline">AI Sales Assistant</p>
+</div>
+</div>
+<button class="w-full mt-4 bg-primary text-on-primary py-2.5 rounded-lg font-label-md hover:bg-primary-container transition-all shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span> New Lead
+            </button>
+</div>
+<nav class="flex-1">
+<div class="space-y-1 px-2">
+<a class="text-primary border-l-2 border-primary bg-primary-fixed/10 flex items-center gap-3 px-4 py-3 font-label-md transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 font-label-md hover:text-primary hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">directions_car</span> Inventory
+                </a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 font-label-md hover:text-primary hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">person_search</span> Leads
+                </a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 font-label-md hover:text-primary hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">smart_toy</span> Agents
+                </a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 font-label-md hover:text-primary hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">assessment</span> Reports
+                </a>
+</div>
+</nav>
+<div class="mt-auto px-2 space-y-1">
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 font-label-md hover:text-primary hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">help</span> Support
+            </a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 font-label-md hover:text-primary hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">logout</span> Sign Out
+            </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-[260px] mt-16 p-8 h-[calc(100vh-64px)] flex gap-8">
+<!-- Kanban Board -->
+<div class="flex-1 flex gap-4 overflow-x-auto pb-4 items-start">
+<!-- Column: New -->
+<div class="kanban-column flex flex-col h-full">
+<div class="flex items-center justify-between mb-4 px-2">
+<h3 class="font-label-md text-label-md uppercase tracking-wider text-outline">New <span class="ml-2 text-on-surface-variant/50">4</span></h3>
+<button class="material-symbols-outlined text-outline">more_horiz</button>
+</div>
+<div class="space-y-3 overflow-y-auto pr-1">
+<!-- Card 1 -->
+<div class="bg-surface border border-outline-variant p-4 rounded-lg hover:border-primary cursor-pointer transition-all active:scale-[0.98]" onclick="toggleSidebar(true)">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded">94 AI Score</span>
+<span class="text-label-sm bg-secondary-container/20 text-secondary px-2 py-0.5 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span> Hot
+                            </span>
+</div>
+<h4 class="font-headline-md text-[15px] text-on-surface mb-0.5">Julian Casablancas</h4>
+<p class="text-body-md text-on-surface-variant mb-4">2024 Porsche Taycan</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-surface bg-slate-200 flex items-center justify-center text-[10px] font-bold">JC</div>
+</div>
+<div class="flex gap-1">
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">mail</span></button>
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">call</span></button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface border border-outline-variant p-4 rounded-lg hover:border-primary cursor-pointer transition-all active:scale-[0.98]">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded">82 AI Score</span>
+<span class="text-label-sm bg-slate-100 text-outline px-2 py-0.5 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-outline rounded-full"></span> Warm
+                            </span>
+</div>
+<h4 class="font-headline-md text-[15px] text-on-surface mb-0.5">Mia Rodriquez</h4>
+<p class="text-body-md text-on-surface-variant mb-4">2023 Audi RS e-tron GT</p>
+<div class="flex items-center justify-between">
+<div class="text-label-sm text-outline">Updated 2h ago</div>
+<div class="flex gap-1">
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">mail</span></button>
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">call</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Contacted -->
+<div class="kanban-column flex flex-col h-full">
+<div class="flex items-center justify-between mb-4 px-2">
+<h3 class="font-label-md text-label-md uppercase tracking-wider text-outline">Contacted <span class="ml-2 text-on-surface-variant/50">2</span></h3>
+<button class="material-symbols-outlined text-outline">more_horiz</button>
+</div>
+<div class="space-y-3">
+<div class="bg-surface border border-outline-variant p-4 rounded-lg hover:border-primary cursor-pointer transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded">76 AI Score</span>
+<span class="text-label-sm bg-secondary-container/20 text-secondary px-2 py-0.5 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span> Hot
+                            </span>
+</div>
+<h4 class="font-headline-md text-[15px] text-on-surface mb-0.5">Alex Chen</h4>
+<p class="text-body-md text-on-surface-variant mb-4">2024 Mercedes-Benz EQS</p>
+<div class="flex items-center justify-between">
+<span class="text-label-sm text-primary font-semibold">Replied via SMS</span>
+<div class="flex gap-1">
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">mail</span></button>
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">call</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Negotiation -->
+<div class="kanban-column flex flex-col h-full">
+<div class="flex items-center justify-between mb-4 px-2">
+<h3 class="font-label-md text-label-md uppercase tracking-wider text-outline">Negotiation <span class="ml-2 text-on-surface-variant/50">1</span></h3>
+<button class="material-symbols-outlined text-outline">more_horiz</button>
+</div>
+<div class="space-y-3">
+<div class="bg-surface border border-outline-variant p-4 rounded-lg hover:border-primary cursor-pointer transition-all border-l-4 border-l-primary shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm bg-primary text-on-primary px-2 py-0.5 rounded">98 AI Score</span>
+<span class="text-label-sm bg-secondary-container/20 text-secondary px-2 py-0.5 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span> High Intent
+                            </span>
+</div>
+<h4 class="font-headline-md text-[15px] text-on-surface mb-0.5">Sarah J. Parker</h4>
+<p class="text-body-md text-on-surface-variant mb-4">2024 BMW i7 M70</p>
+<div class="flex items-center justify-between">
+<span class="text-label-sm text-secondary font-bold">Trade-in Appraisal Sent</span>
+<div class="flex gap-1">
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">mail</span></button>
+<button class="p-1.5 rounded-md hover:bg-surface-container-low text-outline"><span class="material-symbols-outlined text-[18px]">call</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Won -->
+<div class="kanban-column flex flex-col h-full">
+<div class="flex items-center justify-between mb-4 px-2">
+<h3 class="font-label-md text-label-md uppercase tracking-wider text-outline">Won <span class="ml-2 text-on-surface-variant/50">8</span></h3>
+<button class="material-symbols-outlined text-outline">more_horiz</button>
+</div>
+<div class="space-y-3 opacity-80 grayscale">
+<div class="bg-surface-container border border-outline-variant p-4 rounded-lg">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm bg-secondary/10 text-secondary px-2 py-0.5 rounded">Closed</span>
+</div>
+<h4 class="font-headline-md text-[15px] text-on-surface mb-0.5">David Miller</h4>
+<p class="text-body-md text-on-surface-variant">2024 Rivian R1S</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Collapsible Lead Detail Sidebar -->
+<div class="w-[360px] hidden flex-col bg-surface border border-outline-variant rounded-xl overflow-hidden transition-all duration-300 transform translate-x-0" id="detailSidebar">
+<!-- Header -->
+<div class="p-6 border-b border-outline-variant flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md">Lead Details</h3>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-low rounded-full" onclick="toggleSidebar(false)">close</button>
+</div>
+<!-- Content -->
+<div class="p-6 flex-1 overflow-y-auto space-y-8">
+<!-- Profile Summary -->
+<div class="text-center">
+<div class="w-20 h-20 bg-primary-fixed rounded-full mx-auto mb-4 flex items-center justify-center text-primary font-bold text-headline-lg">JC</div>
+<h4 class="font-headline-lg text-headline-lg">Julian Casablancas</h4>
+<p class="text-body-md text-on-surface-variant">julian.c@gmail.com</p>
+<div class="mt-4 flex justify-center gap-3">
+<span class="text-label-sm bg-primary/10 text-primary px-3 py-1 rounded-full">94 Lead Score</span>
+<span class="text-label-sm bg-secondary-container/20 text-secondary px-3 py-1 rounded-full">Hot Sentiment</span>
+</div>
+</div>
+<!-- AI Next Best Action -->
+<div class="p-5 border-2 border-primary rounded-xl bg-primary-fixed/5">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h5 class="font-label-md text-label-md uppercase text-primary">AI Next Best Action</h5>
+</div>
+<p class="text-body-md text-on-surface mb-4">Julian viewed the <strong>Taycan 4S</strong> inventory 3 times today. His trade-in value is estimated at <strong>$45,000</strong>. Trigger the trade-in loyalty email now.</p>
+<button class="w-full bg-primary text-on-primary py-2.5 rounded-lg font-label-md hover:bg-primary-container transition-all">Trigger Auto-Email</button>
+</div>
+<!-- Sentiment Summary -->
+<div>
+<h5 class="font-label-md text-label-md uppercase text-outline mb-4">Sentiment Analysis</h5>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-body-md">Purchase Urgency</span>
+<div class="w-32 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[85%]"></div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-body-md">Brand Affinity</span>
+<div class="w-32 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[92%]"></div>
+</div>
+</div>
+<p class="text-label-sm text-on-surface-variant italic mt-2">"Customer expressed frustration about charging infrastructure in recent chat, but remains highly interested in the Taycan's performance."</p>
+</div>
+</div>
+<!-- Details List -->
+<div class="pt-4 border-t border-outline-variant space-y-4">
+<div class="flex justify-between">
+<span class="text-body-md text-outline">Interested In</span>
+<span class="text-body-md font-semibold">2024 Porsche Taycan</span>
+</div>
+<div class="flex justify-between">
+<span class="text-body-md text-outline">Last Active</span>
+<span class="text-body-md font-semibold">12 minutes ago</span>
+</div>
+<div class="flex justify-between">
+<span class="text-body-md text-outline">Lead Source</span>
+<span class="text-body-md font-semibold">Porsche Configurator</span>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-6 border-t border-outline-variant bg-surface-container-low grid grid-cols-2 gap-3">
+<button class="border border-outline px-4 py-2 rounded-lg font-label-md hover:bg-surface-container transition-all">Schedule Call</button>
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded-lg font-label-md hover:opacity-90 transition-all">Mark as Won</button>
+</div>
+</div>
+</main>
+<script>
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('detailSidebar');
+            if (show) {
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('flex');
+            } else {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex');
+            }
+        }
+
+        // Add some micro-interactions
+        document.querySelectorAll('.bg-surface.border').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body></html>
+
