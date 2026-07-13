@@ -2,17 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "apps/ai-crm/frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "src": "apps/executive-dashboard/public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/apps/executive-dashboard/public/$1"
     }
   ],
   "env": {
