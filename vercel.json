@@ -1,19 +1,10 @@
 {
   "version": 2,
+  "name": "nexus-os",
   "builds": [
-    {
-      "src": "apps/executive-dashboard/public/**",
-      "use": "@vercel/static"
-    }
+    { "src": "apps/executive-dashboard/public/**", "use": "@vercel/static" }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/apps/executive-dashboard/public/$1"
-    }
-  ],
-  "env": {
-    "VITE_API_URL": "https://autodealer-crm-api.onrender.com",
-    "VITE_AI_GATEWAY_URL": "https://autodealer-gateway.onrender.com"
-  }
+    { "src": "/(.*)", "dest": "/apps/executive-dashboard/public/$1" }
+  ]
 }

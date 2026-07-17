@@ -1,40 +1,122 @@
-# AutoDealer Contract Error Auditor — Walkthrough
+# KYC/AML Document Auditor — Walkthrough
+> Alba Cars · AutoDealer AI OS · Last Updated: 2026-07-17
 
-## What this solves
+## Overview
 
-AutoDealer AI OS customers have complained (Reddit, r/dubai) that registration fees on invoices don't match the official RTA receipt — e.g. AED 1,899 charged vs AED 570 actual RTA fee, with the difference billed as unexplained "handling fees."
+The Contract Auditor is a public-facing AI tool that lets any car buyer upload a contract or RTA invoice and instantly detect hidden fees or KYC document anomalies. It uses Google Gemini Flash (via OpenRouter) for vision analysis.
 
-This tool lets a customer upload their contract/invoice **before paying**, and instantly see if the registration fee matches the official rate.
+**Live URL:** https://alba-contract-auditor.vercel.app
+**n8n Webhook:** `https://desktop-l3an0ma.tail2141f7.ts.net/webhook/audit-kyc`
+**n8n Workflow:** `wf_101` — KYC/AML Document Auditor
 
-## How it works
+---
 
-1. **Customer uploads** a photo or PDF of their contract on the web page (`apps/contract-auditor/index.html`)
-2. The file is sent to an **n8n webhook** (`/webhook/contract-audit`)
-3. n8n encodes the file and sends it to **OpenRouter's free vision model** (`google/gemma-4-31b-it:free`) with a prompt to extract every line item and the registration fee
-4. A Code node compares the extracted registration fee against the **official UAE RTA fee (AED 570)**
-5. The result — itemized fees, and a clear flag if there's a discrepancy — is returned to the page instantly
+## Architecture
 
-## Demo script (for pitching to AutoDealer AI OS)
+```
+User uploads contract (JPG/PNG/PDF)
+        ↓
+Vercel Frontend (alba-contract-auditor.vercel.app)
+        ↓ POST /webhook/audit-kyc
+Tailscale Funnel → n8n Docker (localhost:5678)
+        ↓
+[Receive Document] Webhook node
+        ↓
+[OpenRouter Vision] HTTP Request → openrouter.ai/api/v1/chat/completions
+  Model: google/gemini-flash-1.5
+        ↓
+[Parse & Return Result] Code node
+        ↓
+[Respond to Webhook] → JSON back to browser
+        ↓
+Frontend renders: VERIFIED / DISCREPANCY stamp, line items, fee comparison
+```
 
-1. Open the web page
-2. Upload a sample contract image with an inflated registration fee (e.g. AED 1,899)
-3. Show the result: "⚠️ AED 1,329 above the official RTA registration fee was found in unexplained charges"
-4. Pitch line: *"This isn't an accusation — it's a trust tool. Customers who see transparent pricing upfront convert faster and complain less. This catches pricing errors before they become bad reviews."*
+---
 
-## Current setup (demo/free stage)
+## n8n Workflow (wf_101) Node Details
 
-- **n8n**: running locally via Docker, exposed through a Tailscale Funnel URL — free, but requires the host laptop to stay on
-- **Vision AI**: OpenRouter free-tier model — no cost, but rate-limited and the specific free model can change
-- **Frontend**: plain HTML/JS, deployable free on Vercel
+| Node | Type | Purpose |
+|------|------|---------|
+| Receive Document | Webhook POST | Entry at `/audit-kyc` |
+| OpenRouter Vision (KYC Analysis) | HTTP Request v4.1 | Gemini Flash vision call |
+| Parse & Return Result | Code | Parse AI JSON response |
+| Respond to Webhook | Respond to Webhook | Return result to browser |
 
-## Known limitations (be upfront about these before going to production)
+---
 
-- Free OpenRouter models can be rate-limited or swapped out — for a paying client, budget ~$5–10/month for a paid vision model as a reliable fallback
-- n8n only stays reachable while the host machine, Docker, and the Tailscale tunnel are all running — for production, migrate to a permanently-hosted n8n (Oracle Cloud Free Tier VM, or paid n8n Cloud)
-- The official RTA fee (AED 570) is currently hardcoded — confirm this is still the correct government rate before using with real customers, and consider making it configurable per emirate/vehicle type
-- The AI extraction can misread poor-quality photos — always show the raw extracted line items alongside the verdict so the customer can sanity-check it themselves
+## Expected AI Response Shape
 
-## Files in this solution
+```json
+{
+  "document_type": "Emirates ID",
+  "name": "Ahmed Al-Rashid",
+  "id_number": "784-1985-1234567-1",
+  "expiry_date": "2027-03-15",
+  "nationality": "UAE",
+  "is_valid": true,
+  "risk_level": "LOW",
+  "flags": [],
+  "verification_notes": "Document appears authentic."
+}
+```
 
-- `apps/contract-auditor/index.html` — customer-facing upload page
-- n8n workflow: "AutoDealer Contract Error Auditor - Transparency Agent" (workflow ID `25DDrhmAmxMp7JiD`)
+For contract audits, the frontend also renders:
+```json
+{
+  "hidden_fee_aed": 0,
+  "registration_fee_charged_aed": 420,
+  "official_rta_fee_aed": 420,
+  "line_items": [{ "label": "RTA Registration", "amount_aed": 420 }],
+  "alert": "All fees match official RTA rates."
+}
+```
+
+---
+
+## How to Test
+
+**Webhook test (curl):**
+```bash
+curl -X POST https://desktop-l3an0ma.tail2141f7.ts.net/webhook/audit-kyc \
+  -H "Content-Type: application/json" \
+  -d '{"document_url": "https://example.com/contract.jpg"}'
+```
+
+**Frontend test:**
+1. Open https://alba-contract-auditor.vercel.app
+2. Drag & drop contract image or PDF
+3. Click Run Audit — results in 3-5 seconds
+
+**n8n manual test:**
+1. http://localhost:5678 → login → wf_101 → Execute Workflow
+
+---
+
+## Deployment
+
+**Frontend:** Vercel static deploy from `apps/contract-auditor/index.html`
+**Backend:** n8n in Docker + Tailscale Funnel (permanent HTTPS, no port forwarding)
+
+To restart backend: `docker compose up -d` from `alba-ai-platform/`
+
+---
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| "Could not reach audit service" | `docker compose up -d` + activate wf_101 in n8n |
+| Null AI response | Check OpenRouter credits at openrouter.ai |
+| CORS error | Add `Access-Control-Allow-Origin: *` in n8n webhook node |
+| Tailscale down | `tailscale up && tailscale funnel 5678` |
+
+---
+
+## Future Improvements
+
+- PDF text extraction before Vision API (saves tokens for digital PDFs)
+- Supabase `audit_logs` table for analytics
+- IP-based rate limiting
+- Arabic contract support
+- Downloadable branded PDF audit report
