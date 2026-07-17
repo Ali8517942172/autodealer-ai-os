@@ -445,11 +445,10 @@
 </div>
 
 <script src="app.js"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-  // Real-time Event Handling via Socket.io
+  // Socket.io disabled — backend moved to direct Supabase + n8n Tailscale
   document.addEventListener('DOMContentLoaded', () => {
-    if (typeof io === 'undefined') return;
+    return; // no-op placeholder
     
     // Connect to the dashboard backend using the globally defined API object from app.js
     const socket = io(API.dashboard, {
@@ -635,3 +634,4 @@
 </script>
 </body>
 </html>
+                                              
