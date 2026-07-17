@@ -1,0 +1,248 @@
+{
+  "name": "7-Day Warm Lead Drip Campaign",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-trigger",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "days"
+      },
+      "name": "Wait Day 1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "sales@company.com",
+        "toEmail": "={{$json.body.email}}",
+        "subject": "Welcome to Our Platform!",
+        "text": "Hi {{$json.body.name}},\n\nThank you for your interest. We are excited to have you onboard.\n\nBest,\nThe Team"
+      },
+      "name": "Email: Welcome",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "from": "1234567890",
+        "to": "={{$json.body.phone}}",
+        "message": "Hi {{$json.body.name}}, thanks for joining us! Check your email for more details."
+      },
+      "name": "SMS: Welcome",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait Day 3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "sales@company.com",
+        "toEmail": "={{$json.body.email}}",
+        "subject": "Did you get a chance to look around?",
+        "text": "Hi {{$json.body.name}},\n\nJust checking in. Let us know if you have any questions.\n\nBest,\nThe Team"
+      },
+      "name": "Email: Follow Up",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait Day 5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "from": "1234567890",
+        "to": "={{$json.body.phone}}",
+        "message": "Hi {{$json.body.name}}, don't forget to schedule your free onboarding call!"
+      },
+      "name": "SMS: Check-in",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait Day 7",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "sales@company.com",
+        "toEmail": "={{$json.body.email}}",
+        "subject": "Special Offer Just for You!",
+        "text": "Hi {{$json.body.name}},\n\nAs a thank you, here is a 20% discount on your first month.\n\nBest,\nThe Team"
+      },
+      "name": "Email: Final Offer",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        2050,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 1": {
+      "main": [
+        [
+          {
+            "node": "Email: Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Welcome": {
+      "main": [
+        [
+          {
+            "node": "SMS: Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS: Welcome": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 3": {
+      "main": [
+        [
+          {
+            "node": "Email: Follow Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Follow Up": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 5": {
+      "main": [
+        [
+          {
+            "node": "SMS: Check-in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS: Check-in": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 7": {
+      "main": [
+        [
+          {
+            "node": "Email: Final Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "wf_104"
+}

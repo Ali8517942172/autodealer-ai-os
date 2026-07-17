@@ -1,0 +1,159 @@
+{
+  "name": "Slack Command Center - CRM Updates",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack/command/crm-update",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Slack Slash Command Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "12345678-1234-1234-1234-123456789abc"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "leadId",
+              "value": "={{ $json.body.text.split(' ')[0] }}"
+            },
+            {
+              "name": "newStatus",
+              "value": "={{ $json.body.text.split(' ')[1] }}"
+            },
+            {
+              "name": "channelId",
+              "value": "={{ $json.body.channel_id }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.body.user_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Extract Command Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "operation": "update",
+        "dealId": "={{ $json.leadId }}",
+        "updateFields": {
+          "stage": "={{ $json.newStatus }}"
+        }
+      },
+      "name": "Update CRM Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "1",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "={{ $node[\"Extract Command Data\"].json.channelId }}",
+        "text": "=✅ <@{{ $node[\"Extract Command Data\"].json.userId }}> successfully updated Lead/Deal `{{ $node[\"Extract Command Data\"].json.leadId }}` to status `{{ $node[\"Extract Command Data\"].json.newStatus }}`.",
+        "otherOptions": {}
+      },
+      "name": "Send Slack Confirmation",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        850,
+        300
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "1",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Slack Slash Command Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Command Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Command Data": {
+      "main": [
+        [
+          {
+            "node": "Update CRM Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CRM Deal": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "wf_106",
+  "tags": [
+    {
+      "createdAt": "2026-07-17T15:00:00.000Z",
+      "updatedAt": "2026-07-17T15:00:00.000Z",
+      "id": "1",
+      "name": "Slack"
+    },
+    {
+      "createdAt": "2026-07-17T15:00:00.000Z",
+      "updatedAt": "2026-07-17T15:00:00.000Z",
+      "id": "2",
+      "name": "CRM"
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+-- ==============================================================================
+-- Supabase Schema Definition for Alba AI Platform
+-- ==============================================================================
+-- Description: Creates the core tables for Leads, Inventory, and RAG Document 
+-- Embeddings using pgvector.
+-- ==============================================================================
+
+-- 1. Extensions
+-- ==============================================================================
+-- Enable the pgvector extension to work with embedding vectors
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- 2. Custom Functions & Triggers
+-- ==============================================================================
+-- Function to automatically update the 'updated_at' timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- 3. Tables Definition
+-- ==============================================================================
+
+-- ------------------------------------------------------------------------------
+-- Table: leads
+-- Description: Stores information about potential customers or leads.
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.leads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    phone_number TEXT,
+    company TEXT,
+    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'lost', 'converted')),
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Trigger for leads
+CREATE TRIGGER update_leads_updated_at
+BEFORE UPDATE ON public.leads
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------------------------
+-- Table: inventory
+-- Description: Tracks products or items in the inventory.
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.inventory (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sku TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT,
+    quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+    price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
+    category TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Trigger for inventory
+CREATE TRIGGER update_inventory_updated_at
+BEFORE UPDATE ON public.inventory
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------------------------
+-- Table: document_embeddings
+-- Description: Stores RAG document chunks and their corresponding pgvector embeddings.
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.document_embeddings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID, -- Reference to a parent document if applicable
+    content TEXT NOT NULL, -- The text chunk
+    metadata JSONB DEFAULT '{}'::jsonb, -- Additional context (source, page number, etc.)
+    embedding vector(1536), -- OpenAI text-embedding-ada-002 size is 1536. Adjust if using a different model.
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create an index for vector similarity search (HNSW index for pgvector)
+CREATE INDEX IF NOT EXISTS document_embeddings_embedding_idx 
+ON public.document_embeddings 
+USING hnsw (embedding vector_cosine_ops);
+
+
+-- 4. Row Level Security (RLS)
+-- ==============================================================================
+-- Note: Adjust the policies according to your specific auth requirements.
+-- The following are standard secure-by-default policies.
+
+-- Enable RLS on all tables
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.document_embeddings ENABLE ROW LEVEL SECURITY;
+
+-- Example Policies for authenticated users (modify as needed)
+
+-- Leads: Only authenticated users can manage leads
+CREATE POLICY "Allow full access to authenticated users on leads" 
+    ON public.leads 
+    FOR ALL 
+    TO authenticated 
+    USING (true) 
+    WITH CHECK (true);
+
+-- Inventory: Only authenticated users can manage inventory, public can read
+CREATE POLICY "Allow read access to public on inventory" 
+    ON public.inventory 
+    FOR SELECT 
+    TO public 
+    USING (true);
+
+CREATE POLICY "Allow all access to authenticated users on inventory" 
+    ON public.inventory 
+    FOR ALL 
+    TO authenticated 
+    USING (true) 
+    WITH CHECK (true);
+
+-- Document Embeddings: Only authenticated users/services can manage and query
+CREATE POLICY "Allow full access to authenticated users on document_embeddings" 
+    ON public.document_embeddings 
+    FOR ALL 
+    TO authenticated 
+    USING (true) 
+    WITH CHECK (true);
+
+-- ==============================================================================
+-- End of Schema Definition
+-- ==============================================================================

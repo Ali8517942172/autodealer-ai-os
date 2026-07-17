@@ -1,0 +1,170 @@
+{
+  "name": "Competitor Price Scraping & Supabase Update",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "e1f13b65-0a88-4444-a0ab-48e0c8bdf92a",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://example-competitor.com/api/products",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d9ef92-07a8-4c00-9112-9c17be1fa9a1",
+      "name": "Scrape Competitor API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        400,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "projectId": "SUPABASE_PROJECT_REF",
+        "table": "inventory",
+        "options": {}
+      },
+      "id": "a6b7cc99-1738-4e8c-8f1d-23d91eb8f1cc",
+      "name": "Fetch Local Inventory",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        620,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const competitorData = $items(\"Scrape Competitor API\")[0].json;\nconst localInventory = $input.all();\n\nconst updates = [];\n\nfor (const item of localInventory) {\n  const product = item.json;\n  const competitorProduct = competitorData.products.find(p => p.sku === product.sku);\n  \n  if (competitorProduct && competitorProduct.price < product.price) {\n    updates.push({\n      json: {\n        id: product.id,\n        sku: product.sku,\n        oldPrice: product.price,\n        price: competitorProduct.price - 0.01\n      }\n    });\n  }\n}\n\nreturn updates;"
+      },
+      "id": "4d5885c3-3004-4d87-9913-75b5b0eb81cc",
+      "name": "Calculate Dynamic Pricing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "projectId": "SUPABASE_PROJECT_REF",
+        "table": "inventory",
+        "columns": "price",
+        "options": {}
+      },
+      "id": "ff91eab1-8e01-499d-92d6-0a2a4b868bc2",
+      "name": "Update Prices in Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "1",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Competitor API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Competitor API": {
+      "main": [
+        [
+          {
+            "node": "Fetch Local Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Local Inventory": {
+      "main": [
+        [
+          {
+            "node": "Calculate Dynamic Pricing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Dynamic Pricing": {
+      "main": [
+        [
+          {
+            "node": "Update Prices in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c9dbb9f1-a188-4665-9854-8c85ebda627b",
+  "id": "wf_102",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "createdAt": "2026-07-17T15:35:46.000Z",
+      "updatedAt": "2026-07-17T15:35:46.000Z",
+      "id": "1",
+      "name": "dynamic-pricing"
+    }
+  ]
+}

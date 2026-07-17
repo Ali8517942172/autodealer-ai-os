@@ -1,0 +1,190 @@
+{
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "WhatsApp BDC AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "whatsapp-bdc",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "e4f8d9b1-1111-4a11-1111-123456789abc",
+      "name": "WhatsApp Verification Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        200
+      ],
+      "webhookId": "whatsapp-verification"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "id": "e4f8d9b1-2222-4a11-1111-123456789abc",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        450,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-bdc",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "e4f8d9b1-3333-4a11-1111-123456789abc",
+      "name": "WhatsApp Message Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        450
+      ],
+      "webhookId": "whatsapp-messages"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.text?.body }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "e4f8d9b1-4444-4a11-1111-123456789abc",
+      "name": "Check If Valid Text Message",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        450,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": "gpt-4-turbo",
+        "messages": {
+          "messageValues": [
+            {
+              "role": "system",
+              "content": "You are a highly professional Business Development Center (BDC) agent for a premium automotive dealership. Your objective is to chat with leads via WhatsApp, answer their questions about vehicles, and ultimately book them for a test drive. Be polite, concise, and persuasive. Collect their preferred date and time, and confirm the booking."
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.body.entry[0].changes[0].value.messages[0].text.body }}"
+            }
+          ]
+        },
+        "simplifyOutput": true,
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 250
+        }
+      },
+      "id": "e4f8d9b1-5555-4a11-1111-123456789abc",
+      "name": "OpenAI BDC Agent",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        700,
+        430
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIALS_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Message Webhook').item.json.body.entry[0].changes[0].value.messages[0].from }}",
+        "text": "={{ $json.message.content }}"
+      },
+      "id": "e4f8d9b1-6666-4a11-1111-123456789abc",
+      "name": "Send WhatsApp Reply",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        950,
+        430
+      ],
+      "credentials": {
+        "whatsAppApi": {
+          "id": "WHATSAPP_CREDENTIALS_ID",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Verification Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Message Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check If Valid Text Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Valid Text Message": {
+      "main": [
+        [
+          {
+            "node": "OpenAI BDC Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI BDC Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
+  },
+  "id": "wf_107"
+}

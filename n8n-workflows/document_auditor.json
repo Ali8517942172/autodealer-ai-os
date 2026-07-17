@@ -1,0 +1,208 @@
+{
+  "name": "KYC/AML Document Auditor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "audit-kyc",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "2d1b8c04-f584-486a-8b1e-62e9c20a4b67",
+      "name": "Receive Document",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4-vision-preview",
+        "messages": {
+          "messageValues": [
+            {
+              "content": "You are a professional KYC/AML Document Auditor for car buyers. Analyze the provided document image and extract: Full Name, Date of Birth, Expiry Date, Document Type, Validity. Check for any signs of tampering or inconsistencies. Respond STRICTLY in JSON format: { \"fullName\": \"...\", \"dateOfBirth\": \"...\", \"expiryDate\": \"...\", \"documentType\": \"...\", \"isValid\": true/false, \"tamperingDetected\": true/false, \"confidenceScore\": 0-100, \"remarks\": \"...\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e96f1d24-3435-46c4-bfa2-3531b26c2712",
+      "name": "OpenAI Vision (KYC Analysis)",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "auditResult",
+              "value": "={{ $json.message.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6eb678c1-155e-49cd-a24a-fb48721c4355",
+      "name": "Parse JSON Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ JSON.parse($json.auditResult).isValid }}",
+              "value2": true
+            },
+            {
+              "value1": "={{ JSON.parse($json.auditResult).tamperingDetected }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "id": "426beeb2-7d2d-4cc6-8eeb-1cd17d91901a",
+      "name": "Validation Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1.1,
+      "position": [
+        460,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "APPROVED"
+            },
+            {
+              "name": "message",
+              "value": "KYC Document is valid and verified."
+            },
+            {
+              "name": "details",
+              "value": "={{ $json.auditResult }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18f45a0b-1798-4c31-96ec-ecad1a63e6e8",
+      "name": "Approved",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        700,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "REJECTED"
+            },
+            {
+              "name": "message",
+              "value": "KYC Document failed validation or tampering detected."
+            },
+            {
+              "name": "details",
+              "value": "={{ $json.auditResult }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "01c905ab-ee57-41a6-8968-3e4b7b3b3a0f",
+      "name": "Rejected",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        700,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Receive Document": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Vision (KYC Analysis)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision (KYC Analysis)": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Output": {
+      "main": [
+        [
+          {
+            "node": "Validation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Check": {
+      "main": [
+        [
+          {
+            "node": "Approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "kyc-aml-doc-auditor-v1",
+  "id": "wf_101"
+}

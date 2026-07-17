@@ -1,0 +1,42 @@
+{
+  "id": "zap-00123984",
+  "title": "Typeform to n8n Webhook Workflow",
+  "status": "published",
+  "steps": [
+    {
+      "step_number": 1,
+      "type": "trigger",
+      "app": "Typeform",
+      "event": "New Submission",
+      "config": {
+        "form_id": "uB3d9x",
+        "workspace_id": "ws-998822"
+      }
+    },
+    {
+      "step_number": 2,
+      "type": "action",
+      "app": "Webhooks by Zapier",
+      "event": "Custom Request",
+      "config": {
+        "method": "POST",
+        "url": "https://n8n.example.com/webhook/typeform-catch",
+        "data_pass_through": false,
+        "data": {
+          "submission_id": "{{step1.id}}",
+          "submitted_at": "{{step1.submitted_at}}",
+          "answers": "{{step1.answers}}"
+        },
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer YOUR_N8N_API_TOKEN"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "created_at": "2026-07-17T15:35:47+04:00",
+    "updated_at": "2026-07-17T15:35:47+04:00",
+    "owner": "Integration Architect"
+  }
+}

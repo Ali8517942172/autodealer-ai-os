@@ -146,8 +146,8 @@
     <header class="h-16 shrink-0 bg-white border-b border-outline-variant flex items-center justify-between px-6 gap-4">
       <div class="flex items-center gap-3">
         <h2 id="page-title" class="text-lg font-bold text-on-surface">Executive Dashboard</h2>
-        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full">
-          <span class="w-1.5 h-1.5 rounded-full bg-secondary pulse-dot"></span> LIVE
+        <span id="live-status-badge" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full transition-colors duration-300">
+          <span id="live-status-dot" class="w-1.5 h-1.5 rounded-full bg-secondary pulse-dot"></span> <span id="live-status-text">LIVE</span>
         </span>
       </div>
       <div class="flex items-center gap-4">
@@ -403,5 +403,193 @@
 </div>
 
 <script src="app.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  // Real-time Event Handling via Socket.io
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof io === 'undefined') return;
+    
+    // Connect to the dashboard backend using the globally defined API object from app.js
+    const socket = io(API.dashboard, {
+      reconnectionDelayMax: 10000,
+      transports: ['websocket', 'polling']
+    });
+
+    // Connection Events
+    socket.on('connect', () => {
+      console.log('🟢 Connected to Real-time Event Bus');
+      updateConnectionStatus(true);
+      if (typeof addLiveEvent === 'function') {
+        addLiveEvent('WS_CONNECT', 'Connected to real-time event stream');
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.warn('🔴 Disconnected from Event Bus');
+      updateConnectionStatus(false);
+      if (typeof addLiveEvent === 'function') {
+        addLiveEvent('WS_DISCONNECT', 'Disconnected from real-time event stream');
+      }
+    });
+
+    function updateConnectionStatus(isConnected) {
+      const liveBadge = document.getElementById('live-status-badge');
+      const pulseDot = document.getElementById('live-status-dot');
+      const liveText = document.getElementById('live-status-text');
+      if (!liveBadge || !pulseDot || !liveText) return;
+
+      if (isConnected) {
+        liveBadge.className = 'inline-flex items-center gap-1.5 text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full transition-colors duration-300';
+        pulseDot.className = 'w-1.5 h-1.5 rounded-full bg-secondary pulse-dot';
+        liveText.textContent = 'LIVE';
+      } else {
+        liveBadge.className = 'inline-flex items-center gap-1.5 text-[11px] font-bold text-error bg-error-container px-2 py-0.5 rounded-full transition-colors duration-300';
+        pulseDot.className = 'w-1.5 h-1.5 rounded-full bg-error';
+        liveText.textContent = 'OFFLINE';
+      }
+    }
+
+    // Utility to highlight updated elements
+    function flashUpdate(elementId) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.classList.add('text-secondary');
+      el.style.transform = 'scale(1.05)';
+      el.style.transition = 'all 0.3s ease';
+      setTimeout(() => {
+        el.classList.remove('text-secondary');
+        el.style.transform = 'scale(1)';
+      }, 1000);
+    }
+
+    // Dashboard Metrics Update
+    socket.on('dashboard_update', (data) => {
+      const mappings = {
+        todayRevenue: val => `AED ${(val/1000).toFixed(0)}K`,
+        mtdRevenue: val => `AED ${(val/1000000).toFixed(1)}M`,
+        pipelineValue: val => `AED ${(val/1000000).toFixed(1)}M`,
+        netProfit: val => `AED ${(val/1000).toFixed(0)}K`,
+        hotLeads: val => val,
+        warmLeads: val => val,
+        coldLeads: val => val,
+        convRate: val => val,
+        avgDays: val => `${val} days`
+      };
+
+      for (const [key, formatter] of Object.entries(mappings)) {
+        if (data[key] !== undefined) {
+          const el = document.getElementById(key);
+          if (el) {
+            el.textContent = formatter(data[key]);
+            flashUpdate(key);
+          }
+        }
+      }
+      
+      if (typeof addLiveEvent === 'function') {
+        addLiveEvent('METRICS_UPDATE', 'Dashboard metrics synchronized via WebSocket');
+      }
+    });
+
+    // Revenue Updated Event Update
+    socket.on('revenue_updated', (data) => {
+      // Increment Today's Revenue
+      const todayEl = document.getElementById('todayRevenue');
+      if (todayEl && todayEl.textContent !== '—') {
+        const currentK = parseFloat(todayEl.textContent.replace(/[^\\d.]/g, ''));
+        const newTotal = (currentK * 1000) + data.amount;
+        todayEl.textContent = `AED ${(newTotal / 1000).toFixed(0)}K`;
+        flashUpdate('todayRevenue');
+      }
+
+      // Increment MTD Revenue
+      const mtdEl = document.getElementById('mtdRevenue');
+      if (mtdEl && mtdEl.textContent !== '—') {
+        const currentM = parseFloat(mtdEl.textContent.replace(/[^\\d.]/g, ''));
+        const newTotal = (currentM * 1000000) + data.amount;
+        mtdEl.textContent = `AED ${(newTotal / 1000000).toFixed(1)}M`;
+        flashUpdate('mtdRevenue');
+      }
+      
+      // Update Pipeline Value (assuming Pipeline Revenue refers to this)
+      const pipelineEl = document.getElementById('pipelineValue');
+      if (pipelineEl && pipelineEl.textContent !== '—') {
+        const currentM = parseFloat(pipelineEl.textContent.replace(/[^\\d.]/g, ''));
+        const newTotal = (currentM * 1000000) + data.amount;
+        pipelineEl.textContent = `AED ${(newTotal / 1000000).toFixed(1)}M`;
+        flashUpdate('pipelineValue');
+      }
+
+      // Increment Finance Revenue
+      const finRevEl = document.getElementById('finRevenue');
+      if (finRevEl && finRevEl.textContent !== '—') {
+        const currentM = parseFloat(finRevEl.textContent.replace(/[^\\d.]/g, ''));
+        const newTotal = (currentM * 1000000) + data.amount;
+        finRevEl.textContent = `AED ${(newTotal / 1000000).toFixed(1)}M`;
+        flashUpdate('finRevenue');
+      }
+
+      if (typeof addLiveEvent === 'function') {
+        addLiveEvent('REVENUE_UPDATE', data.message);
+      }
+    });
+
+    // Leads Table Update
+    socket.on('new_lead', (lead) => {
+      const tbody = document.getElementById('leadsTable');
+      if (tbody) {
+        const tr = document.createElement('tr');
+        tr.className = 'bg-secondary-container transition-colors duration-1000';
+        const esc = s => String(s).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+        tr.innerHTML = `
+          <td class="px-5 py-3 border-b border-outline-variant"><strong>${esc(lead.name)}</strong></td>
+          <td class="px-5 py-3 border-b border-outline-variant">${esc(lead.vehicle)}</td>
+          <td class="px-5 py-3 border-b border-outline-variant">${esc(lead.source)}</td>
+          <td class="px-5 py-3 border-b border-outline-variant"><strong>${esc(lead.score)}</strong></td>
+          <td class="px-5 py-3 border-b border-outline-variant"><span class="badge badge-${esc(lead.priority ? lead.priority.toLowerCase() : 'safe')}">${esc(lead.priority ? lead.priority.toUpperCase() : 'NORMAL')}</span></td>
+          <td class="px-5 py-3 border-b border-outline-variant">${esc(lead.status)}</td>
+        `;
+        tbody.prepend(tr);
+        
+        // Keep only top 10 leads to prevent memory issues
+        if (tbody.children.length > 10) tbody.removeChild(tbody.lastChild);
+        
+        // Remove highlight class after animation
+        setTimeout(() => tr.classList.remove('bg-secondary-container'), 2000);
+      }
+      
+      if (typeof addLiveEvent === 'function') {
+        addLiveEvent('LEAD_RECEIVED', `New lead: ${lead.name} → ${lead.vehicle}`);
+      }
+    });
+
+    // Inventory Table Update
+    socket.on('inventory_update', (item) => {
+      const tbody = document.getElementById('inventoryTable');
+      if (tbody) {
+        const tr = document.createElement('tr');
+        tr.className = 'bg-secondary-container transition-colors duration-1000';
+        const esc = s => String(s).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+        tr.innerHTML = `
+          <td class="px-5 py-3 border-b border-outline-variant">${esc(item.id)}</td>
+          <td class="px-5 py-3 border-b border-outline-variant"><strong>${esc(item.make)} ${esc(item.model)}</strong> (${esc(item.year)})</td>
+          <td class="px-5 py-3 border-b border-outline-variant">AED ${Number(item.listing_price).toLocaleString()}</td>
+          <td class="px-5 py-3 border-b border-outline-variant">AED ${Number(item.total_landed_cost).toLocaleString()}</td>
+          <td class="px-5 py-3 border-b border-outline-variant">AED ${Number(item.gross_margin).toLocaleString()}</td>
+          <td class="px-5 py-3 border-b border-outline-variant">${esc(item.days_in_stock)} days</td>
+          <td class="px-5 py-3 border-b border-outline-variant"><span class="badge badge-${esc(item.ai_aging_alert ? item.ai_aging_alert.toLowerCase() : 'safe')}">${esc(item.ai_aging_alert || 'SAFE')}</span></td>
+        `;
+        tbody.prepend(tr);
+        
+        if (tbody.children.length > 10) tbody.removeChild(tbody.lastChild);
+        setTimeout(() => tr.classList.remove('bg-secondary-container'), 2000);
+      }
+      
+      if (typeof addLiveEvent === 'function') {
+        addLiveEvent('INVENTORY_SYNC', `Inventory updated: ${item.make} ${item.model}`);
+      }
+    });
+  });
+</script>
 </body>
 </html>

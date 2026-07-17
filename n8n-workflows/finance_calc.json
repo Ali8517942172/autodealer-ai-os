@@ -1,0 +1,136 @@
+{
+  "name": "Finance Calc: Auto Loan Equity & Credit Score",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "finance-calc",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "finance-calc-webhook"
+    },
+    {
+      "parameters": {
+        "url": "https://api.example.com/v1/credit-scores",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ssn",
+              "value": "={{ $json.body.ssn }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Dummy Credit API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\n\n// Extract variables from the Webhook and API response\nconst vehicleValue = parseFloat(inputData.body?.vehicleValue) || 0;\nconst loanPayoffAmount = parseFloat(inputData.body?.loanPayoffAmount) || 0;\nconst creditScore = inputData.creditScore || 700; // Fallback if API response is missing\n\n// Calculate Equity\nconst equity = vehicleValue - loanPayoffAmount;\n\n// Determine Finance Tier based on Credit Score\nlet financeTier = 'Subprime';\nif (creditScore >= 720) {\n  financeTier = 'Prime Plus';\n} else if (creditScore >= 680) {\n  financeTier = 'Prime';\n} else if (creditScore >= 620) {\n  financeTier = 'Near Prime';\n}\n\nreturn {\n  equity: equity,\n  equityStatus: equity >= 0 ? 'Positive' : 'Negative',\n  creditScore: creditScore,\n  financeTier: financeTier,\n  vehicleValue: vehicleValue,\n  loanPayoffAmount: loanPayoffAmount\n};"
+      },
+      "id": "3",
+      "name": "Calculate Equity & Tier",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "success"
+            },
+            {
+              "name": "equityStatus",
+              "value": "={{ $json.equityStatus }}"
+            },
+            {
+              "name": "financeTier",
+              "value": "={{ $json.financeTier }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "equity",
+              "value": "={{ $json.equity }}"
+            },
+            {
+              "name": "creditScore",
+              "value": "={{ $json.creditScore }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4",
+      "name": "Format Final Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Dummy Credit API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dummy Credit API": {
+      "main": [
+        [
+          {
+            "node": "Calculate Equity & Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Equity & Tier": {
+      "main": [
+        [
+          {
+            "node": "Format Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "wf_103"
+}

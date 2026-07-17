@@ -35,9 +35,55 @@ const path = require('path');
 const multer = require('multer');
 const FormData = require('form-data');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB max
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
 const port = process.env.PORT || 5005;
+
+// Create HTTP server for WebSocket Support
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*', // Allow all origins for the dashboard
+        methods: ['GET', 'POST']
+    }
+});
+
+// Setup Socket.io connection handling
+io.on('connection', (socket) => {
+    console.log(`[WebSocket] Client connected: ${socket.id}`);
+    
+    socket.on('disconnect', () => {
+        console.log(`[WebSocket] Client disconnected: ${socket.id}`);
+    });
+});
+
+// Simulate real-time business events for the executive dashboard
+// Broadcasts 'revenue_updated' and 'lead_updated' events periodically
+setInterval(() => {
+    const revenueIncrease = Math.floor(Math.random() * 5000) + 1000;
+    io.emit('revenue_updated', {
+        timestamp: new Date().toISOString(),
+        amount: revenueIncrease,
+        currency: 'AED',
+        message: `New deal closed! Revenue increased by AED ${revenueIncrease}`
+    });
+}, 45000);
+
+setInterval(() => {
+    const leadSources = ['Website', 'WhatsApp', 'Instagram', 'Referral'];
+    const randomSource = leadSources[Math.floor(Math.random() * leadSources.length)];
+    io.emit('lead_updated', {
+        timestamp: new Date().toISOString(),
+        source: randomSource,
+        status: 'HOT',
+        message: `New HOT lead acquired via ${randomSource}`
+    });
+}, 30000);
+
+// Make io accessible to Express routes
+app.set('io', io);
 
 app.use(cors());
 app.use(express.json());
@@ -401,8 +447,8 @@ app.post('/api/v1/workflows/trigger-contract-audit', upload.single('data'), asyn
 });
 
 // Start Server
-app.listen(port, () => {
-    console.log(`[Enterprise API] Executive Dashboard on port ${port}`);
+server.listen(port, () => {
+    console.log(`[Enterprise API] Executive Dashboard on port ${port} (with WebSockets)`);
 });
 
-module.exports = app;
+module.exports = { app, server, io };

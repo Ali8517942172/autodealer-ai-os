@@ -1,0 +1,275 @@
+{
+  "name": "Customer 360 - Data Aggregation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "custom",
+        "customResource": "res.partner",
+        "operation": "getAll",
+        "limit": 50,
+        "options": {
+          "fieldsList": [
+            "id",
+            "name",
+            "email",
+            "phone",
+            "company_type"
+          ]
+        }
+      },
+      "name": "Odoo - Get Customers",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 20,
+        "simple": false,
+        "options": {
+          "q": "={{ 'from:' + $json.email + ' OR to:' + $json.email }}"
+        }
+      },
+      "name": "Gmail - Get Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "search",
+        "query": "={{ $node['Split In Batches'].json.email }}",
+        "limit": 20
+      },
+      "name": "Slack - Search Mentions",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "multiplex",
+        "options": {}
+      },
+      "name": "Merge Customer Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const customer = $node['Split In Batches'].json;\nconst emails = $items(\"Gmail - Get Emails\").map(item => item.json);\nconst slackMessages = $items(\"Slack - Search Mentions\").map(item => item.json);\n\nreturn {\n  customer_id: customer.id,\n  name: customer.name,\n  email: customer.email,\n  phone: customer.phone,\n  type: customer.company_type,\n  total_emails: emails.length,\n  total_slack_messages: slackMessages.length,\n  last_synced_at: new Date().toISOString()\n};"
+      },
+      "name": "Transform & Unify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": "customer_360_profiles",
+        "columns": "customer_id,name,email,phone,type,total_emails,total_slack_messages,last_synced_at",
+        "matchColumns": "email",
+        "options": {}
+      },
+      "name": "Supabase - Upsert Profile",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $node['Split In Batches'].context.noItemsLeft }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "name": "More Customers?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Odoo - Get Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo - Get Customers": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Get Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack - Search Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Get Emails": {
+      "main": [
+        [
+          {
+            "node": "Merge Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Search Mentions": {
+      "main": [
+        [
+          {
+            "node": "Merge Customer Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Customer Data": {
+      "main": [
+        [
+          {
+            "node": "Transform & Unify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform & Unify": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Upsert Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Upsert Profile": {
+      "main": [
+        [
+          {
+            "node": "More Customers?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Customers?": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": [
+    {
+      "createdAt": "2023-10-10T10:00:00.000Z",
+      "updatedAt": "2023-10-10T10:00:00.000Z",
+      "id": "1",
+      "name": "Customer 360"
+    }
+  ],
+  "id": "wf_100"
+}

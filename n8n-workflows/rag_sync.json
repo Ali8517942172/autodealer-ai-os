@@ -1,0 +1,132 @@
+{
+  "name": "Sync Closed-Won Deals to Supabase pgvector",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deals/closed-won",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook - New Deal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "webhook-deals-sync-rag"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "dealText",
+              "value": "={{ $json.body.deal_name }} - {{ $json.body.company }}: {{ $json.body.description }}"
+            },
+            {
+              "name": "dealId",
+              "value": "={{ $json.body.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Format Deal Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "embeddings",
+        "input": "={{ $json.dealText }}",
+        "model": "text-embedding-ada-002"
+      },
+      "id": "3",
+      "name": "OpenAI - Generate Embedding",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "1",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO deals_embeddings (deal_id, content, embedding) VALUES ($1, $2, $3) ON CONFLICT (deal_id) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding;",
+        "additionalFields": {
+          "queryParams": "={{ [ $node[\"Format Deal Text\"].json.dealId, $node[\"Format Deal Text\"].json.dealText, JSON.stringify($json.embedding) ] }}"
+        }
+      },
+      "id": "4",
+      "name": "Supabase (Postgres) - Upsert Vector",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "2",
+          "name": "Supabase Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - New Deal": {
+      "main": [
+        [
+          {
+            "node": "Format Deal Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Deal Text": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Generate Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Generate Embedding": {
+      "main": [
+        [
+          {
+            "node": "Supabase (Postgres) - Upsert Vector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "versionId": "df11d88a-d7b4-4b95-bd57-a9a7a13c9e6d",
+  "id": "wf_105"
+}
