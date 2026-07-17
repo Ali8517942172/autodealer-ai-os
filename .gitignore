@@ -26,3 +26,4 @@ docker-compose.override.yml
 *.key
 
 .github/workflows/
+.vercel

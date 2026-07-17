@@ -319,10 +319,15 @@ const WEBHOOK_URLS = {
 app.post('/api/v1/workflows/trigger-escalation', async (req, res) => {
     try {
         const payload = req.body;
+        // INJECT SECRETS at runtime so Make.com doesn't need them hardcoded in blueprint
+        payload.secrets = {
+            slack_url: process.env.SLACK_WEBHOOK,
+            email_key: process.env.RESEND_API_KEY
+        };
         // Actually trigger the Escalation webhook
         await axios.post(WEBHOOK_URLS.escalation, payload);
         
-        console.log(`[Escalation Webhook Triggered] Payload:`, payload);
+        console.log(`[Escalation Webhook Triggered] Payload:`, { ...payload, secrets: '[REDACTED]' });
         res.json({ success: true, message: 'Escalate workflow triggered successfully', platform: 'make' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to trigger Escalation workflow', details: err.message });
@@ -336,9 +341,14 @@ app.post('/api/v1/workflows/trigger-escalation', async (req, res) => {
 app.post('/api/v1/workflows/trigger-make', async (req, res) => {
     try {
         const payload = req.body;
+        // INJECT SECRETS at runtime so Make.com doesn't need them hardcoded
+        payload.secrets = {
+            supabase_key: process.env.SUPABASE_KEY,
+            odoo_key: process.env.ODOO_KEY
+        };
         await axios.post(WEBHOOK_URLS.make, payload);
         
-        console.log(`[Make.com Webhook Triggered] Payload:`, payload);
+        console.log(`[Make.com Webhook Triggered] Payload:`, { ...payload, secrets: '[REDACTED]' });
         res.json({ success: true, message: 'Make.com Lead Sync & Enrichment triggered', platform: 'make' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to trigger Make.com workflow', details: err.message });
