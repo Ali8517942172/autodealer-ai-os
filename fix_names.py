@@ -11,11 +11,11 @@ def replace_in_file(filepath):
     original = content
     
     # Fix the weird hyphenated names
-    content = re.sub(r'autodealer-ai-os', 'autodealer-ai-os', content)
-    content = re.sub(r'autodealer-ai-os-marketing', 'autodealer-ai-os-marketing', content)
+    content = re.sub(r'nexus-os', 'nexus-os', content)
+    content = re.sub(r'nexus-os-marketing', 'nexus-os-marketing', content)
     
     # Fix UI text inconsistencies
-    content = re.sub(r'AutoDealer AI OS', 'AutoDealer AI OS', content)
+    content = re.sub(r'NEXUS OS', 'NEXUS OS', content)
     
     if content != original:
         with open(filepath, 'w', encoding='utf-8') as f:
@@ -41,4 +41,4 @@ def process_directory(directory):
                     print(f"Updated: {filepath}")
     print(f"Total files updated: {count}")
 
-process_directory(r"C:\Users\user\Desktop\MY RESUMES\alba-ai-platform")
+process_directory(r"C:\Users\user\Desktop\MY RESUMES\nexus-os")

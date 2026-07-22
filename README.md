@@ -1,10 +1,10 @@
-# AutoDealer AI OS
+# NEXUS OS
 
-**AutoDealer AI OS** is an enterprise AI operating system for automotive dealerships that unifies CRM, Marketing, Knowledge Management, Sales Intelligence, Inventory Lifecycle, and Business Automation into a single platform.
+**NEXUS OS** is an enterprise AI operating system for automotive dealerships that unifies CRM, Marketing, Knowledge Management, Sales Intelligence, Inventory Lifecycle, and Business Automation into a single platform.
 
 The platform is designed to increase dealership profitability, reduce operational overhead, improve lead conversion, and enable AI-assisted decision making across every department.
 
-> *Reference implementation created for the AutoDealer Corp AI Engineer portfolio challenge.*
+> *Reference implementation created for the NEXUS OS Corp AI Engineer portfolio challenge.*
 
 ---
 
@@ -175,7 +175,7 @@ Each tenant gets isolated data, configurable workflows, and customizable brandin
 ## Repository Structure
 
 ```
-autodealer-ai-os/
+nexus-os/
 ├── .github/workflows/        # CI/CD pipelines
 ├── architecture/              # System diagrams, DB schemas, API specs
 ├── deployment/                # Docker Compose, environment configs
@@ -196,7 +196,7 @@ autodealer-ai-os/
 
 ## Complete JD Requirements Mapping
 
-Every requirement from the AutoDealer Corp AI Engineer (Vibe Coder) job description is implemented:
+Every requirement from the NEXUS OS Corp AI Engineer (Vibe Coder) job description is implemented:
 
 | JD Requirement | Where It's Implemented | How |
 |---------------|----------------------|-----|

@@ -1,5 +1,5 @@
 -- =============================================
--- Alba AI Platform - Supabase Database Schema
+-- NEXUS AI Platform - Supabase Database Schema
 -- =============================================
 -- This schema powers the AI CRM and is designed
 -- for Supabase (PostgreSQL) with Row Level Security.

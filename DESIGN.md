@@ -1,4 +1,4 @@
-# AutoDealer AI OS Design System
+# NEXUS OS Design System
 
 ## Overall Theme
 The design must be a world-class, premium UI that supports BOTH Light and Dark themes. It must STRICTLY adhere to a minimalist color palette (Maximum 2-3 colors total in the entire app).

@@ -2,10 +2,10 @@ const https = require('https');
 const token = process.env.MAKE_TOKEN;
 
 const postPayload = JSON.stringify({
-    name: "AutoDealer Master Router",
+    name: "NEXUS OS Master Router",
     teamId: 2111305,
     scheduling: '{"type":"immediately"}',
-    blueprint: '{"name":"AutoDealer Master Router","flow":[]}'
+    blueprint: '{"name":"NEXUS OS Master Router","flow":[]}'
 });
 
 const postOptions = {

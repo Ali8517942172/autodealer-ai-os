@@ -1,6 +1,6 @@
-# AutoDealer Cars - JD Mapping (Portfolio)
+# NEXUS OS Cars - JD Mapping (Portfolio)
 
-This document maps the implementation of the AutoDealer Cars Enterprise Platform to the specific technical requirements mentioned in the AutoDealer Corp "AI Engineer" Job Description.
+This document maps the implementation of the NEXUS OS Cars Enterprise Platform to the specific technical requirements mentioned in the NEXUS OS Corp "AI Engineer" Job Description.
 
 JD Requirement:
 n8n Automation

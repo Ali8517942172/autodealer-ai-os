@@ -3,7 +3,7 @@
 ## JD Requirement
 > "Strong proficiency with modern AI coding tools such as Claude Code and Codex."
 
-This document describes how AutoDealer AI OS was built using AI-assisted development tools, demonstrating practical proficiency with the exact tools mentioned in the job description.
+This document describes how NEXUS OS was built using AI-assisted development tools, demonstrating practical proficiency with the exact tools mentioned in the job description.
 
 ---
 

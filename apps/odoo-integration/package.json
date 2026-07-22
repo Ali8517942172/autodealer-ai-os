@@ -1,7 +1,7 @@
 {
   "name": "autodealer-odoo-integration",
   "version": "1.0.0",
-  "description": "Odoo ERP Integration for AutoDealer AI OS - Sales, Inventory, Accounting, Purchase",
+  "description": "Odoo ERP Integration for NEXUS OS - Sales, Inventory, Accounting, Purchase",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -52,33 +52,28 @@
     },
     {
       "parameters": {
-        "authentication": "oAuth2",
-        "resource": "deal",
-        "operation": "update",
-        "dealId": "={{ $json.leadId }}",
-        "updateFields": {
-          "stage": "={{ $json.newStatus }}"
-        }
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET status = '{{ $json.newStatus }}', updated_at = NOW() WHERE id = '{{ $json.leadId }}' RETURNING id, status;",
+        "options": {}
       },
-      "name": "Update CRM Deal",
-      "type": "n8n-nodes-base.hubspot",
-      "typeVersion": 1,
+      "name": "Update Lead in Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
       "position": [
         650,
         300
       ],
       "credentials": {
-        "hubspotOAuth2Api": {
-          "id": "1",
-          "name": "HubSpot account"
+        "postgres": {
+          "id": "2njx6fRNkElVRJ6x",
+          "name": "Supabase Postgres (Docker)"
         }
       }
     },
     {
       "parameters": {
-        "authentication": "oAuth2",
         "channel": "={{ $node[\"Extract Command Data\"].json.channelId }}",
-        "text": "=✅ <@{{ $node[\"Extract Command Data\"].json.userId }}> successfully updated Lead/Deal `{{ $node[\"Extract Command Data\"].json.leadId }}` to status `{{ $node[\"Extract Command Data\"].json.newStatus }}`.",
+        "text": "=✅ <@{{ $node[\"Extract Command Data\"].json.userId }}> successfully updated Lead `{{ $node[\"Extract Command Data\"].json.leadId }}` to status `{{ $node[\"Extract Command Data\"].json.newStatus }}` in Supabase.",
         "otherOptions": {}
       },
       "name": "Send Slack Confirmation",
@@ -89,9 +84,9 @@
         300
       ],
       "credentials": {
-        "slackOAuth2Api": {
-          "id": "1",
-          "name": "Slack account"
+        "slackApi": {
+          "id": "HPTEqLu6xjmhEXDN",
+          "name": "Slack - NEXUS OS Bot"
         }
       }
     }
@@ -112,14 +107,14 @@
       "main": [
         [
           {
-            "node": "Update CRM Deal",
+            "node": "Update Lead in Supabase",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Update CRM Deal": {
+    "Update Lead in Supabase": {
       "main": [
         [
           {

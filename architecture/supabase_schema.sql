@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Supabase Schema Definition for Alba AI Platform
+-- Supabase Schema Definition for NEXUS AI Platform
 -- ==============================================================================
 -- Description: Creates the core tables for Leads, Inventory, and RAG Document 
 -- Embeddings using pgvector.

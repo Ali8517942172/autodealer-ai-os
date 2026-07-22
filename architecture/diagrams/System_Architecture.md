@@ -32,8 +32,8 @@ graph TD
     Auth --> Mongo
 
     %% Business Modules (Apps)
-    subgraph "AutoDealer AI OS Modules"
-        CRM[AutoDealer AI CRM]
+    subgraph "NEXUS OS Modules"
+        CRM[NEXUS OS AI CRM]
         Mktg[Marketing Intelligence OS]
         RAG[Enterprise Knowledge RAG]
         Inv[Inventory Intelligence]

@@ -1,5 +1,5 @@
 /**
- * AutoDealer AI OS - Executive Dashboard API
+ * NEXUS OS - Executive Dashboard API
  * ============================================
  * 
  * BUSINESS PROBLEM:
@@ -103,7 +103,7 @@ const SERVICES = {
 // Health Check
 // ==========================================
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', service: 'AutoDealer Executive Dashboard' });
+    res.json({ status: 'OK', service: 'NEXUS OS Executive Dashboard' });
 });
 
 // ==========================================
@@ -338,7 +338,7 @@ app.get('/api/v1/dashboard/services', async (req, res) => {
     }
 
     res.json({
-        platform: 'AutoDealer AI OS',
+        platform: 'NEXUS OS',
         checked_at: new Date().toISOString(),
         services
     });

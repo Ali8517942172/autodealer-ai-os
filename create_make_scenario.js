@@ -2,7 +2,7 @@ const https = require('https');
 const fs = require('fs');
 
 const token = process.env.MAKE_TOKEN;
-const bpPath = 'c:\\Users\\user\\Desktop\\MY RESUMES\\alba-ai-platform\\make-workflows\\master_router_blueprint.json';
+const bpPath = 'c:\\Users\\user\\Desktop\\MY RESUMES\\nexus-os\\make-workflows\\master_router_blueprint.json';
 const bpData = fs.readFileSync(bpPath, 'utf8');
 
 const bpObj = JSON.parse(bpData);
@@ -10,7 +10,7 @@ delete bpObj.platform;
 delete bpObj.version;
 
 const postPayload = JSON.stringify({
-    name: "AutoDealer Master Router",
+    name: "NEXUS OS Master Router",
     teamId: 2111305
 });
 

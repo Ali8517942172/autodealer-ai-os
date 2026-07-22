@@ -6,7 +6,7 @@ files = {
     'automation': r'C:\Users\user\.gemini\antigravity-ide\brain\d83dad3d-d2b0-4910-bfc3-11ebf0af6537\.system_generated\steps\1156\output.txt',
 }
 
-out_dir = r"C:\Users\user\Desktop\MY RESUMES\alba-ai-platform\apps\executive-dashboard\public"
+out_dir = r"C:\Users\user\Desktop\MY RESUMES\nexus-os\apps\executive-dashboard\public"
 
 for name, path in files.items():
     try:

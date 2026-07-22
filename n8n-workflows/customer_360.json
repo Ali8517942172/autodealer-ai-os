@@ -42,7 +42,13 @@
       "position": [
         220,
         300
-      ]
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "QFndoyD3gLoVLidE",
+          "name": "Odoo - NEXUS OS"
+        }
+      }
     },
     {
       "parameters": {
@@ -72,7 +78,14 @@
       "position": [
         660,
         200
-      ]
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-oauth",
+          "name": "Gmail OAuth2 - CONFIGURE IN N8N UI"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -87,7 +100,13 @@
       "position": [
         660,
         400
-      ]
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "HPTEqLu6xjmhEXDN",
+          "name": "Slack - NEXUS OS Bot"
+        }
+      }
     },
     {
       "parameters": {
@@ -129,7 +148,13 @@
       "position": [
         1320,
         300
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - NEXUS OS"
+        }
+      }
     },
     {
       "parameters": {

@@ -1,5 +1,5 @@
 /**
- * AutoDealer AI OS - Vehicle Inventory Intelligence
+ * NEXUS OS - Vehicle Inventory Intelligence
  * ===================================================
  * 
  * BUSINESS PROBLEM:
@@ -206,7 +206,7 @@ const inventory = [
 
 // Health Check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', service: 'AutoDealer Inventory Intelligence', vehicles_tracked: inventory.length });
+    res.json({ status: 'OK', service: 'NEXUS OS Inventory Intelligence', vehicles_tracked: inventory.length });
 });
 
 // Full Inventory with AI Intelligence
@@ -370,7 +370,7 @@ cron.schedule('0 8 * * 1', () => {
 
 // Start Server
 app.listen(port, () => {
-    console.log(`[Enterprise API] AutoDealer Inventory Intelligence on port ${port}`);
+    console.log(`[Enterprise API] NEXUS OS Inventory Intelligence on port ${port}`);
 });
 
 module.exports = app;

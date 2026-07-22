@@ -1,11 +1,11 @@
 # KYC/AML Document Auditor — Walkthrough
-> Alba Cars · AutoDealer AI OS · Last Updated: 2026-07-17
+> NEXUS OS · NEXUS OS · Last Updated: 2026-07-17
 
 ## Overview
 
 The Contract Auditor is a public-facing AI tool that lets any car buyer upload a contract or RTA invoice and instantly detect hidden fees or KYC document anomalies. It uses Google Gemini Flash (via OpenRouter) for vision analysis.
 
-**Live URL:** https://alba-contract-auditor.vercel.app
+**Live URL:** https://nexus-contract-auditor.vercel.app
 **n8n Webhook:** `https://desktop-l3an0ma.tail2141f7.ts.net/webhook/audit-kyc`
 **n8n Workflow:** `wf_101` — KYC/AML Document Auditor
 
@@ -16,7 +16,7 @@ The Contract Auditor is a public-facing AI tool that lets any car buyer upload a
 ```
 User uploads contract (JPG/PNG/PDF)
         ↓
-Vercel Frontend (alba-contract-auditor.vercel.app)
+Vercel Frontend (nexus-contract-auditor.vercel.app)
         ↓ POST /webhook/audit-kyc
 Tailscale Funnel → n8n Docker (localhost:5678)
         ↓
@@ -84,7 +84,7 @@ curl -X POST https://desktop-l3an0ma.tail2141f7.ts.net/webhook/audit-kyc \
 ```
 
 **Frontend test:**
-1. Open https://alba-contract-auditor.vercel.app
+1. Open https://nexus-contract-auditor.vercel.app
 2. Drag & drop contract image or PDF
 3. Click Run Audit — results in 3-5 seconds
 
@@ -98,7 +98,7 @@ curl -X POST https://desktop-l3an0ma.tail2141f7.ts.net/webhook/audit-kyc \
 **Frontend:** Vercel static deploy from `apps/contract-auditor/index.html`
 **Backend:** n8n in Docker + Tailscale Funnel (permanent HTTPS, no port forwarding)
 
-To restart backend: `docker compose up -d` from `alba-ai-platform/`
+To restart backend: `docker compose up -d` from `nexus-os/`
 
 ---
 

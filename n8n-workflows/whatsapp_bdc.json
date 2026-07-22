@@ -75,62 +75,81 @@
     },
     {
       "parameters": {
-        "resource": "chat",
-        "operation": "create",
-        "model": "gpt-4-turbo",
-        "messages": {
-          "messageValues": [
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "role": "system",
-              "content": "You are a highly professional Business Development Center (BDC) agent for a premium automotive dealership. Your objective is to chat with leads via WhatsApp, answer their questions about vehicles, and ultimately book them for a test drive. Be polite, concise, and persuasive. Collect their preferred date and time, and confirm the booking."
+              "name": "HTTP-Referer",
+              "value": "https://nexuscorp.net"
             },
             {
-              "role": "user",
-              "content": "={{ $json.body.entry[0].changes[0].value.messages[0].text.body }}"
+              "name": "X-Title",
+              "value": "NEXUS OS - WhatsApp BDC"
             }
           ]
         },
-        "simplifyOutput": true,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 250,\n  \"temperature\": 0.7,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a highly professional Business Development Center (BDC) agent for a premium automotive dealership (NEXUS OS). Your objective is to chat with leads via WhatsApp, answer their questions about vehicles, and ultimately book them for a test drive. Be polite, concise, and persuasive. Collect their preferred date and time, and confirm the booking. Always respond in the same language the customer uses.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.body.entry[0].changes[0].value.messages[0].text.body }}\"\n    }\n  ]\n}",
         "options": {
-          "temperature": 0.7,
-          "maxTokens": 250
+          "timeout": 15000
         }
       },
       "id": "e4f8d9b1-5555-4a11-1111-123456789abc",
-      "name": "OpenAI BDC Agent",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1,
+      "name": "OpenRouter BDC Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [
         700,
         430
       ],
       "credentials": {
-        "openAiApi": {
-          "id": "OPENAI_CREDENTIALS_ID",
-          "name": "OpenAI account"
+        "httpHeaderAuth": {
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
         }
       }
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
-        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "={{ $('WhatsApp Message Webhook').item.json.body.entry[0].changes[0].value.messages[0].from }}",
-        "text": "={{ $json.message.content }}"
+        "jsCode": "const response = $input.first().json;\nconst aiReply = response.choices[0].message.content;\nconst customerPhone = $('WhatsApp Message Webhook').first().json.body.entry[0].changes[0].value.messages[0].from;\n\nreturn [{ json: { aiReply, customerPhone } }];"
+      },
+      "id": "e4f8d9b1-parse-reply",
+      "name": "Extract AI Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        430
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID || 'CONFIGURE_PHONE_ID' }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.customerPhone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.aiReply }}\"\n  }\n}",
+        "options": {}
       },
       "id": "e4f8d9b1-6666-4a11-1111-123456789abc",
       "name": "Send WhatsApp Reply",
-      "type": "n8n-nodes-base.whatsApp",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [
-        950,
+        1140,
         430
       ],
       "credentials": {
-        "whatsAppApi": {
-          "id": "WHATSAPP_CREDENTIALS_ID",
-          "name": "WhatsApp account"
+        "httpHeaderAuth": {
+          "id": "W1bKj9lO2JiWjifO",
+          "name": "WhatsApp Business API Token"
         }
       }
     }
@@ -162,14 +181,25 @@
       "main": [
         [
           {
-            "node": "OpenAI BDC Agent",
+            "node": "OpenRouter BDC Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenAI BDC Agent": {
+    "OpenRouter BDC Agent": {
+      "main": [
+        [
+          {
+            "node": "Extract AI Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Reply": {
       "main": [
         [
           {

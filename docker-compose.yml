@@ -14,6 +14,14 @@ services:
       - NODE_ENV=production
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=UTC
+
+      # WhatsApp Business API — Phone Number ID from Meta Business Manager
+      # Number: +971526647253 -> Get ID from: https://business.facebook.com/wa/manage/phone-numbers/
+      - WHATSAPP_PHONE_NUMBER_ID=REGISTER_AT_META_TO_GET_ID
+
+      # Google OAuth2 — Gmail credential
+      - GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
+      - GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET_HERE
       
       # Database setup pointing to mock Supabase Postgres
       - DB_TYPE=postgresdb

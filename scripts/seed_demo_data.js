@@ -1,7 +1,7 @@
 const fs = require('fs');
 const http = require('http');
 
-console.log('🚗 Starting AutoDealer AI OS Data Seeder & Make/Zapier Webhook Simulator...\n');
+console.log('🚗 Starting NEXUS OS Data Seeder & Make/Zapier Webhook Simulator...\n');
 
 // Simulated Make.com Webhook (Google Sheets -> CRM)
 const makeWebhooks = [

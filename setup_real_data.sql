@@ -108,7 +108,7 @@ create table rag_documents (
 );
 
 insert into rag_documents (doc_title, section, content, source_file, page_number) values
-('Warranty Policy', 'Standard Coverage', 'All new vehicles sold by AutoDealer come with a standard warranty of 3 years or 100,000 km, whichever comes first. This covers manufacturing defects in engine, transmission, and electrical systems.', 'warranty_policy_v4.2.pdf', 12),
+('Warranty Policy', 'Standard Coverage', 'All new vehicles sold by NEXUS OS come with a standard warranty of 3 years or 100,000 km, whichever comes first. This covers manufacturing defects in engine, transmission, and electrical systems.', 'warranty_policy_v4.2.pdf', 12),
 ('Warranty Policy', 'Extended Warranty', 'Customers may purchase an Extended Warranty for an additional 2 years beyond the standard coverage. This must be purchased within 30 days of vehicle delivery and is non-transferable.', 'warranty_policy_v4.2.pdf', 13),
 ('Warranty Policy', 'Powertrain Coverage', 'The powertrain (engine and transmission) is covered separately for 5 years or 150,000 km. This is the longest coverage period offered and applies regardless of standard or extended warranty status.', 'warranty_policy_v4.2.pdf', 14),
 ('Warranty Policy', 'Hybrid Battery Coverage', 'Hybrid and electric vehicle batteries carry an 8-year or 160,000 km warranty, covering degradation below 70 percent of original capacity.', 'warranty_policy_v4.2.pdf', 15),

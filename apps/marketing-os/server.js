@@ -1,5 +1,5 @@
 /**
- * AutoDealer Marketing Intelligence OS - API Server
+ * NEXUS OS Marketing Intelligence OS - API Server
  *
  * Enterprise marketing platform for automotive dealerships.
  * Connects to Supabase for real competitor pricing data and integrates
@@ -29,7 +29,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Health Check
 // ==========================================
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', service: 'AutoDealer Marketing Intelligence OS' });
+    res.json({ status: 'OK', service: 'NEXUS OS Marketing Intelligence OS' });
 });
 
 // ==========================================
@@ -108,7 +108,7 @@ app.post('/api/campaigns/generate', async (req, res) => {
                 keywords: ['buy toyota prado uae', 'best car deals dubai', 'autodealer cars']
             },
             meta_ads: {
-                primary_text: `Looking for a ${target_model || 'Toyota Prado'}? AutoDealer Cars has the best prices in the UAE. Visit us today!`,
+                primary_text: `Looking for a ${target_model || 'Toyota Prado'}? NEXUS OS Cars has the best prices in the UAE. Visit us today!`,
                 cta: 'LEARN_MORE',
                 audience: 'UAE residents, Age 25-55, Interest: Cars, Luxury'
             },
@@ -209,7 +209,7 @@ app.post('/api/nurture/trigger', async (req, res) => {
 // The actual scraping + AI analysis is done by the n8n Hermes Competitor
 // Intel workflow, which writes directly into the Supabase 'competitors' table.
 cron.schedule('0 6 * * *', async () => {
-    console.log('[Cron] Daily competitor intel reminder — see n8n workflow "Alba Competitor Intelligence".');
+    console.log('[Cron] Daily competitor intel reminder — see n8n workflow "NEXUS Competitor Intelligence".');
 });
 
 // ==========================================
@@ -260,7 +260,7 @@ app.post('/api/webhooks/make', async (req, res) => {
 
 // Start Server
 app.listen(port, () => {
-    console.log(`[Enterprise API] AutoDealer Marketing OS listening on port ${port}`);
+    console.log(`[Enterprise API] NEXUS OS Marketing OS listening on port ${port}`);
     console.log(`[Enterprise API] Data source: Supabase (real persistent storage)`);
 });
 

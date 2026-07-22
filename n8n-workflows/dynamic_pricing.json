@@ -23,22 +23,12 @@
     },
     {
       "parameters": {
-        "url": "https://example-competitor.com/api/products",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "// MOCK COMPETITOR DATA — Replace this with real API call when ready\n// TODO: Replace URL in httpRequest node with real competitor API endpoint\nconst mockCompetitorData = {\n  products: [\n    { sku: 'VH-2024-CAMRY', price: 28500, name: 'Toyota Camry 2024' },\n    { sku: 'VH-2024-CIVIC', price: 26200, name: 'Honda Civic 2024' },\n    { sku: 'VH-2024-ACCORD', price: 31800, name: 'Honda Accord 2024' },\n    { sku: 'VH-2024-RAV4', price: 33400, name: 'Toyota RAV4 2024' },\n    { sku: 'VH-2024-CRV', price: 32100, name: 'Honda CR-V 2024' },\n    { sku: 'VH-2024-COROLLA', price: 22900, name: 'Toyota Corolla 2024' }\n  ],\n  source: 'mock-data',\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: mockCompetitorData }];"
       },
-      "id": "c3d9ef92-07a8-4c00-9112-9c17be1fa9a1",
-      "name": "Scrape Competitor API",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "id": "mock-competitor-data",
+      "name": "Mock Competitor Data (Replace with Real API)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         400,
         240
@@ -47,7 +37,6 @@
     {
       "parameters": {
         "operation": "getAll",
-        "projectId": "SUPABASE_PROJECT_REF",
         "table": "inventory",
         "options": {}
       },
@@ -61,14 +50,14 @@
       ],
       "credentials": {
         "supabaseApi": {
-          "id": "1",
-          "name": "Supabase account"
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - NEXUS OS"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "const competitorData = $items(\"Scrape Competitor API\")[0].json;\nconst localInventory = $input.all();\n\nconst updates = [];\n\nfor (const item of localInventory) {\n  const product = item.json;\n  const competitorProduct = competitorData.products.find(p => p.sku === product.sku);\n  \n  if (competitorProduct && competitorProduct.price < product.price) {\n    updates.push({\n      json: {\n        id: product.id,\n        sku: product.sku,\n        oldPrice: product.price,\n        price: competitorProduct.price - 0.01\n      }\n    });\n  }\n}\n\nreturn updates;"
+        "jsCode": "const competitorData = $items(\"Mock Competitor Data (Replace with Real API)\")[0].json;\nconst localInventory = $input.all();\n\nconst updates = [];\n\nfor (const item of localInventory) {\n  const product = item.json;\n  const competitorProduct = competitorData.products.find(p => p.sku === product.sku);\n  \n  if (competitorProduct && competitorProduct.price < product.price) {\n    updates.push({\n      json: {\n        id: product.id,\n        sku: product.sku,\n        oldPrice: product.price,\n        price: competitorProduct.price - 0.01\n      }\n    });\n  }\n}\n\nif (updates.length === 0) {\n  return [{ json: { message: 'No price updates needed', timestamp: new Date().toISOString() } }];\n}\n\nreturn updates;"
       },
       "id": "4d5885c3-3004-4d87-9913-75b5b0eb81cc",
       "name": "Calculate Dynamic Pricing",
@@ -82,7 +71,6 @@
     {
       "parameters": {
         "operation": "update",
-        "projectId": "SUPABASE_PROJECT_REF",
         "table": "inventory",
         "columns": "price",
         "options": {}
@@ -97,8 +85,8 @@
       ],
       "credentials": {
         "supabaseApi": {
-          "id": "1",
-          "name": "Supabase account"
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - NEXUS OS"
         }
       }
     }
@@ -109,14 +97,14 @@
       "main": [
         [
           {
-            "node": "Scrape Competitor API",
+            "node": "Mock Competitor Data (Replace with Real API)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Scrape Competitor API": {
+    "Mock Competitor Data (Replace with Real API)": {
       "main": [
         [
           {
@@ -154,7 +142,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "c9dbb9f1-a188-4665-9854-8c85ebda627b",
+  "versionId": "dynamic-pricing-v2-fixed",
   "id": "wf_102",
   "meta": {
     "templateCredsSetupCompleted": true

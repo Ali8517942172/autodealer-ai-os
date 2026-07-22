@@ -10,17 +10,17 @@ def replace_in_file(filepath):
 
     original = content
     # Replace cases
-    content = re.sub(r'\bAlba\b', 'AutoDealer', content)
-    content = re.sub(r'\balba\b', 'autodealer', content)
+    content = re.sub(r'\bNEXUS\b', 'NEXUS OS', content)
+    content = re.sub(r'\bnexus\b', 'autodealer', content)
     content = re.sub(r'\bALBA\b', 'AUTODEALER', content)
     
-    # Also catch joined words like autodealer-ai-os-marketing -> autodealer-ai-os-marketing
+    # Also catch joined words like nexus-os-marketing -> nexus-os-marketing
     content = re.sub(r'autodealer-', 'autodealer-', content)
-    content = re.sub(r'AutoDealer-', 'AutoDealer-', content)
+    content = re.sub(r'NEXUS OS-', 'NEXUS OS-', content)
     content = re.sub(r'-autodealer', '-autodealer', content)
     
-    # Catch "AutoDealer Cars" -> "AutoDealer AI"
-    content = re.sub(r'AutoDealer Cars', 'AutoDealer', content)
+    # Catch "NEXUS OS Cars" -> "NEXUS OS AI"
+    content = re.sub(r'NEXUS OS Cars', 'NEXUS OS', content)
     content = re.sub(r'autodealer cars', 'autodealer', content)
 
     if content != original:

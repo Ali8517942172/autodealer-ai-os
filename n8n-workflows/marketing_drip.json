@@ -30,24 +30,34 @@
     },
     {
       "parameters": {
-        "fromEmail": "sales@company.com",
-        "toEmail": "={{$json.body.email}}",
-        "subject": "Welcome to Our Platform!",
-        "text": "Hi {{$json.body.name}},\n\nThank you for your interest. We are excited to have you onboard.\n\nBest,\nThe Team"
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"NEXUS OS Sales <sales@nexuscorp.net>\",\n  \"to\": [\"{{ $node['Webhook Trigger'].json.body.email }}\"],\n  \"subject\": \"Welcome to NEXUS OS! 🚗\",\n  \"html\": \"<h2>Hi {{ $node['Webhook Trigger'].json.body.name }},</h2><p>Thank you for your interest in NEXUS OS. We have an incredible selection of premium vehicles waiting for you.</p><p>Reply to this email or call us to schedule your personal showroom tour.</p><br><p>Best regards,<br>NEXUS OS Sales Team</p>\"\n}",
+        "options": {}
       },
-      "name": "Email: Welcome",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 1,
+      "name": "Email: Welcome (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [
         650,
         300
-      ]
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AUsufgmxQqmkeIPw",
+          "name": "Resend Email API"
+        }
+      }
     },
     {
       "parameters": {
-        "from": "1234567890",
-        "to": "={{$json.body.phone}}",
-        "message": "Hi {{$json.body.name}}, thanks for joining us! Check your email for more details."
+        "from": "+1234567890",
+        "to": "={{ $node['Webhook Trigger'].json.body.phone }}",
+        "message": "Hi {{ $node['Webhook Trigger'].json.body.name }}, thanks for contacting NEXUS OS! Check your email for exclusive offers. Reply STOP to opt out."
       },
       "name": "SMS: Welcome",
       "type": "n8n-nodes-base.twilio",
@@ -55,7 +65,14 @@
       "position": [
         850,
         300
-      ]
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "uSZczHzmgv3bHs5w",
+          "name": "Twilio SMS API"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -72,18 +89,28 @@
     },
     {
       "parameters": {
-        "fromEmail": "sales@company.com",
-        "toEmail": "={{$json.body.email}}",
-        "subject": "Did you get a chance to look around?",
-        "text": "Hi {{$json.body.name}},\n\nJust checking in. Let us know if you have any questions.\n\nBest,\nThe Team"
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"NEXUS OS Sales <sales@nexuscorp.net>\",\n  \"to\": [\"{{ $node['Webhook Trigger'].json.body.email }}\"],\n  \"subject\": \"Did you find your dream car? 🔑\",\n  \"html\": \"<h2>Hi {{ $node['Webhook Trigger'].json.body.name }},</h2><p>Just checking in — have you had a chance to browse our inventory?</p><p>We have new arrivals this week including premium SUVs and sedans. Let us know if you need any help!</p><br><p>Best regards,<br>NEXUS OS Sales Team</p>\"\n}",
+        "options": {}
       },
-      "name": "Email: Follow Up",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 1,
+      "name": "Email: Follow Up (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [
         1250,
         300
-      ]
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AUsufgmxQqmkeIPw",
+          "name": "Resend Email API"
+        }
+      }
     },
     {
       "parameters": {
@@ -100,9 +127,9 @@
     },
     {
       "parameters": {
-        "from": "1234567890",
-        "to": "={{$json.body.phone}}",
-        "message": "Hi {{$json.body.name}}, don't forget to schedule your free onboarding call!"
+        "from": "+1234567890",
+        "to": "={{ $node['Webhook Trigger'].json.body.phone }}",
+        "message": "Hi {{ $node['Webhook Trigger'].json.body.name }}, don't miss our weekend specials at NEXUS OS! Schedule your test drive today: https://nexuscorp.net/book"
       },
       "name": "SMS: Check-in",
       "type": "n8n-nodes-base.twilio",
@@ -110,7 +137,14 @@
       "position": [
         1650,
         300
-      ]
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "uSZczHzmgv3bHs5w",
+          "name": "Twilio SMS API"
+        }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -127,18 +161,28 @@
     },
     {
       "parameters": {
-        "fromEmail": "sales@company.com",
-        "toEmail": "={{$json.body.email}}",
-        "subject": "Special Offer Just for You!",
-        "text": "Hi {{$json.body.name}},\n\nAs a thank you, here is a 20% discount on your first month.\n\nBest,\nThe Team"
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"NEXUS OS Sales <sales@nexuscorp.net>\",\n  \"to\": [\"{{ $node['Webhook Trigger'].json.body.email }}\"],\n  \"subject\": \"🎉 Exclusive Offer — Just for You!\",\n  \"html\": \"<h2>Hi {{ $node['Webhook Trigger'].json.body.name }},</h2><p>As a special thank you for your interest, we're offering you an <strong>exclusive 5% discount</strong> on your first purchase at NEXUS OS.</p><p>This offer expires in 48 hours. Don't miss out!</p><p><a href='https://nexuscorp.net/book'>Book Your Test Drive Now →</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>\"\n}",
+        "options": {}
       },
-      "name": "Email: Final Offer",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 1,
+      "name": "Email: Final Offer (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [
         2050,
         300
-      ]
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AUsufgmxQqmkeIPw",
+          "name": "Resend Email API"
+        }
+      }
     }
   ],
   "connections": {
@@ -157,14 +201,14 @@
       "main": [
         [
           {
-            "node": "Email: Welcome",
+            "node": "Email: Welcome (Resend)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Email: Welcome": {
+    "Email: Welcome (Resend)": {
       "main": [
         [
           {
@@ -190,14 +234,14 @@
       "main": [
         [
           {
-            "node": "Email: Follow Up",
+            "node": "Email: Follow Up (Resend)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Email: Follow Up": {
+    "Email: Follow Up (Resend)": {
       "main": [
         [
           {
@@ -234,7 +278,7 @@
       "main": [
         [
           {
-            "node": "Email: Final Offer",
+            "node": "Email: Final Offer (Resend)",
             "type": "main",
             "index": 0
           }

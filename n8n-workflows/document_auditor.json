@@ -5,7 +5,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "audit-kyc",
-        "responseMode": "onReceived",
+        "responseMode": "lastNode",
         "options": {}
       },
       "id": "2d1b8c04-f584-486a-8b1e-62e9c20a4b67",
@@ -19,45 +19,68 @@
     },
     {
       "parameters": {
-        "resource": "chat",
-        "model": "gpt-4-vision-preview",
-        "messages": {
-          "messageValues": [
-            {
-              "content": "You are a professional KYC/AML Document Auditor for car buyers. Analyze the provided document image and extract: Full Name, Date of Birth, Expiry Date, Document Type, Validity. Check for any signs of tampering or inconsistencies. Respond STRICTLY in JSON format: { \"fullName\": \"...\", \"dateOfBirth\": \"...\", \"expiryDate\": \"...\", \"documentType\": \"...\", \"isValid\": true/false, \"tamperingDetected\": true/false, \"confidenceScore\": 0-100, \"remarks\": \"...\" }"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "// Extract document content from webhook payload\nconst items = $input.all();\nconst item = items[0].json;\n\n// Try to get file data from binary or body\nlet documentContent = '';\nlet imageBase64 = null;\n\nif (item.body && item.body.document_base64) {\n  imageBase64 = item.body.document_base64;\n  documentContent = 'Image document provided as base64';\n} else if (item.body && item.body.document_text) {\n  documentContent = item.body.document_text;\n} else if (item.body && item.body.text) {\n  documentContent = item.body.text;\n} else {\n  documentContent = JSON.stringify(item.body || item);\n}\n\nreturn [{\n  json: {\n    documentContent,\n    imageBase64,\n    hasImage: !!imageBase64\n  }\n}];"
       },
-      "id": "e96f1d24-3435-46c4-bfa2-3531b26c2712",
-      "name": "OpenAI Vision (KYC Analysis)",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1,
+      "id": "prep-doc-node",
+      "name": "Prepare Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        20,
+        0,
         0
       ]
     },
     {
       "parameters": {
-        "keepOnlySet": true,
-        "values": {
-          "string": [
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "name": "auditResult",
-              "value": "={{ $json.message.content }}"
+              "name": "HTTP-Referer",
+              "value": "https://nexuscorp.net"
+            },
+            {
+              "name": "X-Title",
+              "value": "NEXUS OS - KYC Auditor"
             }
           ]
         },
-        "options": {}
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 1500,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a professional KYC/AML Document Auditor for car buyers. Analyze the provided document and extract: Full Name, Date of Birth, Expiry Date, Document Type, Validity. Check for any signs of tampering or inconsistencies. Respond STRICTLY in JSON format: { \\\"fullName\\\": \\\"...\\\", \\\"dateOfBirth\\\": \\\"...\\\", \\\"expiryDate\\\": \\\"...\\\", \\\"documentType\\\": \\\"...\\\", \\\"isValid\\\": true/false, \\\"tamperingDetected\\\": true/false, \\\"confidenceScore\\\": 0-100, \\\"remarks\\\": \\\"...\\\" }\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ $json.hasImage ? JSON.stringify([{\"type\": \"text\", \"text\": \"Analyze this KYC document:\"}, {\"type\": \"image_url\", \"image_url\": {\"url\": \"data:image/jpeg;base64,\" + $json.imageBase64}}]) : JSON.stringify(\"Analyze this KYC document text:\\n\\n\" + $json.documentContent) }}\n    }\n  ]\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "e96f1d24-3435-46c4-bfa2-3531b26c2712",
+      "name": "OpenRouter Vision (KYC Analysis)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst content = response.choices[0].message.content;\n\n// Try to parse the JSON from the AI response\nlet auditResult;\ntry {\n  // Remove markdown code fences if present\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  auditResult = JSON.parse(cleaned);\n} catch (e) {\n  auditResult = {\n    fullName: 'PARSE_ERROR',\n    isValid: false,\n    tamperingDetected: false,\n    confidenceScore: 0,\n    remarks: 'Failed to parse AI response: ' + content.substring(0, 200)\n  };\n}\n\nreturn [{ json: { auditResult: JSON.stringify(auditResult), parsed: auditResult } }];"
       },
       "id": "6eb678c1-155e-49cd-a24a-fb48721c4355",
       "name": "Parse JSON Output",
-      "type": "n8n-nodes-base.set",
+      "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
+        440,
         0
       ]
     },
@@ -66,11 +89,11 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{ JSON.parse($json.auditResult).isValid }}",
+              "value1": "={{ $json.parsed.isValid }}",
               "value2": true
             },
             {
-              "value1": "={{ JSON.parse($json.auditResult).tamperingDetected }}",
+              "value1": "={{ $json.parsed.tamperingDetected }}",
               "value2": false
             }
           ]
@@ -81,7 +104,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1.1,
       "position": [
-        460,
+        660,
         0
       ]
     },
@@ -111,7 +134,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        700,
+        900,
         -100
       ]
     },
@@ -141,7 +164,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        700,
+        900,
         100
       ]
     }
@@ -151,14 +174,25 @@
       "main": [
         [
           {
-            "node": "OpenAI Vision (KYC Analysis)",
+            "node": "Prepare Document",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenAI Vision (KYC Analysis)": {
+    "Prepare Document": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter Vision (KYC Analysis)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Vision (KYC Analysis)": {
       "main": [
         [
           {
@@ -203,6 +237,6 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "kyc-aml-doc-auditor-v1",
+  "versionId": "kyc-aml-doc-auditor-v2-fixed",
   "id": "wf_101"
 }

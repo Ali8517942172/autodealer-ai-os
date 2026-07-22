@@ -1,5 +1,5 @@
 /**
- * AutoDealer Marketing OS - Competitor Price Scraper
+ * NEXUS OS Marketing OS - Competitor Price Scraper
  * 
  * Production-grade scraper that runs daily via cron.
  * Scrapes competitor dealership websites and classifieds
@@ -18,7 +18,7 @@ const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
 const mongoUrl = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const dbName = 'alba_marketing';
+const dbName = 'nexus_marketing';
 
 // Competitor sources to monitor
 const COMPETITORS = [
@@ -102,7 +102,7 @@ function generateRecommendation(competitorPrice, ourPrice, model) {
  * Main scraper execution
  */
 async function runScraper() {
-    console.log('=== AutoDealer Competitor Intelligence Scraper ===');
+    console.log('=== NEXUS OS Competitor Intelligence Scraper ===');
     console.log(`Started at: ${new Date().toISOString()}`);
     console.log(`Monitoring ${COMPETITORS.length} competitors across ${TARGET_MODELS.length} models\n`);
 

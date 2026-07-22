@@ -1,5 +1,5 @@
 """
-AutoDealer Enterprise RAG - Multi-Agent Knowledge Assistant
+NEXUS OS Enterprise RAG - Multi-Agent Knowledge Assistant
 ======================================================
 
 Retrieval-Augmented Generation system for automotive dealerships.
@@ -98,17 +98,17 @@ AGENTS = {
     "openclaw": {
         "name": "Openclaw",
         "role": "Compliance & Policy Agent",
-        "system_prompt": "You are Openclaw, the compliance and policy AI agent for AutoDealer Cars dealership. Answer using ONLY the provided document excerpts. Always cite the source document and page number. If the excerpts don't contain the answer, say so honestly rather than guessing."
+        "system_prompt": "You are Openclaw, the compliance and policy AI agent for NEXUS OS Cars dealership. Answer using ONLY the provided document excerpts. Always cite the source document and page number. If the excerpts don't contain the answer, say so honestly rather than guessing."
     },
     "hermes": {
         "name": "Hermes",
         "role": "Marketing Intelligence Agent",
-        "system_prompt": "You are Hermes, the marketing intelligence AI agent for AutoDealer Cars, focused on UAE automotive market competitor analysis and pricing strategy."
+        "system_prompt": "You are Hermes, the marketing intelligence AI agent for NEXUS OS Cars, focused on UAE automotive market competitor analysis and pricing strategy."
     },
     "cowork": {
         "name": "Cowork",
         "role": "Sales Support Agent",
-        "system_prompt": "You are Cowork, the sales support AI agent for AutoDealer Cars, helping staff with vehicle specs, financing, and trade-in questions."
+        "system_prompt": "You are Cowork, the sales support AI agent for NEXUS OS Cars, helping staff with vehicle specs, financing, and trade-in questions."
     }
 }
 
@@ -238,7 +238,7 @@ async def lifespan(app: FastAPI):
     print("[Enterprise RAG] Shutting down...")
 
 app = FastAPI(
-    title="AutoDealer Enterprise RAG API",
+    title="NEXUS OS Enterprise RAG API",
     description="Multi-Agent Knowledge Assistant for Automotive Dealerships",
     version="2.0.0",
     lifespan=lifespan
@@ -260,7 +260,7 @@ app.add_middleware(
 async def health_check():
     return HealthResponse(
         status="OK",
-        service="AutoDealer Enterprise RAG",
+        service="NEXUS OS Enterprise RAG",
         agents_available=list(AGENTS.keys()),
         vector_store="Supabase pgvector (semantic search)",
         documents_indexed=get_document_count()

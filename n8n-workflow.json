@@ -1,5 +1,5 @@
 {
-  "name": "AutoDealer CRM — Lead Ingestion Pipeline",
+  "name": "NEXUS OS CRM — Lead Ingestion Pipeline",
   "nodes": [
     {
       "parameters": {

@@ -1,5 +1,5 @@
 """
-AutoDealer AI OS - AI Gateway Service
+NEXUS OS - AI Gateway Service
 =======================================
 
 BUSINESS PROBLEM:
@@ -159,15 +159,15 @@ usage_log = []
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("[AI Gateway] Starting AutoDealer AI Gateway Service...")
+    print("[AI Gateway] Starting NEXUS OS AI Gateway Service...")
     print(f"[AI Gateway] OpenRouter API Key: {'configured' if OPENROUTER_API_KEY else 'NOT SET'}")
     print(f"[AI Gateway] Available agents: {list(AGENT_PROMPTS.keys())}")
     yield
     print("[AI Gateway] Shutting down...")
 
 app = FastAPI(
-    title="AutoDealer AI Gateway",
-    description="Centralized AI/LLM Gateway for AutoDealer AI OS. Routes requests to OpenRouter.",
+    title="NEXUS OS AI Gateway",
+    description="Centralized AI/LLM Gateway for NEXUS OS. Routes requests to OpenRouter.",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -198,7 +198,7 @@ async def call_openrouter(messages: list, model: str, temperature: float = 0.7, 
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://github.com/Ali8517942172/autodealer-ai-platform",
-        "X-Title": "AutoDealer AI OS"
+        "X-Title": "NEXUS OS"
     }
 
     payload = {
@@ -233,7 +233,7 @@ async def call_openrouter(messages: list, model: str, temperature: float = 0.7, 
 async def health():
     return {
         "status": "OK",
-        "service": "AutoDealer AI Gateway",
+        "service": "NEXUS OS AI Gateway",
         "openrouter_configured": bool(OPENROUTER_API_KEY),
         "agents_available": list(AGENT_PROMPTS.keys()),
         "total_requests_served": len(usage_log)

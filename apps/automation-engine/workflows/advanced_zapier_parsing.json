@@ -1,12 +1,12 @@
 {
   "name": "Zapier AI Inbound Email Parsing & CRM Sync",
   "platform": "Zapier",
-  "description": "Monitors a dedicated sales inbox for unstructured inquiries, uses Zapier's built-in AI (or external LLM) to extract structured entity data (Name, Email, Vehicle, Intent), and securely pushes it to the AutoDealer AI Platform. Includes fallback mechanisms if the AI parsing fails.",
+  "description": "Monitors a dedicated sales inbox for unstructured inquiries, uses Zapier's built-in AI (or external LLM) to extract structured entity data (Name, Email, Vehicle, Intent), and securely pushes it to the NEXUS OS AI Platform. Includes fallback mechanisms if the AI parsing fails.",
   "trigger": {
     "app": "Gmail",
     "event": "New Email Matching Search",
     "config": {
-      "search_string": "to:sales@albacorp.net",
+      "search_string": "to:sales@nexuscorp.net",
       "folder": "INBOX"
     }
   },

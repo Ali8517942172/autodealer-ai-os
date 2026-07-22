@@ -1,5 +1,5 @@
 /**
- * AutoDealer AI OS - Odoo ERP Integration Module
+ * NEXUS OS - Odoo ERP Integration Module
  * ================================================
  * 
  * BUSINESS PROBLEM:
@@ -8,7 +8,7 @@
  *   Currently, data is manually copied between CRM and Odoo.
  * 
  * SOLUTION:
- *   Bidirectional sync between AutoDealer AI OS and Odoo via XML-RPC API.
+ *   Bidirectional sync between NEXUS OS and Odoo via XML-RPC API.
  *   When a deal closes in the AI CRM → auto-creates invoice in Odoo.
  *   When a vehicle is purchased in Odoo → auto-appears in AI Inventory.
  * 
@@ -98,7 +98,7 @@ async function odooSearchRead(model, domain = [], fields = [], limit = 50) {
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
-        service: 'AutoDealer Odoo ERP Integration',
+        service: 'NEXUS OS Odoo ERP Integration',
         odoo_url: ODOO_URL,
         odoo_db: ODOO_DB
     });

@@ -1,7 +1,7 @@
 {
-  "name": "autodealer-ai-os-marketing",
+  "name": "nexus-os-marketing",
   "version": "1.0.0",
-  "description": "AutoDealer AI Marketing Intelligence Platform - Competitor scraping, AI campaign generation, and attribution analytics",
+  "description": "NEXUS OS AI Marketing Intelligence Platform - Competitor scraping, AI campaign generation, and attribution analytics",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

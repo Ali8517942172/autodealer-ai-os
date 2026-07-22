@@ -1,5 +1,5 @@
 /**
- * AutoDealer AI OS — AI CRM Backend API
+ * NEXUS OS — AI CRM Backend API
  * TECH STACK: Node.js + Express + Supabase (Postgres) — real persistent storage
  */
 
@@ -35,7 +35,7 @@ function classifyLead(score) {
 }
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', service: 'AutoDealer AI CRM Backend', version: '1.0.0', timestamp: new Date().toISOString() });
+    res.json({ status: 'OK', service: 'NEXUS OS AI CRM Backend', version: '1.0.0', timestamp: new Date().toISOString() });
 });
 
 app.get('/api/v1/leads', async (req, res) => {
@@ -191,7 +191,7 @@ app.get('/api/leads', (req, res) => res.redirect('/api/v1/leads'));
 app.get('/api/inventory', (req, res) => res.redirect('/api/v1/inventory'));
 
 app.listen(port, () => {
-    console.log(`[Enterprise API] AutoDealer AI CRM Backend running on port ${port}`);
+    console.log(`[Enterprise API] NEXUS OS AI CRM Backend running on port ${port}`);
     console.log(`[Enterprise API] Data source: Supabase (real persistent storage)`);
 });
 

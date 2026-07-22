@@ -1,7 +1,7 @@
 {
   "name": "Advanced Multi-Channel Lead Routing & Scoring",
   "platform": "Make.com",
-  "description": "Enterprise-grade Make.com scenario that watches for leads across multiple channels (Google Forms, Facebook Lead Ads). It validates phone numbers and emails, uses AI for initial sentiment analysis, and routes to AutoDealer CRM with dead-letter queue error handling.",
+  "description": "Enterprise-grade Make.com scenario that watches for leads across multiple channels (Google Forms, Facebook Lead Ads). It validates phone numbers and emails, uses AI for initial sentiment analysis, and routes to NEXUS OS CRM with dead-letter queue error handling.",
   "modules": [
     {
       "step": 1,
@@ -66,7 +66,7 @@
     "directives": [
       {
         "type": "Break",
-        "description": "If AutoDealer CRM API is down, pause and retry up to 3 times over 15 minutes."
+        "description": "If NEXUS OS CRM API is down, pause and retry up to 3 times over 15 minutes."
       },
       {
         "type": "Ignore / Resume",

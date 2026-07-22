@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const dir = process.cwd();
-const repoUrl = 'https://github.com/Ali8517942172/autodealer-ai-os.git';
+const repoUrl = 'https://github.com/Ali8517942172/nexus-os.git';
 
 async function run() {
     try {
@@ -40,7 +40,7 @@ async function run() {
             fs, dir,
             message: 'feat: add new Stitch screens and mock workflows for n8n, Zapier, Make',
             author: {
-                name: 'AutoDealer',
+                name: 'NEXUS OS',
                 email: 'deploy@autodealer.com'
             }
         });

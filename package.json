@@ -4,5 +4,5 @@
     "dotenv": "^17.4.2",
     "isomorphic-git": "^1.38.7"
   },
-  "name": "autodealer-ai-os"
+  "name": "nexus-os"
 }

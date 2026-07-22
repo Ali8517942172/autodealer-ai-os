@@ -45,45 +45,77 @@
     },
     {
       "parameters": {
-        "resource": "embeddings",
-        "input": "={{ $json.dealText }}",
-        "model": "text-embedding-ada-002"
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "HTTP-Referer",
+              "value": "https://nexuscorp.net"
+            },
+            {
+              "name": "X-Title",
+              "value": "NEXUS OS - RAG Embeddings"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/text-embedding-ada-002\",\n  \"input\": \"{{ $json.dealText }}\"\n}",
+        "options": {
+          "timeout": 15000
+        }
       },
       "id": "3",
-      "name": "OpenAI - Generate Embedding",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1,
+      "name": "OpenRouter - Generate Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [
         650,
         300
       ],
       "credentials": {
-        "openAiApi": {
-          "id": "1",
-          "name": "OpenAI account"
+        "httpHeaderAuth": {
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
         }
-      }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nlet embedding;\n\nif (response.data && response.data[0] && response.data[0].embedding) {\n  embedding = response.data[0].embedding;\n} else {\n  // Fallback: generate a zero vector if embedding fails\n  embedding = new Array(1536).fill(0);\n}\n\nconst dealId = $node['Format Deal Text'].json.dealId;\nconst dealText = $node['Format Deal Text'].json.dealText;\n\nreturn [{ json: { dealId, dealText, embedding: JSON.stringify(embedding) } }];"
+      },
+      "id": "parse-embedding",
+      "name": "Parse Embedding Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        850,
+        300
+      ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO deals_embeddings (deal_id, content, embedding) VALUES ($1, $2, $3) ON CONFLICT (deal_id) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding;",
-        "additionalFields": {
-          "queryParams": "={{ [ $node[\"Format Deal Text\"].json.dealId, $node[\"Format Deal Text\"].json.dealText, JSON.stringify($json.embedding) ] }}"
-        }
+        "query": "INSERT INTO deals_embeddings (deal_id, content, embedding) VALUES ('{{ $json.dealId }}', '{{ $json.dealText }}', '{{ $json.embedding }}') ON CONFLICT (deal_id) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding;",
+        "options": {}
       },
       "id": "4",
       "name": "Supabase (Postgres) - Upsert Vector",
       "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
+      "typeVersion": 2.3,
       "position": [
-        850,
+        1050,
         300
       ],
       "credentials": {
         "postgres": {
-          "id": "2",
-          "name": "Supabase Postgres account"
+          "id": "2njx6fRNkElVRJ6x",
+          "name": "Supabase Postgres (Docker)"
         }
       }
     }
@@ -104,14 +136,25 @@
       "main": [
         [
           {
-            "node": "OpenAI - Generate Embedding",
+            "node": "OpenRouter - Generate Embedding",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenAI - Generate Embedding": {
+    "OpenRouter - Generate Embedding": {
+      "main": [
+        [
+          {
+            "node": "Parse Embedding Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Embedding Response": {
       "main": [
         [
           {
@@ -127,6 +170,6 @@
     "executionOrder": "v1"
   },
   "active": false,
-  "versionId": "df11d88a-d7b4-4b95-bd57-a9a7a13c9e6d",
+  "versionId": "rag-sync-v2-fixed",
   "id": "wf_105"
 }

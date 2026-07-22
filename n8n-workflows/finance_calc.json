@@ -32,17 +32,18 @@
         "options": {}
       },
       "id": "2",
-      "name": "Dummy Credit API",
+      "name": "Credit Score API (Configure Real Endpoint)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
         450,
         300
-      ]
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "const inputData = $input.first().json;\n\n// Extract variables from the Webhook and API response\nconst vehicleValue = parseFloat(inputData.body?.vehicleValue) || 0;\nconst loanPayoffAmount = parseFloat(inputData.body?.loanPayoffAmount) || 0;\nconst creditScore = inputData.creditScore || 700; // Fallback if API response is missing\n\n// Calculate Equity\nconst equity = vehicleValue - loanPayoffAmount;\n\n// Determine Finance Tier based on Credit Score\nlet financeTier = 'Subprime';\nif (creditScore >= 720) {\n  financeTier = 'Prime Plus';\n} else if (creditScore >= 680) {\n  financeTier = 'Prime';\n} else if (creditScore >= 620) {\n  financeTier = 'Near Prime';\n}\n\nreturn {\n  equity: equity,\n  equityStatus: equity >= 0 ? 'Positive' : 'Negative',\n  creditScore: creditScore,\n  financeTier: financeTier,\n  vehicleValue: vehicleValue,\n  loanPayoffAmount: loanPayoffAmount\n};"
+        "jsCode": "const inputData = $input.first().json;\nconst webhookData = $node['Webhook Trigger'].json;\n\n// Extract variables from the Webhook and API response\nconst vehicleValue = parseFloat(webhookData.body?.vehicleValue) || 0;\nconst loanPayoffAmount = parseFloat(webhookData.body?.loanPayoffAmount) || 0;\n// Use API credit score if available, fallback to webhook value or default 700\nconst creditScore = inputData.creditScore || parseInt(webhookData.body?.creditScore) || 700;\n\n// Calculate Equity\nconst equity = vehicleValue - loanPayoffAmount;\n\n// Determine Finance Tier based on Credit Score\nlet financeTier = 'Subprime';\nif (creditScore >= 720) {\n  financeTier = 'Prime Plus';\n} else if (creditScore >= 680) {\n  financeTier = 'Prime';\n} else if (creditScore >= 620) {\n  financeTier = 'Near Prime';\n}\n\nreturn [{\n  json: {\n    status: 'success',\n    equity: equity,\n    equityStatus: equity >= 0 ? 'Positive' : 'Negative',\n    creditScore: creditScore,\n    financeTier: financeTier,\n    vehicleValue: vehicleValue,\n    loanPayoffAmount: loanPayoffAmount,\n    calculatedAt: new Date().toISOString()\n  }\n}];"
       },
       "id": "3",
       "name": "Calculate Equity & Tier",
@@ -52,46 +53,6 @@
         650,
         300
       ]
-    },
-    {
-      "parameters": {
-        "keepOnlySet": true,
-        "values": {
-          "string": [
-            {
-              "name": "status",
-              "value": "success"
-            },
-            {
-              "name": "equityStatus",
-              "value": "={{ $json.equityStatus }}"
-            },
-            {
-              "name": "financeTier",
-              "value": "={{ $json.financeTier }}"
-            }
-          ],
-          "number": [
-            {
-              "name": "equity",
-              "value": "={{ $json.equity }}"
-            },
-            {
-              "name": "creditScore",
-              "value": "={{ $json.creditScore }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "4",
-      "name": "Format Final Output",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.2,
-      "position": [
-        850,
-        300
-      ]
     }
   ],
   "connections": {
@@ -99,29 +60,18 @@
       "main": [
         [
           {
-            "node": "Dummy Credit API",
+            "node": "Credit Score API (Configure Real Endpoint)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Dummy Credit API": {
+    "Credit Score API (Configure Real Endpoint)": {
       "main": [
         [
           {
             "node": "Calculate Equity & Tier",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Calculate Equity & Tier": {
-      "main": [
-        [
-          {
-            "node": "Format Final Output",
             "type": "main",
             "index": 0
           }

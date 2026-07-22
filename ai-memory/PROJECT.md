@@ -1,7 +1,7 @@
 # Project Overview
 
 Project:
-AutoDealer Cars Enterprise Platform
+NEXUS OS Cars Enterprise Platform
 
 
 ## Objective
