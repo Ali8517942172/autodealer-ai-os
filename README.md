@@ -162,7 +162,7 @@ The platform is designed as a SaaS product adaptable to any dealership:
 
 ```
 /customers
-  ├── autodealer-cars/
+  ├── Nexus-cars/
   ├── toyota-dubai/
   ├── nissan-uae/
   └── bmw-abudhabi/

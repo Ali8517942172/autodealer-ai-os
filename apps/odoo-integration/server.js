@@ -37,7 +37,7 @@ app.use(express.json());
 
 // Odoo Connection Config
 const ODOO_URL = process.env.ODOO_URL || 'http://localhost:8069';
-const ODOO_DB = process.env.ODOO_DB || 'autodealer_erp';
+const ODOO_DB = process.env.ODOO_DB || 'Nexus_erp';
 const ODOO_USER = process.env.ODOO_USER || 'admin';
 const ODOO_PASSWORD = process.env.ODOO_PASSWORD || 'admin';
 

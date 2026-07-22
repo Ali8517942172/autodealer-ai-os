@@ -41,7 +41,7 @@ async function run() {
             message: 'feat: add new Stitch screens and mock workflows for n8n, Zapier, Make',
             author: {
                 name: 'NEXUS OS',
-                email: 'deploy@autodealer.com'
+                email: 'deploy@Nexus.com'
             }
         });
 

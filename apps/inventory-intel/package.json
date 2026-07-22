@@ -1,5 +1,5 @@
 {
-  "name": "autodealer-inventory-intel",
+  "name": "Nexus-inventory-intel",
   "version": "1.0.0",
   "description": "AI-powered Vehicle Inventory Lifecycle Management for Automotive Dealerships",
   "main": "server.js",

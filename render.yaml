@@ -3,7 +3,7 @@ services:
   # 1. AI Gateway (Python / FastAPI) — port $PORT
   # ─────────────────────────────────────────────
   - type: web
-    name: autodealer-gateway
+    name: Nexus-gateway
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -22,7 +22,7 @@ services:
   # 2. Executive Dashboard (Node.js) — port $PORT
   # ─────────────────────────────────────────────
   - type: web
-    name: autodealer-dashboard
+    name: Nexus-dashboard
     env: node
     plan: free
     buildCommand: npm install
@@ -31,11 +31,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: CRM_API_URL
-        value: https://autodealer-crm-api.onrender.com
+        value: https://Nexus-crm-api.onrender.com
       - key: MARKETING_API_URL
-        value: https://autodealer-marketing.onrender.com
+        value: https://Nexus-marketing.onrender.com
       - key: AI_GATEWAY_URL
-        value: https://autodealer-gateway.onrender.com
+        value: https://Nexus-gateway.onrender.com
     rootDir: apps/executive-dashboard
     healthCheckPath: /api/health
 
@@ -43,7 +43,7 @@ services:
   # 3. AI CRM Backend (Node.js) — port $PORT
   # ─────────────────────────────────────────────
   - type: web
-    name: autodealer-crm-api
+    name: Nexus-crm-api
     env: node
     plan: free
     buildCommand: npm install
@@ -56,7 +56,7 @@ services:
       - key: SUPABASE_ANON_KEY
         sync: false
       - key: AI_GATEWAY_URL
-        value: https://autodealer-gateway.onrender.com
+        value: https://Nexus-gateway.onrender.com
     rootDir: apps/ai-crm/backend
     healthCheckPath: /api/health
 
@@ -64,7 +64,7 @@ services:
   # 4. Marketing OS (Node.js) — port $PORT
   # ─────────────────────────────────────────────
   - type: web
-    name: autodealer-marketing
+    name: Nexus-marketing
     env: node
     plan: free
     buildCommand: npm install
@@ -73,9 +73,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: AI_GATEWAY_URL
-        value: https://autodealer-gateway.onrender.com
+        value: https://Nexus-gateway.onrender.com
       - key: CRM_API_URL
-        value: https://autodealer-crm-api.onrender.com
+        value: https://Nexus-crm-api.onrender.com
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
@@ -87,7 +87,7 @@ services:
   # 5. Enterprise RAG (Python / FastAPI) — port $PORT
   # ─────────────────────────────────────────────
   - type: web
-    name: autodealer-rag
+    name: Nexus-rag
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt

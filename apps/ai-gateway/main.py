@@ -197,7 +197,7 @@ async def call_openrouter(messages: list, model: str, temperature: float = 0.7, 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Ali8517942172/autodealer-ai-platform",
+        "HTTP-Referer": "https://github.com/Ali8517942172/Nexus-ai-platform",
         "X-Title": "NEXUS OS"
     }
 

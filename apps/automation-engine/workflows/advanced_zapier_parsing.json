@@ -49,7 +49,7 @@
       "app": "Webhooks by Zapier",
       "action": "Custom Request (POST)",
       "config": {
-        "url": "{{ALBA_AI_GATEWAY_URL}}/api/v1/inbound-email",
+        "url": "{{Nexus_AI_GATEWAY_URL}}/api/v1/inbound-email",
         "headers": {
           "X-API-KEY": "{{ZAPIER_SECRET}}",
           "Content-Type": "application/json"

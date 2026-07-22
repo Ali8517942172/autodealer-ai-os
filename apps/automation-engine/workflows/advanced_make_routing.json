@@ -38,7 +38,7 @@
             {
               "module": "HTTP",
               "action": "Make an API Request",
-              "url": "{{ALBA_AI_GATEWAY_URL}}/api/v1/leads/hot",
+              "url": "{{Nexus_AI_GATEWAY_URL}}/api/v1/leads/hot",
               "method": "POST"
             },
             {
@@ -54,7 +54,7 @@
             {
               "module": "HTTP",
               "action": "Make an API Request",
-              "url": "{{ALBA_AI_GATEWAY_URL}}/api/v1/leads/standard",
+              "url": "{{Nexus_AI_GATEWAY_URL}}/api/v1/leads/standard",
               "method": "POST"
             }
           ]

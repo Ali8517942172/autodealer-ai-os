@@ -105,7 +105,7 @@ app.post('/api/campaigns/generate', async (req, res) => {
             google_ads: {
                 headline: `Best Price on ${target_model || 'Toyota Prado'} in UAE`,
                 description: 'Certified pre-owned. Full warranty. Finance available from AED 2,500/month.',
-                keywords: ['buy toyota prado uae', 'best car deals dubai', 'autodealer cars']
+                keywords: ['buy toyota prado uae', 'best car deals dubai', 'Nexus cars']
             },
             meta_ads: {
                 primary_text: `Looking for a ${target_model || 'Toyota Prado'}? NEXUS OS Cars has the best prices in the UAE. Visit us today!`,
@@ -218,7 +218,7 @@ cron.schedule('0 6 * * *', async () => {
 
 async function forwardToCRM(leadData) {
     try {
-        const crmUrl = process.env.CRM_API_URL || 'https://autodealer-crm-api.onrender.com';
+        const crmUrl = process.env.CRM_API_URL || 'https://Nexus-crm-api.onrender.com';
         const response = await fetch(`${crmUrl}/api/v1/leads`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

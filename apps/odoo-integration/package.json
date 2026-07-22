@@ -1,5 +1,5 @@
 {
-  "name": "autodealer-odoo-integration",
+  "name": "Nexus-odoo-integration",
   "version": "1.0.0",
   "description": "Odoo ERP Integration for NEXUS OS - Sales, Inventory, Accounting, Purchase",
   "main": "server.js",

@@ -15,7 +15,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [250, 300],
-      "webhookId": "autodealer-lead-webhook"
+      "webhookId": "Nexus-lead-webhook"
     },
     {
       "parameters": {
@@ -30,7 +30,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://autodealer-crm-api.onrender.com/api/v1/leads",
+        "url": "https://Nexus-crm-api.onrender.com/api/v1/leads",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -140,7 +140,7 @@
     "saveDataSuccessExecution": "last"
   },
   "staticData": null,
-  "tags": ["autodealer-corp", "crm", "leads", "webhook"],
+  "tags": ["Nexus-corp", "crm", "leads", "webhook"],
   "active": true,
   "versionId": "2.0.0"
 }
