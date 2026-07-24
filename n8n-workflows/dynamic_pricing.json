@@ -43,7 +43,7 @@
         "options": { "timeout": 20000 }
       },
       "id": "g7-004", "name": "AI Pricing Intelligence", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 300],
-      "credentials": { "httpHeaderAuth": { "id": "OPENROUTER_CRED_ID", "name": "OpenRouter API" } }
+      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } }
     },
     {
       "parameters": {
@@ -75,7 +75,7 @@
         "otherOptions": {}
       },
       "id": "g7-007", "name": "Slack: Daily Report", "type": "n8n-nodes-base.slack", "typeVersion": 2.1, "position": [1200, 100],
-      "credentials": { "slackApi": { "id": "SLACK_CRED_ID", "name": "Slack - NEXUS OS Bot" } },
+      "credentials": { "slackApi": { "id": "HPTEqLu6xjmhEXDN", "name": "Slack - Nexus Bot" } },
       "onError": "continueRegularOutput"
     }
   ],

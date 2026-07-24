@@ -19,9 +19,9 @@ services:
   # ─────────────────────────────────────────────
   - type: web
     name: n8n-automation-engine
-    env: docker
+    env: image
+    image: docker.n8n.io/n8nio/n8n:latest
     plan: free
-    dockerfilePath: ./Dockerfile
     envVars:
       - key: N8N_PORT
         value: "5678"
@@ -68,9 +68,9 @@ services:
   # ─────────────────────────────────────────────
   - type: worker
     name: n8n-worker
-    env: docker
+    env: image
+    image: docker.n8n.io/n8nio/n8n:latest
     plan: free
-    dockerfilePath: ./Dockerfile
     dockerCommand: "n8n worker"
     envVars:
       - key: EXECUTIONS_MODE

@@ -20,7 +20,7 @@
         }
       },
       "id": "j10-002", "name": "Fetch All Active Leads", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [240, 200],
-      "credentials": { "supabaseApi": { "id": "SUPABASE_CRED_ID", "name": "Supabase API" } }
+      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } }
     },
     {
       "parameters": {
@@ -32,7 +32,7 @@
         "limit": 50
       },
       "id": "j10-003", "name": "Fetch Odoo Leads", "type": "n8n-nodes-base.odoo", "typeVersion": 1, "position": [240, 400],
-      "credentials": { "odooApi": { "id": "ODOO_CRED_ID", "name": "Odoo ERP" } },
+      "credentials": { "odooApi": { "id": "QFndoyD3gLoVLidE", "name": "Odoo - Nexus" } },
       "onError": "continueRegularOutput"
     },
     {
@@ -55,7 +55,7 @@
         "options": { "timeout": 12000 }
       },
       "id": "j10-005", "name": "AI Customer Intelligence", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 300],
-      "credentials": { "httpHeaderAuth": { "id": "OPENROUTER_CRED_ID", "name": "OpenRouter API" } }
+      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } }
     },
     {
       "parameters": {
@@ -70,7 +70,7 @@
         "otherOptions": {}
       },
       "id": "j10-007", "name": "Post to Slack", "type": "n8n-nodes-base.slack", "typeVersion": 2.1, "position": [1200, 300],
-      "credentials": { "slackApi": { "id": "SLACK_CRED_ID", "name": "Slack - NEXUS OS Bot" } },
+      "credentials": { "slackApi": { "id": "HPTEqLu6xjmhEXDN", "name": "Slack - Nexus Bot" } },
       "onError": "continueRegularOutput"
     }
   ],

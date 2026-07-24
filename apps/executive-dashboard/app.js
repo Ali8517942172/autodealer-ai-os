@@ -39,6 +39,7 @@ function showPage(page) {
 // LOAD DASHBOARD — direct from Supabase
 // ==========================================
 async function loadDashboard() {
+    const esc = s => String(s||'').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
     try {
         const h = { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` };
         const leadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=priority,score,status&limit=100`, { headers: h });
@@ -49,7 +50,7 @@ async function loadDashboard() {
             document.getElementById('hotLeads').textContent = "-";
             document.getElementById('warmLeads').textContent = "-";
             document.getElementById('coldLeads').textContent = "-";
-            document.getElementById('pipelineValue').textContent = "AED 0";
+            document.getElementById('pipelineValue').textContent = "—";
             document.getElementById('convRate').textContent = "—";
             document.getElementById('avgDays').textContent = "—";
             document.getElementById('aiInsights').innerHTML = `<div class="p-4 text-error text-sm">Failed to load data. Please check Supabase API Key.</div>`;
@@ -63,75 +64,68 @@ async function loadDashboard() {
         document.getElementById('hotLeads').textContent = hot;
         document.getElementById('warmLeads').textContent = warm;
         document.getElementById('coldLeads').textContent = Math.max(0, cold);
-        document.getElementById('pipelineValue').textContent = `AED ${(leads.length * 237.5).toFixed(0)}K`;
-        document.getElementById('convRate').textContent = leads.length ? `${((12/leads.length)*100).toFixed(1)}%` : '—';
-        document.getElementById('avgDays').textContent = '8.3 days';
 
+        // Revenue KPIs: no live finance/revenue feed is wired up yet (no confirmed
+        // Supabase table backs these), so we show an honest empty state instead of
+        // fabricating figures.
+        document.getElementById('pipelineValue').textContent = '—';
+        document.getElementById('convRate').textContent = '—';
+        document.getElementById('avgDays').textContent = '—';
+        document.getElementById('todayRevenue').textContent = '—';
+        document.getElementById('mtdRevenue').textContent = '—';
+        document.getElementById('netProfit').textContent = '—';
+        document.getElementById('grossMargin').textContent = 'No live data yet';
+
+        // AI Insights: only the HOT-lead count below is real (derived from the live
+        // Supabase `leads` query above). There is no AI-generation backend wired up
+        // for narrative insights yet, so we don't fabricate the rest.
         document.getElementById('aiInsights').innerHTML = `
           <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:border-error/30 transition-colors mb-3">
             <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-sm text-error">priority_high</span><span class="text-xs font-bold text-error uppercase">High Priority</span></div>
-            <p class="text-sm text-on-surface-variant leading-relaxed"><strong class="text-on-surface">${hot} HOT leads</strong> need immediate follow-up. Average response window: <span class="text-error font-bold">3 min</span>.</p>
+            <p class="text-sm text-on-surface-variant leading-relaxed"><strong class="text-on-surface">${hot} HOT leads</strong> need immediate follow-up (live count from Supabase).</p>
           </div>
-          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:border-tertiary/30 transition-colors mb-3">
-            <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-sm text-tertiary">analytics</span><span class="text-xs font-bold text-tertiary uppercase">Medium Priority</span></div>
-            <p class="text-sm text-on-surface-variant leading-relaxed">Competitor Al Futtaim dropped Prado price by AED 5K — recommend <span class="text-tertiary font-bold">matching</span>.</p>
-          </div>
-          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:border-secondary/30 transition-colors">
-            <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-sm text-secondary">trending_up</span><span class="text-xs font-bold text-secondary uppercase">Low Priority</span></div>
-            <p class="text-sm text-on-surface-variant leading-relaxed">WhatsApp channel delivering <span class="text-secondary font-bold">1,200% ROI</span> — increase ad spend allocation.</p>
+          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 text-center">
+            <p class="text-sm text-on-surface-variant leading-relaxed italic">Competitor pricing &amp; channel ROI insights — coming soon (no live AI insights feed connected yet).</p>
           </div>`;
 
-        document.getElementById('inventoryAlerts').innerHTML = `
-          <div class="flex items-center gap-4 p-3 bg-outline-variant/10 rounded-lg border border-error/20 mb-3 hover:border-error/40 transition-colors">
-            <div class="flex-1">
-              <div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-on-surface">Nissan Patrol (VH-003)</span><span class="text-[10px] text-error font-bold px-2 py-0.5 bg-error/10 rounded uppercase">Critical</span></div>
-              <p class="text-xs text-on-surface-variant">In stock: <strong class="text-error">147 days</strong>. Reduce price by AED 15K to move within 2 weeks.</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 p-3 bg-outline-variant/10 rounded-lg border border-tertiary/20 hover:border-tertiary/40 transition-colors">
-            <div class="flex-1">
-              <div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-on-surface">BMW X5 (VH-007)</span><span class="text-[10px] text-tertiary font-bold px-2 py-0.5 bg-tertiary/10 rounded uppercase">Warning</span></div>
-              <p class="text-xs text-on-surface-variant">In stock: <strong class="text-tertiary">95 days</strong>. Schedule social media campaign this week.</p>
-            </div>
-          </div>`;
+        // Inventory Alerts: computed for real from Supabase `inventory.days_in_stock`.
+        try {
+            const invRes = await fetch(`${SUPABASE_URL}/rest/v1/inventory?select=id,model,days_in_stock&order=days_in_stock.desc&limit=5`, { headers: h });
+            const inventory = await invRes.json();
+            if (Array.isArray(inventory) && inventory.length) {
+                const aged = inventory.filter(v => (v.days_in_stock || 0) >= 90);
+                document.getElementById('inventoryAlerts').innerHTML = aged.length ? aged.map(v => {
+                    const critical = v.days_in_stock >= 120;
+                    return `<div class="flex items-center gap-4 p-3 bg-outline-variant/10 rounded-lg border ${critical ? 'border-error/20 hover:border-error/40' : 'border-tertiary/20 hover:border-tertiary/40'} mb-3 transition-colors">
+                      <div class="flex-1">
+                        <div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-on-surface">${esc(v.model)} (${esc(v.id)})</span><span class="text-[10px] ${critical ? 'text-error bg-error/10' : 'text-tertiary bg-tertiary/10'} font-bold px-2 py-0.5 rounded uppercase">${critical ? 'Critical' : 'Warning'}</span></div>
+                        <p class="text-xs text-on-surface-variant">In stock: <strong class="${critical ? 'text-error' : 'text-tertiary'}">${esc(v.days_in_stock)} days</strong> (live from Supabase).</p>
+                      </div>
+                    </div>`;
+                }).join('') : `<div class="p-4 text-sm text-on-surface-variant">No aging inventory — all units under 90 days in stock.</div>`;
+            } else {
+                document.getElementById('inventoryAlerts').innerHTML = `<div class="p-4 text-sm text-on-surface-variant">No inventory data available yet.</div>`;
+            }
+        } catch (invErr) {
+            document.getElementById('inventoryAlerts').innerHTML = `<div class="p-4 text-sm text-on-surface-variant">No inventory data available yet.</div>`;
+        }
 
-        document.getElementById('marketingROI').innerHTML = `
-          <div class="flex items-center justify-between p-3 bg-outline-variant/10 rounded-lg border border-outline-variant/20 mb-3 hover:bg-outline-variant/20 transition-colors">
-            <span class="flex items-center gap-2 text-sm text-on-surface"><span class="text-xl">📱</span> WhatsApp</span>
-            <span class="text-secondary font-bold font-mono text-base">1,200%</span>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-outline-variant/10 rounded-lg border border-outline-variant/20 mb-3 hover:bg-outline-variant/20 transition-colors">
-            <span class="flex items-center gap-2 text-sm text-on-surface"><span class="text-xl">📘</span> Facebook/IG</span>
-            <span class="text-primary font-bold font-mono text-base">800%</span>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:bg-outline-variant/20 transition-colors">
-            <span class="flex items-center gap-2 text-sm text-on-surface"><span class="text-xl">🔍</span> Google Ads</span>
-            <span class="text-tertiary font-bold font-mono text-base">700%</span>
-          </div>`;
+        // Marketing ROI: no campaigns/attribution backend wired up yet — honest placeholder.
+        document.getElementById('marketingROI').innerHTML = `<div class="p-4 text-sm text-on-surface-variant italic">Coming soon — channel ROI attribution isn't wired up to a live data source yet.</div>`;
 
-        document.getElementById('topPerformer').innerHTML = `
-          <div class="p-5 bg-primary/10 rounded-xl border border-primary/20 shadow-inner">
-            <div class="font-bold text-on-surface mb-5 flex items-center gap-2 text-base">🏆 Mohammed Al Rashid</div>
-            <div class="flex justify-between text-sm mb-3 pb-3 border-b border-primary/10"><span class="text-on-surface-variant">Deals Closed</span><strong class="text-primary text-base">8</strong></div>
-            <div class="flex justify-between text-sm mb-3 pb-3 border-b border-primary/10"><span class="text-on-surface-variant">Revenue</span><strong class="text-primary text-base">AED 1.9M</strong></div>
-            <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Commission</span><strong class="text-secondary text-base">AED 95,000</strong></div>
-          </div>`;
-
-        document.getElementById('todayRevenue').textContent = 'AED 420K';
-        document.getElementById('mtdRevenue').textContent = 'AED 4.2M';
-        document.getElementById('netProfit').textContent = 'AED 380K';
-        document.getElementById('grossMargin').textContent = '↑ 18.5% margin';
+        // Top Performer: no deals/sales-rep leaderboard backend wired up yet — honest placeholder.
+        document.getElementById('topPerformer').innerHTML = `<div class="p-4 text-sm text-on-surface-variant italic">Coming soon — no live sales leaderboard data source connected yet.</div>`;
 
     } catch (err) {
         console.error('Dashboard load error:', err);
-        // Fallback static data
-        document.getElementById('todayRevenue').textContent = 'AED 420K';
-        document.getElementById('mtdRevenue').textContent = 'AED 4.2M';
-        document.getElementById('pipelineValue').textContent = 'AED 12.4M';
-        document.getElementById('netProfit').textContent = 'AED 380K';
-        document.getElementById('hotLeads').textContent = '15';
-        document.getElementById('warmLeads').textContent = '32';
-        document.getElementById('coldLeads').textContent = '40';
+        // Fallback: honest empty state, not fabricated figures.
+        document.getElementById('todayRevenue').textContent = '—';
+        document.getElementById('mtdRevenue').textContent = '—';
+        document.getElementById('pipelineValue').textContent = '—';
+        document.getElementById('netProfit').textContent = '—';
+        document.getElementById('hotLeads').textContent = '—';
+        document.getElementById('warmLeads').textContent = '—';
+        document.getElementById('coldLeads').textContent = '—';
     }
 }
 
@@ -154,7 +148,7 @@ async function loadLeadsPage() {
           <td class="px-5 py-3 border-b border-outline-variant">${esc(l.status||'New')}</td>
         </tr>`).join('');
 
-        document.getElementById('leadsTable').innerHTML = rows || '<tr><td colspan="6" class="px-5 py-3 text-center text-on-surface-variant">No leads yet — fire a test lead via Make.com webhook</td></tr>';
+        document.getElementById('leadsTable').innerHTML = rows || '<tr><td colspan="6" class="px-5 py-3 text-center text-on-surface-variant">No leads yet — fire a test lead via the n8n webhook</td></tr>';
     } catch(err) {
         document.getElementById('leadsTable').innerHTML = `
           <tr><td class="px-5 py-3"><strong>Ahmed Al-Rashid</strong></td><td class="px-5 py-3">Toyota LC 300</td><td class="px-5 py-3">WhatsApp</td><td class="px-5 py-3"><strong>92</strong></td><td class="px-5 py-3"><span class="badge badge-hot">HOT</span></td><td class="px-5 py-3">Contacted</td></tr>
@@ -265,20 +259,20 @@ function addLiveEvent(type, msg) {
     log.prepend(entry);
 }
 
-async function triggerMakeLeadSync() {
-    addLiveEvent('MAKE_TRIGGER', 'Syncing HOT leads to Odoo ERP via Make.com…');
+async function triggerErpSync() {
+    addLiveEvent('ERP_SYNC_TRIGGER', 'Syncing HOT leads to Odoo ERP via n8n…');
     try {
         const res = await fetch(N8N_ERP_SYNC, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ trigger: 'dashboard', timestamp: new Date().toISOString() }) });
-        addLiveEvent('MAKE_SUCCESS', `ERP sync triggered — status ${res.status}`);
-    } catch(e) { addLiveEvent('MAKE_ERROR', e.message); }
+        addLiveEvent('ERP_SYNC_SUCCESS', `ERP sync triggered — status ${res.status}`);
+    } catch(e) { addLiveEvent('ERP_SYNC_ERROR', e.message); }
 }
 
 async function triggerEscalation(vehicleId) {
-    addLiveEvent('N8N_ESCALATIONALATE', `Escalating ${vehicleId} via Make.com…`);
+    addLiveEvent('N8N_ESCALATION', `Escalating ${vehicleId} via n8n…`);
     try {
         const res = await fetch(N8N_ESCALATION, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ vehicle_id: vehicleId, priority: 'CRITICAL', timestamp: new Date().toISOString() }) });
-        addLiveEvent('MAKE_SUCCESS', `Escalation sent — Slack + Email notified`);
-    } catch(e) { addLiveEvent('MAKE_ERROR', e.message); }
+        addLiveEvent('N8N_ESCALATION_SUCCESS', `Escalation sent — Slack + Email notified`);
+    } catch(e) { addLiveEvent('N8N_ESCALATION_ERROR', e.message); }
 }
 
 async function triggerN8NIntel() {
@@ -291,12 +285,12 @@ async function triggerN8NIntel() {
 
 function loadEventLog() {
     const events = [
-        { time: '09:02:14', type: 'LEAD_SCORED', msg: 'Ahmed Al-Rashid → HOT (92/100) via Make.com' },
+        { time: '09:02:14', type: 'LEAD_SCORED', msg: 'Ahmed Al-Rashid → HOT (92/100) via n8n Master Router' },
         { time: '09:02:17', type: 'WHATSAPP_SENT', msg: 'n8n wf_107: WhatsApp welcome sent to Ahmed' },
         { time: '09:05:30', type: 'COMPETITOR_ALERT', msg: 'Al Futtaim dropped Prado by AED 5K — Intel scraper' },
         { time: '09:10:00', type: 'KYC_AUDIT', msg: 'Contract Auditor: Emirates ID verified (LOW risk)' },
         { time: '09:15:22', type: 'DEAL_CLOSED', msg: 'Fatima: Lexus LX 600 → AED 420K — Supabase synced' },
-        { time: '09:15:24', type: 'ERP_SYNC', msg: 'Make.com: Odoo deal INV-2026-0147 created' },
+        { time: '09:15:24', type: 'ERP_SYNC', msg: 'n8n: Odoo deal INV-2026-0147 created' },
         { time: '09:30:00', type: 'RAG_QUERY', msg: 'Employee asked warranty coverage → Knowledge Agent cited Page 12' },
         { time: '09:45:00', type: 'SLACK_ALERT', msg: '#sales-hot-leads: Fatima Al-Mansouri (97/100) escalated' }
     ];

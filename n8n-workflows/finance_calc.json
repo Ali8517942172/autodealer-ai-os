@@ -25,7 +25,7 @@
         "options": { "timeout": 10000 }
       },
       "id": "f6-003", "name": "AI Finance Advisor", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [500, 300],
-      "credentials": { "httpHeaderAuth": { "id": "OPENROUTER_CRED_ID", "name": "OpenRouter API" } },
+      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } },
       "onError": "continueRegularOutput"
     },
     {

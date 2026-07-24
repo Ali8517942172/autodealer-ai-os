@@ -48,7 +48,7 @@
       "typeVersion": 4.2,
       "position": [480, 300],
       "credentials": {
-        "httpHeaderAuth": { "id": "OPENROUTER_CRED_ID", "name": "OpenRouter API" }
+        "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" }
       }
     },
     {
@@ -113,7 +113,7 @@
       "typeVersion": 2.1,
       "position": [1440, 200],
       "credentials": {
-        "slackApi": { "id": "SLACK_CRED_ID", "name": "Slack - NEXUS OS Bot" }
+        "slackApi": { "id": "HPTEqLu6xjmhEXDN", "name": "Slack - Nexus Bot" }
       },
       "onError": "continueRegularOutput"
     },

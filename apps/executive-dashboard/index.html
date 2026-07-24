@@ -269,7 +269,7 @@
         <div class="bg-white rounded-xl border border-outline-variant overflow-hidden">
           <div class="flex items-center justify-between p-5 border-b border-outline-variant">
             <h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">assignment</span> Recent Leads</h3>
-            <button onclick="triggerMakeLeadSync()" class="flex items-center gap-1.5 text-xs font-semibold text-on-primary bg-primary px-3 py-2 rounded-lg hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">sync</span> Sync to ERP (Make.com)</button>
+            <button onclick="triggerErpSync()" class="flex items-center gap-1.5 text-xs font-semibold text-on-primary bg-primary px-3 py-2 rounded-lg hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">sync</span> Sync to ERP (n8n)</button>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -401,7 +401,7 @@
           <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">play_circle</span> Manual Workflow Triggers</h3>
           <div class="flex flex-wrap gap-3">
             <button onclick="triggerN8NIntel()" class="flex items-center gap-1.5 text-xs font-semibold text-on-primary bg-primary px-3 py-2.5 rounded-lg hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">smart_toy</span> Run Hermes Intel (n8n)</button>
-            <button onclick="triggerMakeLeadSync()" class="flex items-center gap-1.5 text-xs font-semibold text-white bg-secondary px-3 py-2.5 rounded-lg hover:opacity-90"><span class="material-symbols-outlined text-[16px]">sync</span> Sync CRM → Odoo (Make)</button>
+            <button onclick="triggerErpSync()" class="flex items-center gap-1.5 text-xs font-semibold text-white bg-secondary px-3 py-2.5 rounded-lg hover:opacity-90"><span class="material-symbols-outlined text-[16px]">sync</span> Sync CRM → Odoo (n8n)</button>
             <button onclick="triggerEscalation('VH-003')" class="flex items-center gap-1.5 text-xs font-semibold text-white bg-tertiary px-3 py-2.5 rounded-lg hover:opacity-90"><span class="material-symbols-outlined text-[16px]">warning</span> Escalate Critical Stock (Zapier)</button>
           </div>
         </div>
