@@ -1,0 +1,305 @@
+{
+  "name": "Lead Escalation - AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-escalation",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "name": "Fetch Escalated Lead",
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "eq.{{$input.all()[0].json.body.lead_id || $input.all()[0].json.lead_id}}"
+            }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "Fetch Escalated Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Analyze this escalated lead: {{$json}}. Summarize the situation, explain why it might have been escalated, and recommend next steps for the senior rep. Output a professional summary.",
+        "options": {
+          "systemMessage": "You are an AI Escalation Analyst for NEXUS OS. You review leads that are stuck or escalated, analyze their history, and provide concise, actionable recommendations for human managers."
+        }
+      },
+      "id": "3",
+      "name": "AI Escalation Analyst",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-3.5-sonnet",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "4",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [450, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TRR9eUUk37850wgs",
+          "name": "Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "get_lead_timeline",
+        "description": "Fetches the communication history for the lead.",
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/communication_logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "sender",
+              "value": "eq.{{$fromAI('email')}}"
+            }
+          ]
+        }
+      },
+      "id": "5",
+      "name": "get_lead_timeline",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [600, 500]
+    },
+    {
+      "parameters": {
+        "name": "find_available_rep",
+        "description": "Finds a senior sales rep available for assignment.",
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/users?role=eq.senior_rep&status=eq.online",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        }
+      },
+      "id": "6",
+      "name": "find_available_rep",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [750, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"{{$env.RESEND_FROM_EMAIL}}\",\n  \"to\": \"aliasgher892@gmail.com\",\n  \"subject\": \"URGENT: Lead Escalation Required\",\n  \"html\": \"<p><strong>AI Analysis:</strong></p><p>{{$json.output}}</p>\"\n}"
+      },
+      "id": "7",
+      "name": "Send Email via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SLACK_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*🚨 Escalated Lead Alert*\\n\\n*AI Summary:*\\n{{$json.output}}\"\n}"
+      },
+      "id": "8",
+      "name": "Send Slack Alert (#sales-hot-leads)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/audit_log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"workflow\": \"Lead Escalation\",\n  \"status\": \"Success\",\n  \"summary\": \"{{$json.output}}\"\n}"
+      },
+      "id": "9",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Escalated Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Escalated Lead": {
+      "main": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Escalation Analyst": {
+      "main": [
+        [
+          {
+            "node": "Send Email via Resend",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Slack Alert (#sales-hot-leads)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_lead_timeline": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "find_available_rep": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email via Resend": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Alert (#sales-hot-leads)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

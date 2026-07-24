@@ -1,220 +1,227 @@
 {
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
   "name": "WhatsApp BDC AI Agent",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "GET",
-        "path": "whatsapp-bdc",
+        "httpMethod": "POST",
+        "path": "waha-webhook",
         "responseMode": "lastNode",
         "options": {}
       },
-      "id": "e4f8d9b1-1111-4a11-1111-123456789abc",
-      "name": "WhatsApp Verification Webhook",
+      "id": "1",
+      "name": "WAHA Webhook (POST)",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        200,
-        200
-      ],
-      "webhookId": "whatsapp-verification"
+      "typeVersion": 1.1,
+      "position": [0, 300]
     },
     {
       "parameters": {
-        "respondWith": "text",
-        "responseBody": "={{ $json.query['hub.challenge'] }}",
-        "options": {}
+        "jsCode": "return [{json: {message: $input.all()[0].json.body.payload.body, sender: $input.all()[0].json.body.payload.from}}];"
       },
-      "id": "e4f8d9b1-2222-4a11-1111-123456789abc",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        450,
-        200
-      ]
+      "id": "2",
+      "name": "Extract Message & Sender",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 300]
     },
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "whatsapp-bdc",
-        "responseMode": "onReceived",
-        "options": {}
-      },
-      "id": "e4f8d9b1-3333-4a11-1111-123456789abc",
-      "name": "WhatsApp Message Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        200,
-        450
-      ],
-      "webhookId": "whatsapp-messages"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ $json.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.text?.body }}",
-              "operation": "isNotEmpty"
-            }
-          ]
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "You are NEXUS OS BDC Agent for a premium automotive dealership in UAE. You help customers find vehicles, answer questions about pricing & availability, and book test drives. Be bilingual (EN/AR)."
         }
       },
-      "id": "e4f8d9b1-4444-4a11-1111-123456789abc",
-      "name": "Check If Valid Text Message",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        450,
-        450
-      ]
+      "id": "3",
+      "name": "AI BDC Sales Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [450, 300]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "model": "google/gemini-flash-1.5",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "4",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [450, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TRR9eUUk37850wgs",
+          "name": "Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionId": "={{ $('Extract Message & Sender').item.json.sender }}",
+        "contextWindowLength": 10
+      },
+      "id": "5",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [550, 500]
+    },
+    {
+      "parameters": {
+        "name": "search_inventory",
+        "description": "Query Supabase vehicles table by make/model/budget",
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/inventory",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "HTTP-Referer",
-              "value": "https://nexuscorp.net"
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
             },
             {
-              "name": "X-Title",
-              "value": "NEXUS OS - WhatsApp BDC"
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "make",
+              "value": "ilike.*{{$fromAI('make')}}*"
+            }
+          ]
+        }
+      },
+      "id": "6",
+      "name": "search_inventory",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [700, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chatId\": \"{{$('Extract Message & Sender').item.json.sender}}\",\n  \"text\": \"{{$json.output}}\",\n  \"session\": \"default\"\n}"
+      },
+      "id": "7",
+      "name": "Send Reply via WAHA HTTP API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/communication_logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 250,\n  \"temperature\": 0.7,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a highly professional Business Development Center (BDC) agent for a premium automotive dealership (NEXUS OS). Your objective is to chat with leads via WhatsApp, answer their questions about vehicles, and ultimately book them for a test drive. Be polite, concise, and persuasive. Collect their preferred date and time, and confirm the booking. Always respond in the same language the customer uses.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.body.entry[0].changes[0].value.messages[0].text.body }}\"\n    }\n  ]\n}",
-        "options": {
-          "timeout": 15000
-        }
+        "jsonBody": "={\n  \"sender\": \"{{$('Extract Message & Sender').item.json.sender}}\",\n  \"message\": \"{{$json.output}}\",\n  \"direction\": \"outbound\"\n}"
       },
-      "id": "e4f8d9b1-5555-4a11-1111-123456789abc",
-      "name": "OpenRouter BDC Agent",
+      "id": "8",
+      "name": "Log Conversation",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        700,
-        430
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "2hBISF8xyersMO9B",
-          "name": "OpenRouter API"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst aiReply = response.choices[0].message.content;\nconst customerPhone = $('WhatsApp Message Webhook').first().json.body.entry[0].changes[0].value.messages[0].from;\n\nreturn [{ json: { aiReply, customerPhone } }];"
-      },
-      "id": "e4f8d9b1-parse-reply",
-      "name": "Extract AI Reply",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        920,
-        430
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID || 'CONFIGURE_PHONE_ID' }}/messages",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.customerPhone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.aiReply }}\"\n  }\n}",
-        "options": {}
-      },
-      "id": "e4f8d9b1-6666-4a11-1111-123456789abc",
-      "name": "Send WhatsApp Reply",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        1140,
-        430
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "W1bKj9lO2JiWjifO",
-          "name": "WhatsApp Business API Token"
-        }
-      }
+      "typeVersion": 4.2,
+      "position": [1000, 300]
     }
   ],
   "connections": {
-    "WhatsApp Verification Webhook": {
+    "WAHA Webhook (POST)": {
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Extract Message & Sender",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "WhatsApp Message Webhook": {
+    "Extract Message & Sender": {
       "main": [
         [
           {
-            "node": "Check If Valid Text Message",
+            "node": "AI BDC Sales Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Check If Valid Text Message": {
+    "AI BDC Sales Agent": {
       "main": [
         [
           {
-            "node": "OpenRouter BDC Agent",
+            "node": "Send Reply via WAHA HTTP API",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenRouter BDC Agent": {
-      "main": [
+    "OpenRouter Model": {
+      "ai_languageModel": [
         [
           {
-            "node": "Extract AI Reply",
-            "type": "main",
+            "node": "AI BDC Sales Agent",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Extract AI Reply": {
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI BDC Sales Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI BDC Sales Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply via WAHA HTTP API": {
       "main": [
         [
           {
-            "node": "Send WhatsApp Reply",
+            "node": "Log Conversation",
             "type": "main",
             "index": 0
           }
         ]
       ]
     }
-  },
-  "settings": {
-    "saveDataErrorExecution": "all",
-    "saveDataSuccessExecution": "all",
-    "saveExecutionProgress": true
-  },
-  "id": "wf_107"
+  }
 }

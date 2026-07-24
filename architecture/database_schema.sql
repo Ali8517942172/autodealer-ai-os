@@ -43,7 +43,7 @@ CREATE TABLE leads (
     status VARCHAR(30) DEFAULT 'new',  -- new, contacted, qualified, negotiation, won, lost
     
     -- AI Agent Fields
-    ai_score INTEGER DEFAULT 0,           -- 0-100, scored by Cowork Agent
+    ai_score INTEGER DEFAULT 0,           -- 0-100, scored by Sales Agent
     ai_priority VARCHAR(10) DEFAULT 'COLD', -- HOT, WARM, COLD
     ai_intent TEXT,                        -- "Looking for family SUV, budget ~200k"
     ai_probability DECIMAL(5,2),           -- Probability to buy (0.00 - 1.00)
@@ -201,7 +201,7 @@ CREATE TABLE campaigns (
     channels TEXT[] DEFAULT '{}',
     budget_aed DECIMAL(12,2),
     status VARCHAR(20) DEFAULT 'draft',
-    generated_by VARCHAR(50),  -- 'Hermes AI Agent'
+    generated_by VARCHAR(50),  -- 'Marketing Agent'
     
     -- Attribution
     impressions INTEGER DEFAULT 0,

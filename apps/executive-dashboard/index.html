@@ -7,85 +7,40 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          primary: "#3525cd",
-          "primary-container": "#4f46e5",
-          "on-primary": "#ffffff",
-          "on-primary-container": "#eef0ff",
-          secondary: "#006c49",
-          "secondary-container": "#dcfce9",
-          "on-secondary-container": "#00532f",
-          tertiary: "#7e3000",
-          "tertiary-container": "#ffe3d3",
-          error: "#ba1a1a",
-          "error-container": "#ffdad6",
-          "on-error-container": "#93000a",
-          surface: "#faf8ff",
-          "surface-container-low": "#f2f3ff",
-          "surface-container": "#eaedff",
-          "surface-container-high": "#e2e7ff",
-          "surface-variant": "#dae2fd",
-          outline: "#777587",
-          "outline-variant": "#c7c4d8",
-          "on-surface": "#131b2e",
-          "on-surface-variant": "#464555",
-          background: "#faf8ff"
-        },
-        fontFamily: { sans: ["Inter", "sans-serif"] },
-        borderRadius: { DEFAULT: "0.5rem", lg: "0.75rem", xl: "1rem" }
-      }
-    }
-  };
-</script>
+<link rel="stylesheet" href="/index.css">
 <style>
-  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; font-size: 20px; }
-  body { font-family: 'Inter', sans-serif; }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 10px; }
-  .page { display: none; }
-  .page.active { display: block; animation: fadeIn .3s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  .nav-item.active { background: #eef0ff; color: #3525cd; font-weight: 600; }
-  .nav-item.active .nav-icon { color: #3525cd; }
-  .pulse-dot { animation: pulse 1.6s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-  .status-dot.pulse { animation: pulse 1.6s infinite; }
-
-  /* Badges */
-  .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:9999px; font-size:11px; font-weight:700; letter-spacing:.02em; }
-  .badge-hot { background:#ffdad6; color:#ba1a1a; }
-  .badge-warm { background:#ffe3d3; color:#7e3000; }
-  .badge-cold { background:#eaedff; color:#464555; }
-  .badge-critical { background:#ffdad6; color:#ba1a1a; }
-  .badge-warning { background:#ffe3d3; color:#7e3000; }
-  .badge-safe { background:#dcfce9; color:#00532f; }
-
-  /* AI Insights / Alerts */
-  .insight-item, .alert-item { padding:12px; border-radius:10px; background:#f2f3ff; font-size:13px; line-height:1.5; border-left:3px solid #3525cd; }
-  .insight-item.medium { border-left-color:#7e3000; }
-  .insight-item.low { border-left-color:#006c49; }
-  .channel-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eaedff; font-size:13px; }
-  .performer-card .perf-name { font-weight:700; margin-bottom:8px; }
-  .performer-card .perf-stat { display:flex; justify-content:space-between; padding:4px 0; }
-  .competitor-item { padding:12px; border-radius:10px; background:#f2f3ff; font-size:13px; }
-  .comp-name { font-weight:600; margin-bottom:4px; }
-  .pl-item { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eaedff; }
-  .pl-label { color:#464555; }
-  .pl-value { font-weight:600; }
-  .aging-label { width:100px; font-size:13px; color:#464555; }
-  .event-entry { padding:6px 0; border-bottom:1px solid #eaedff; }
-  .chat-msg.user { display:flex; gap:12px; flex-direction:row-reverse; }
-  .chat-msg.user .msg-bubble { background:#3525cd; color:#fff; border-radius:12px 12px 0 12px; padding:12px 16px; max-width:80%; }
-  .chat-msg.bot { display:flex; gap:12px; }
-  .chat-msg.bot .msg-bubble { background:#f2f3ff; border-radius:12px 12px 12px 0; padding:12px 16px; max-width:80%; }
-  .msg-avatar { width:32px; height:32px; border-radius:9999px; background:#3525cd; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .chat-msg.user .msg-avatar { background:#eaedff; color:#3525cd; }
+  .inner-shimmer {
+      position: relative;
+      overflow: hidden;
+  }
+  .inner-shimmer::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+          45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.03) 45%,
+          rgba(255, 255, 255, 0.08) 50%,
+          rgba(255, 255, 255, 0.03) 55%,
+          transparent 100%
+      );
+      transform: rotate(45deg);
+      animation: shimmer 6s infinite;
+  }
+  @keyframes shimmer {
+      0% { transform: translateX(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) rotate(45deg); }
+  }
+  .glow-blue {
+      box-shadow: 0 0 15px rgba(var(--md-sys-color-primary-rgb, 0, 100, 255), 0.4);
+  }
+  .glance-bar-hot { border-left: 3px solid var(--md-sys-color-error, #ba1a1a); }
+  .glance-bar-warm { border-left: 3px solid var(--md-sys-color-tertiary, #006c49); }
+  .glance-bar-cold { border-left: 3px solid var(--md-sys-color-outline, #727785); }
 </style>
 </head>
 <body class="bg-background text-on-surface">
@@ -174,56 +129,123 @@
 
       <!-- ===================== DASHBOARD ===================== -->
       <section id="page-dashboard" class="page active space-y-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <div class="flex items-center gap-2 text-on-surface-variant text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span> Today's Revenue</div>
-            <div class="text-2xl font-bold text-on-surface" id="todayRevenue">—</div>
-            <div class="text-xs text-secondary font-medium mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> vs yesterday</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          <!-- Card 1: Today's Revenue -->
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant rounded-xl p-6 hover:scale-[1.02] transition-all duration-300 group cursor-pointer inner-shimmer shadow-sm hover:shadow-md">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-primary/10 rounded-lg text-primary">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+              </div>
+              <div class="flex items-center gap-1 text-secondary font-mono text-xs font-semibold">
+                <span class="material-symbols-outlined text-[14px]">trending_up</span> +12.4%
+              </div>
+            </div>
+            <p class="text-on-surface-variant text-xs mb-1 uppercase tracking-wider font-semibold">Today's Revenue</p>
+            <h3 class="text-3xl font-bold text-on-surface group-hover:text-primary transition-colors" id="todayRevenue">—</h3>
+            <div class="mt-4 h-1.5 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+              <div class="h-full bg-primary w-[85%] rounded-full glow-blue"></div>
+            </div>
           </div>
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <div class="flex items-center gap-2 text-on-surface-variant text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">bar_chart</span> MTD Revenue</div>
-            <div class="text-2xl font-bold text-on-surface" id="mtdRevenue">—</div>
-            <div class="text-xs text-secondary font-medium mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> 8% vs last month</div>
+
+          <!-- Card 2: MTD Revenue -->
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant rounded-xl p-6 hover:scale-[1.02] transition-all duration-300 group cursor-pointer inner-shimmer shadow-sm hover:shadow-md">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-secondary/10 rounded-lg text-secondary">
+                <span class="material-symbols-outlined">bar_chart</span>
+              </div>
+              <div class="flex items-center gap-1 text-secondary font-mono text-xs font-semibold">
+                <span class="material-symbols-outlined text-[14px]">trending_up</span> 8%
+              </div>
+            </div>
+            <p class="text-on-surface-variant text-xs mb-1 uppercase tracking-wider font-semibold">MTD Revenue</p>
+            <h3 class="text-3xl font-bold text-on-surface group-hover:text-secondary transition-colors" id="mtdRevenue">—</h3>
+            <div class="mt-4 h-1.5 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+              <div class="h-full bg-secondary w-[70%] rounded-full glow-blue"></div>
+            </div>
           </div>
-          <div class="bg-primary rounded-xl p-5 text-on-primary">
-            <div class="flex items-center gap-2 text-on-primary-container text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">filter_alt</span> Pipeline Value</div>
-            <div class="text-2xl font-bold" id="pipelineValue">—</div>
-            <div class="text-xs text-on-primary-container font-medium mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">local_fire_department</span> 15 hot leads</div>
+
+          <!-- Card 3: Pipeline Value -->
+          <div class="bg-primary backdrop-blur-xl border border-primary rounded-xl p-6 hover:scale-[1.02] transition-all duration-300 group cursor-pointer shadow-lg hover:shadow-xl text-on-primary">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-on-primary/20 rounded-lg text-on-primary">
+                <span class="material-symbols-outlined">filter_alt</span>
+              </div>
+              <div class="flex items-center gap-1 text-on-primary-container bg-primary-container/20 px-2 py-0.5 rounded-full text-xs font-semibold">
+                <span class="material-symbols-outlined text-[14px]">local_fire_department</span> Hot
+              </div>
+            </div>
+            <p class="text-on-primary/80 text-xs mb-1 uppercase tracking-wider font-semibold">Pipeline Value</p>
+            <h3 class="text-3xl font-bold text-on-primary" id="pipelineValue">—</h3>
+            <div class="mt-4 flex gap-1">
+              <div class="h-1.5 flex-1 bg-on-primary rounded-full"></div>
+              <div class="h-1.5 flex-1 bg-on-primary rounded-full"></div>
+              <div class="h-1.5 flex-1 bg-on-primary rounded-full"></div>
+              <div class="h-1.5 flex-1 bg-on-primary/30 rounded-full"></div>
+            </div>
           </div>
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <div class="flex items-center gap-2 text-on-surface-variant text-xs font-medium mb-2"><span class="material-symbols-outlined text-[18px]">savings</span> Net Profit MTD</div>
-            <div class="text-2xl font-bold text-on-surface" id="netProfit">—</div>
-            <div class="text-xs text-secondary font-medium mt-1" id="grossMargin">—</div>
+
+          <!-- Card 4: Net Profit MTD -->
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant rounded-xl p-6 hover:scale-[1.02] transition-all duration-300 group cursor-pointer inner-shimmer shadow-sm hover:shadow-md">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-tertiary/10 rounded-lg text-tertiary">
+                <span class="material-symbols-outlined">savings</span>
+              </div>
+              <div class="flex items-center gap-1 text-tertiary font-mono text-xs font-semibold" id="grossMargin">
+                —
+              </div>
+            </div>
+            <p class="text-on-surface-variant text-xs mb-1 uppercase tracking-wider font-semibold">Net Profit MTD</p>
+            <h3 class="text-3xl font-bold text-on-surface group-hover:text-tertiary transition-colors" id="netProfit">—</h3>
+            <div class="mt-4 h-1.5 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+              <div class="h-full bg-tertiary w-[60%] rounded-full shadow-[0_0_10px_rgba(var(--md-sys-color-tertiary),0.3)]"></div>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">auto_awesome</span> AI Insights</h3>
-            <div id="aiInsights" class="space-y-3 text-sm"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- AI Insights -->
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant p-6 rounded-xl relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 blur-[60px] rounded-full group-hover:bg-primary/20 transition-all duration-700 pointer-events-none"></div>
+            <div class="flex items-center justify-between mb-6 relative z-10">
+              <h3 class="font-bold text-lg flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-primary text-[24px]">auto_awesome</span> AI Insights</h3>
+              <span class="text-[10px] text-primary uppercase tracking-widest font-bold bg-primary/10 px-2 py-1 rounded">Nexus Engine v4.2</span>
+            </div>
+            <div id="aiInsights" class="space-y-4 text-sm relative z-10"></div>
           </div>
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">warning</span> Inventory Alerts</h3>
-            <div id="inventoryAlerts" class="space-y-3 text-sm"></div>
+
+          <!-- Inventory Alerts -->
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant p-6 rounded-xl relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-error/10 blur-[60px] rounded-full group-hover:bg-error/20 transition-all duration-700 pointer-events-none"></div>
+            <div class="flex items-center justify-between mb-6 relative z-10">
+              <h3 class="font-bold text-lg flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-error text-[24px]">warning</span> Inventory Alerts</h3>
+              <span class="px-2 py-1 bg-error/10 text-error text-[10px] font-bold rounded uppercase">Action Required</span>
+            </div>
+            <div id="inventoryAlerts" class="space-y-4 text-sm relative z-10"></div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">target</span> Lead Pipeline</h3>
-            <div class="flex items-center justify-between text-sm mb-1"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-error"></span>Hot</span><strong id="hotLeads">—</strong></div>
-            <div class="flex items-center justify-between text-sm mb-1"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span>Warm</span><strong id="warmLeads">—</strong></div>
-            <div class="flex items-center justify-between text-sm mb-3"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-outline"></span>Cold</span><strong id="coldLeads">—</strong></div>
-            <div class="border-t border-outline-variant pt-3 flex justify-between text-sm"><span class="text-on-surface-variant">Conversion Rate</span><strong id="convRate">—</strong></div>
-            <div class="flex justify-between text-sm mt-1"><span class="text-on-surface-variant">Avg Days to Close</span><strong id="avgDays">—</strong></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant p-6 rounded-xl hover:shadow-md transition-shadow">
+            <h3 class="font-bold text-base mb-5 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[20px]">target</span> Lead Pipeline</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 font-medium"><span class="w-2.5 h-2.5 rounded-full bg-error shadow-[0_0_8px_rgba(var(--md-sys-color-error),0.6)]"></span>Hot</span><strong id="hotLeads" class="text-base">—</strong></div>
+              <div class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 font-medium"><span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>Warm</span><strong id="warmLeads" class="text-base">—</strong></div>
+              <div class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 font-medium"><span class="w-2.5 h-2.5 rounded-full bg-outline"></span>Cold</span><strong id="coldLeads" class="text-base">—</strong></div>
+            </div>
+            <div class="border-t border-outline-variant mt-5 pt-4 space-y-2">
+              <div class="flex justify-between text-sm"><span class="text-on-surface-variant font-medium">Conversion Rate</span><strong id="convRate" class="text-secondary">—</strong></div>
+              <div class="flex justify-between text-sm"><span class="text-on-surface-variant font-medium">Avg Days to Close</span><strong id="avgDays">—</strong></div>
+            </div>
           </div>
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[18px]">trending_up</span> Marketing ROI</h3>
-            <div id="marketingROI" class="space-y-2 text-sm"></div>
+          
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant p-6 rounded-xl hover:shadow-md transition-shadow">
+            <h3 class="font-bold text-base mb-5 flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">trending_up</span> Marketing ROI</h3>
+            <div id="marketingROI" class="space-y-4 text-sm font-medium"></div>
           </div>
-          <div class="bg-white rounded-xl border border-outline-variant p-5">
-            <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">groups</span> Top Performer</h3>
-            <div id="topPerformer" class="text-sm space-y-1.5"></div>
+          
+          <div class="bg-surface-container-low/60 backdrop-blur-xl border border-outline-variant p-6 rounded-xl hover:shadow-md transition-shadow">
+            <h3 class="font-bold text-base mb-5 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[20px]">groups</span> Top Performer</h3>
+            <div id="topPerformer" class="text-sm space-y-3"></div>
           </div>
         </div>
 
@@ -444,7 +466,7 @@
   </main>
 </div>
 
-<script src="app.js"></script>
+<script type="module" src="/app.js"></script>
 <script>
   // Socket.io disabled — backend moved to direct Supabase + n8n Tailscale
   document.addEventListener('DOMContentLoaded', () => {
@@ -634,4 +656,4 @@
 </script>
 </body>
 </html>
-                                              
+

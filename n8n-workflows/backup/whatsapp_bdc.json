@@ -1,0 +1,243 @@
+{
+  "name": "WhatsApp BDC — AI Sales Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-bdc",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "b2000001-0001-4b00-b000-000000000001",
+      "name": "WAHA Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "whatsapp-bdc-waha"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// EXTRACT & VALIDATE WAHA/WhatsApp message\n// Supports both WAHA format and Facebook Graph API\n// ──────────────────────────────────────────────\nconst raw = $input.first().json;\nconst body = raw.body || raw;\n\nlet customerPhone, customerName, messageText, messageId;\n\n// WAHA format\nif (body.event === 'message' && body.payload) {\n  customerPhone = body.payload.from?.replace('@c.us', '') || body.payload.from;\n  customerName = body.payload.notifyName || body.payload.pushName || 'Customer';\n  messageText = body.payload.body || body.payload.text || '';\n  messageId = body.payload.id || Date.now().toString();\n}\n// Facebook Graph API format (legacy)\nelse if (body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {\n  const msg = body.entry[0].changes[0].value.messages[0];\n  customerPhone = msg.from;\n  customerName = body.entry[0].changes[0].value.contacts?.[0]?.profile?.name || 'Customer';\n  messageText = msg.text?.body || msg.body || '';\n  messageId = msg.id || Date.now().toString();\n}\n// Direct format (testing)\nelse {\n  customerPhone = body.phone || body.from || 'unknown';\n  customerName = body.name || 'Customer';\n  messageText = body.message || body.text || '';\n  messageId = body.id || Date.now().toString();\n}\n\nif (!messageText || messageText.trim() === '') {\n  throw new Error('Empty message — skipping');\n}\n\nreturn [{\n  json: {\n    customerPhone,\n    customerName,\n    messageText: messageText.trim(),\n    messageId,\n    sessionId: `wa_${customerPhone}`,\n    receivedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "b2000001-0002-4b00-b000-000000000002",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL || 'https://dsvuoovivysszdoiorch.supabase.co' }}/rest/v1/communication_logs?session_id=eq.{{ $json.sessionId }}&order=created_at.desc&limit=10",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2000001-0003-4b00-b000-000000000003",
+      "name": "Load Chat History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 200],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL || 'https://dsvuoovivysszdoiorch.supabase.co' }}/rest/v1/leads?or=(phone.eq.{{ $node['Extract Message'].json.customerPhone }},phone.eq.%2B{{ $node['Extract Message'].json.customerPhone }})&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2000001-0004-4b00-b000-000000000004",
+      "name": "Lookup Lead Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 400],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// BUILD AGENTIC CONTEXT: History + Lead Profile\n// ──────────────────────────────────────────────\nconst message = $node['Extract Message'].json;\nconst historyRaw = $node['Load Chat History'].json;\nconst leadRaw = $node['Lookup Lead Profile'].json;\n\n// Build conversation history for memory\nlet history = [];\nif (Array.isArray(historyRaw)) {\n  history = historyRaw.reverse().map(h => ({\n    role: h.direction === 'inbound' ? 'user' : 'assistant',\n    content: h.message_text\n  }));\n}\n\n// Build lead context\nlet leadContext = 'No existing lead profile found — this may be a new customer.';\nconst lead = Array.isArray(leadRaw) ? leadRaw[0] : leadRaw;\nif (lead && lead.id) {\n  leadContext = [\n    `Existing Lead: ${lead.name}`,\n    `Status: ${lead.status} | Priority: ${lead.ai_priority || 'unknown'}`,\n    `Vehicle Interest: ${lead.vehicle_interest || 'Not specified'}`,\n    `Budget: ${lead.budget_min ? 'AED ' + lead.budget_min + '-' + lead.budget_max : 'Unknown'}`,\n    `Score: ${lead.ai_score || 'Not scored'}`\n  ].join('\\n');\n}\n\nreturn [{\n  json: {\n    ...message,\n    chatHistory: history,\n    leadContext,\n    existingLeadId: lead?.id || null,\n    isNewCustomer: !lead?.id\n  }\n}];"
+      },
+      "id": "b2000001-0005-4b00-b000-000000000005",
+      "name": "Build Agent Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
+            { "name": "X-Title", "value": "NEXUS OS — WhatsApp BDC Agent" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 400,\n  \"temperature\": 0.7,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are NEXUS — the AI-powered Business Development Center (BDC) agent for a premium automotive dealership in Dubai, UAE.\\n\\n🎯 YOUR OBJECTIVES (in priority order):\\n1. QUALIFY the lead — understand what vehicle they want, their budget, timeline\\n2. ANSWER questions about inventory, pricing, financing, trade-ins\\n3. BOOK a showroom visit or test drive\\n4. HANDLE objections professionally\\n5. ESCALATE to human manager if customer is angry, mentions legal, or specifically asks for a person\\n\\n📋 RULES:\\n• Be concise — WhatsApp messages should be SHORT (max 3 sentences per message)\\n• Be bilingual — respond in the SAME language the customer uses (Arabic or English)\\n• NEVER invent vehicle availability or prices — say \\\"let me check\\\" if unsure\\n• Use emoji sparingly but naturally 🚗\\n• Always end with a question or call-to-action\\n• If the customer wants to book a visit, ask for preferred date and time\\n• If customer mentions budget, note it for CRM\\n\\n📊 LEAD PROFILE:\\n{{ $json.leadContext }}\\n\\n⚠️ ESCALATION TRIGGERS (output \\\"[ESCALATE]\\\" at start of reply):\\n• Customer is angry/threatening\\n• Customer asks for \\\"manager\\\" or \\\"human\\\"\\n• Complaint about previous service\\n• Legal/regulatory questions\"\n    },\n    {{ $json.chatHistory.length > 0 ? JSON.stringify($json.chatHistory) + ',' : '' }}\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.messageText }}\"\n    }\n  ]\n}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "b2000001-0006-4b00-b000-000000000006",
+      "name": "AI BDC Sales Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OPENROUTER_CRED_ID",
+          "name": "OpenRouter API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// PARSE AI REPLY + DETECT ESCALATION\n// ──────────────────────────────────────────────\nconst aiResponse = $input.first().json;\nconst context = $node['Build Agent Context'].json;\n\nlet aiReply;\ntry {\n  aiReply = aiResponse.choices[0].message.content.trim();\n} catch (e) {\n  aiReply = 'Thank you for your message! Let me connect you with our team. A representative will reach out shortly. 🙏';\n}\n\nconst needsEscalation = aiReply.includes('[ESCALATE]');\nif (needsEscalation) {\n  aiReply = aiReply.replace('[ESCALATE]', '').trim();\n}\n\nreturn [{\n  json: {\n    ...context,\n    aiReply,\n    needsEscalation,\n    tokensUsed: aiResponse.usage?.total_tokens || 0\n  }\n}];"
+      },
+      "id": "b2000001-0007-4b00-b000-000000000007",
+      "name": "Parse & Check Escalation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:3000/api/sendText",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chatId\": \"{{ $json.customerPhone }}@c.us\",\n  \"text\": {{ JSON.stringify($json.aiReply) }},\n  \"session\": \"default\"\n}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "b2000001-0008-4b00-b000-000000000008",
+      "name": "Send Reply via WAHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL || 'https://dsvuoovivysszdoiorch.supabase.co' }}/rest/v1/communication_logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=[\n  {\n    \"session_id\": \"{{ $json.sessionId }}\",\n    \"channel\": \"whatsapp\",\n    \"direction\": \"inbound\",\n    \"sender_phone\": \"{{ $json.customerPhone }}\",\n    \"sender_name\": \"{{ $json.customerName }}\",\n    \"message_text\": {{ JSON.stringify($json.messageText) }},\n    \"lead_id\": {{ $json.existingLeadId ? '\"' + $json.existingLeadId + '\"' : 'null' }}\n  },\n  {\n    \"session_id\": \"{{ $json.sessionId }}\",\n    \"channel\": \"whatsapp\",\n    \"direction\": \"outbound\",\n    \"sender_phone\": \"system\",\n    \"sender_name\": \"NEXUS AI BDC\",\n    \"message_text\": {{ JSON.stringify($json.aiReply) }},\n    \"lead_id\": {{ $json.existingLeadId ? '\"' + $json.existingLeadId + '\"' : 'null' }},\n    \"metadata\": { \"ai_generated\": true, \"tokens_used\": {{ $json.tokensUsed }} }\n  }\n]",
+        "options": {}
+      },
+      "id": "b2000001-0009-4b00-b000-000000000009",
+      "name": "Log Conversation → Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $node['Parse & Check Escalation'].json.needsEscalation }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "b2000001-0010-4b00-b000-000000000010",
+      "name": "Needs Escalation?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1920, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://desktop-l3an0ma.tail2141f7.ts.net/webhook/lead-escalation",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"lead_id\": \"{{ $node['Parse & Check Escalation'].json.existingLeadId }}\",\n  \"name\": \"{{ $node['Parse & Check Escalation'].json.customerName }}\",\n  \"phone\": \"{{ $node['Parse & Check Escalation'].json.customerPhone }}\",\n  \"channel\": \"whatsapp\",\n  \"reason\": \"AI BDC Agent triggered escalation — customer may need human assistance\",\n  \"last_message\": {{ JSON.stringify($node['Parse & Check Escalation'].json.messageText) }}\n}",
+        "options": {}
+      },
+      "id": "b2000001-0011-4b00-b000-000000000011",
+      "name": "Trigger Escalation Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 200],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "WAHA Webhook": {
+      "main": [[ { "node": "Extract Message", "type": "main", "index": 0 } ]]
+    },
+    "Extract Message": {
+      "main": [
+        [
+          { "node": "Load Chat History", "type": "main", "index": 0 },
+          { "node": "Lookup Lead Profile", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Load Chat History": {
+      "main": [[ { "node": "Build Agent Context", "type": "main", "index": 0 } ]]
+    },
+    "Lookup Lead Profile": {
+      "main": [[ { "node": "Build Agent Context", "type": "main", "index": 1 } ]]
+    },
+    "Build Agent Context": {
+      "main": [[ { "node": "AI BDC Sales Agent", "type": "main", "index": 0 } ]]
+    },
+    "AI BDC Sales Agent": {
+      "main": [[ { "node": "Parse & Check Escalation", "type": "main", "index": 0 } ]]
+    },
+    "Parse & Check Escalation": {
+      "main": [[ { "node": "Send Reply via WAHA", "type": "main", "index": 0 } ]]
+    },
+    "Send Reply via WAHA": {
+      "main": [[ { "node": "Log Conversation → Supabase", "type": "main", "index": 0 } ]]
+    },
+    "Log Conversation → Supabase": {
+      "main": [[ { "node": "Needs Escalation?", "type": "main", "index": 0 } ]]
+    },
+    "Needs Escalation?": {
+      "main": [
+        [{ "node": "Trigger Escalation Workflow", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
+  },
+  "meta": { "templateCredsSetupCompleted": true },
+  "tags": [
+    { "name": "AI-Agent", "id": "tag-agent" },
+    { "name": "WhatsApp", "id": "tag-whatsapp" },
+    { "name": "BDC", "id": "tag-bdc" }
+  ]
+}

@@ -1,114 +1,294 @@
 {
-  "name": "NEXUS Master Lead Router",
+  "name": "NEXUS Master Lead Router - AI Agent",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "nexus-inbound-lead",
+        "responseMode": "lastNode",
         "options": {}
       },
+      "id": "1",
       "name": "Webhook Catch-All",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300]
+      "typeVersion": 1.1,
+      "position": [0, 300]
     },
     {
       "parameters": {
-        "model": "gpt-4",
-        "messages": {
-          "messageValues": [
-            {
-              "content": "You are NEXUS AI. Read the following lead message and score the intent from 1-100. If >= 70, classify as HOT. If 40-69, classify as WARM. If < 40, classify as COLD. Return exactly JSON: {\"score\": number, \"intent\": \"HOT\"|\"WARM\"|\"COLD\"}. Message: {{ $json.body.message || $json.body.notes }}"
-            }
-          ]
+        "jsCode": "return [{json: {lead: $input.all()[0].json.body || $input.all()[0].json}}];"
+      },
+      "id": "2",
+      "name": "Validate & Enrich Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Analyze the lead data provided in the input. Score the lead from 1-100 based on the information. Classify intent as HOT, WARM, or COLD. Use tools to check if the lead exists, and upsert them to the database. \n\nRETURN STRICT JSON OUTPUT ONLY with schema: { \"score\": 85, \"intent\": \"HOT\", \"reason\": \"string\" }",
+        "options": {
+          "systemMessage": "You are NEXUS AI, an expert lead scoring agent for a premium car dealership. You evaluate leads and route them accordingly."
         }
       },
-      "name": "OpenAI Intent Scoring",
-      "type": "n8n-nodes-base.openAi",
+      "id": "3",
+      "name": "AI Lead Scoring Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-3.5-sonnet",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "4",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
-      "position": [450, 300],
+      "position": [450, 500],
       "credentials": {
-        "openAiApi": {
-          "id": "nexus-openai-key",
-          "name": "OpenAI API"
+        "httpHeaderAuth": {
+          "id": "TRR9eUUk37850wgs",
+          "name": "Header Auth"
         }
       }
     },
     {
       "parameters": {
-        "options": {
-          "jsonParse": true
-        }
-      },
-      "name": "Parse AI Output",
-      "type": "n8n-nodes-base.jsonParse",
-      "typeVersion": 1,
-      "position": [650, 300]
-    },
-    {
-      "parameters": {
-        "dataType": "string",
-        "value1": "={{ $json.intent }}",
-        "rules": {
-          "rules": [
+        "name": "lookup_lead",
+        "description": "Lookup existing lead in Supabase by email or phone. Requires email or phone parameter.",
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "value2": "HOT",
-              "output": 0
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
             },
             {
-              "value2": "WARM",
-              "output": 1
-            },
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
             {
-              "value2": "COLD",
-              "output": 2
+              "name": "email",
+              "value": "eq.{{$fromAI('email')}}"
             }
           ]
         }
       },
+      "id": "5",
+      "name": "Supabase Lead Lookup",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [600, 500]
+    },
+    {
+      "parameters": {
+        "name": "upsert_lead",
+        "description": "Creates or updates a lead in Supabase (merge on email). Requires name, email, phone, message, score, and intent.",
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{$fromAI('name')}}\",\n  \"email\": \"{{$fromAI('email')}}\",\n  \"phone\": \"{{$fromAI('phone')}}\",\n  \"message\": \"{{$fromAI('message')}}\",\n  \"score\": {{$fromAI('score')}},\n  \"intent\": \"{{$fromAI('intent')}}\"\n}"
+      },
+      "id": "12",
+      "name": "Supabase Lead Upsert",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [600, 650]
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const aiOutput = JSON.parse($input.all()[0].json.output || $input.all()[0].json.text || '{}');\n  return [{json: { ...$input.all()[0].json, ai_decision: aiOutput }}];\n} catch(e) {\n  return [{json: { ...$input.all()[0].json, ai_decision: { intent: 'COLD', score: 0 } }}];\n}"
+      },
+      "id": "6",
+      "name": "Parse AI Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "7876a310-724d-4be9-b4be-b33362a2a0a2",
+                    "leftValue": "={{ $json.ai_decision.intent }}",
+                    "rightValue": "HOT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HOT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "7876a310-724d-4be9-b4be-b33362a2a0a3",
+                    "leftValue": "={{ $json.ai_decision.intent }}",
+                    "rightValue": "WARM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WARM"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "7876a310-724d-4be9-b4be-b33362a2a0a4",
+                    "leftValue": "={{ $json.ai_decision.intent }}",
+                    "rightValue": "COLD",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COLD"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 3
+        }
+      },
+      "id": "7",
       "name": "Intent Switch",
       "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [920, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": "VmnIXo7tM30zqawp"
+      },
+      "id": "8",
+      "name": "Slack Router (HOT)",
+      "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [850, 300]
+      "position": [1200, 100]
+    },
+    {
+      "parameters": {
+        "workflowId": "bxNBzBrcOtcFpMPn"
+      },
+      "id": "13",
+      "name": "ERP Sync (HOT)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1200, 0]
+    },
+    {
+      "parameters": {
+        "workflowId": "BiyHk9ZXxJUVGbf6"
+      },
+      "id": "9",
+      "name": "WhatsApp BDC (WARM)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": "G7FhvMY2ucW5Fg7X"
+      },
+      "id": "10",
+      "name": "Marketing Drip (COLD)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1200, 500]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:5678/webhook/slack-hot-lead",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/audit_log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($node[\"Webhook Catch-All\"].json.body) }}"
+        "jsonBody": "={\n  \"workflow\": \"Master Router\",\n  \"status\": \"Success\",\n  \"lead_score\": {{$json.ai_decision.score}},\n  \"intent\": \"{{$json.ai_decision.intent}}\"\n}"
       },
-      "name": "Trigger Slack (HOT)",
+      "id": "11",
+      "name": "Audit Log",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [1050, 100]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:5678/webhook/whatsapp-welcome",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($node[\"Webhook Catch-All\"].json.body) }}"
-      },
-      "name": "Trigger WhatsApp (HOT/WARM)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [1050, 300]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:5678/webhook/lead-trigger",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($node[\"Webhook Catch-All\"].json.body) }}"
-      },
-      "name": "Trigger Marketing Drip (COLD)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [1050, 500]
+      "typeVersion": 4.2,
+      "position": [1450, 300]
     }
   ],
   "connections": {
@@ -116,25 +296,69 @@
       "main": [
         [
           {
-            "node": "OpenAI Intent Scoring",
+            "node": "Validate & Enrich Input",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenAI Intent Scoring": {
+    "Validate & Enrich Input": {
       "main": [
         [
           {
-            "node": "Parse AI Output",
+            "node": "AI Lead Scoring Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Parse AI Output": {
+    "AI Lead Scoring Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Lead Lookup": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Lead Upsert": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Decision": {
       "main": [
         [
           {
@@ -149,34 +373,75 @@
       "main": [
         [
           {
-            "node": "Trigger Slack (HOT)",
+            "node": "Slack Router (HOT)",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Trigger WhatsApp (HOT/WARM)",
+            "node": "ERP Sync (HOT)",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Trigger WhatsApp (HOT/WARM)",
+            "node": "WhatsApp BDC (WARM)",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Trigger Marketing Drip (COLD)",
+            "node": "Marketing Drip (COLD)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Router (HOT)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ERP Sync (HOT)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp BDC (WARM)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketing Drip (COLD)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
             "type": "main",
             "index": 0
           }
         ]
       ]
     }
-  },
-  "active": false,
-  "settings": {},
-  "id": "nexus_wf_master"
+  }
 }

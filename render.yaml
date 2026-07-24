@@ -1,105 +1,122 @@
+databases:
+  - name: n8n-db
+    databaseName: n8ndb
+    user: n8n
+    plan: free
+
 services:
   # ─────────────────────────────────────────────
-  # 1. AI Gateway (Python / FastAPI) — port $PORT
+  # 1. Redis Cache & Queue
   # ─────────────────────────────────────────────
-  - type: web
-    name: Nexus-gateway
-    env: python
+  - type: pserv
+    name: redis
+    env: image
+    image: redis:alpine
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: OPENROUTER_API_KEY
-        sync: false
-      - key: ENVIRONMENT
-        value: production
-      - key: PYTHON_VERSION
-        value: 3.11.9
-    rootDir: apps/ai-gateway
-    healthCheckPath: /api/health
 
   # ─────────────────────────────────────────────
-  # 2. Executive Dashboard (Node.js) — port $PORT
+  # 2. n8n Enterprise Engine (Main)
   # ─────────────────────────────────────────────
   - type: web
-    name: Nexus-dashboard
-    env: node
+    name: n8n-automation-engine
+    env: docker
     plan: free
-    buildCommand: npm install
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: CRM_API_URL
-        value: https://Nexus-crm-api.onrender.com
-      - key: MARKETING_API_URL
-        value: https://Nexus-marketing.onrender.com
-      - key: AI_GATEWAY_URL
-        value: https://Nexus-gateway.onrender.com
-    rootDir: apps/executive-dashboard
-    healthCheckPath: /api/health
+      - key: N8N_PORT
+        value: "5678"
+      - key: PORT
+        value: "5678"
+      - key: EXECUTIONS_MODE
+        value: queue
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_DATABASE
+        fromDatabase:
+          name: n8n-db
+          property: database
+      - key: DB_POSTGRESDB_HOST
+        fromDatabase:
+          name: n8n-db
+          property: host
+      - key: DB_POSTGRESDB_PORT
+        fromDatabase:
+          name: n8n-db
+          property: port
+      - key: DB_POSTGRESDB_USER
+        fromDatabase:
+          name: n8n-db
+          property: user
+      - key: DB_POSTGRESDB_PASSWORD
+        fromDatabase:
+          name: n8n-db
+          property: password
+      - key: QUEUE_BULL_REDIS_HOST
+        fromService:
+          type: pserv
+          name: redis
+          envVarKey: RENDER_INTERNAL_HOSTNAME
+      - key: QUEUE_BULL_REDIS_PORT
+        value: "6379"
+      - key: WEBHOOK_URL
+        value: https://n8n-automation-engine.onrender.com/
+      - key: GENERIC_TIMEZONE
+        value: UTC
 
   # ─────────────────────────────────────────────
-  # 3. AI CRM Backend (Node.js) — port $PORT
+  # 3. n8n Enterprise Worker
   # ─────────────────────────────────────────────
-  - type: web
-    name: Nexus-crm-api
-    env: node
+  - type: worker
+    name: n8n-worker
+    env: docker
     plan: free
-    buildCommand: npm install
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile
+    dockerCommand: "n8n worker"
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: AI_GATEWAY_URL
-        value: https://Nexus-gateway.onrender.com
-    rootDir: apps/ai-crm/backend
-    healthCheckPath: /api/health
+      - key: EXECUTIONS_MODE
+        value: queue
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_DATABASE
+        fromDatabase:
+          name: n8n-db
+          property: database
+      - key: DB_POSTGRESDB_HOST
+        fromDatabase:
+          name: n8n-db
+          property: host
+      - key: DB_POSTGRESDB_PORT
+        fromDatabase:
+          name: n8n-db
+          property: port
+      - key: DB_POSTGRESDB_USER
+        fromDatabase:
+          name: n8n-db
+          property: user
+      - key: DB_POSTGRESDB_PASSWORD
+        fromDatabase:
+          name: n8n-db
+          property: password
+      - key: QUEUE_BULL_REDIS_HOST
+        fromService:
+          type: pserv
+          name: redis
+          envVarKey: RENDER_INTERNAL_HOSTNAME
+      - key: QUEUE_BULL_REDIS_PORT
+        value: "6379"
+      - key: GENERIC_TIMEZONE
+        value: UTC
 
   # ─────────────────────────────────────────────
-  # 4. Marketing OS (Node.js) — port $PORT
+  # 4. WAHA (WhatsApp API)
   # ─────────────────────────────────────────────
   - type: web
-    name: Nexus-marketing
-    env: node
+    name: waha-whatsapp-api
+    env: image
+    image: devlikeapro/waha:latest
     plan: free
-    buildCommand: npm install
-    startCommand: npm start
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: AI_GATEWAY_URL
-        value: https://Nexus-gateway.onrender.com
-      - key: CRM_API_URL
-        value: https://Nexus-crm-api.onrender.com
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-    rootDir: apps/marketing-os
-    healthCheckPath: /api/health
-
-  # ─────────────────────────────────────────────
-  # 5. Enterprise RAG (Python / FastAPI) — port $PORT
-  # ─────────────────────────────────────────────
-  - type: web
-    name: Nexus-rag
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: OPENROUTER_API_KEY
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: PYTHON_VERSION
-        value: 3.11.9
-    rootDir: apps/enterprise-rag
-    healthCheckPath: /api/health
+      - key: WAHA_PRINT_QR
+        value: "True"
+      - key: WAHA_LOG_LEVEL
+        value: "info"

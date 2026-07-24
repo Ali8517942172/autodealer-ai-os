@@ -4,7 +4,8 @@ services:
   n8n:
     image: docker.n8n.io/n8nio/n8n
     container_name: n8n
-    restart: unless-stopped
+    restart: always
+    env_file: .env
     ports:
       - "5678:5678"
     environment:
@@ -12,84 +13,127 @@ services:
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
       - NODE_ENV=production
-      - WEBHOOK_URL=http://localhost:5678/
+      - WEBHOOK_URL=https://desktop-l3an0ma.tail2141f7.ts.net/
+      - N8N_EDITOR_BASE_URL=https://desktop-l3an0ma.tail2141f7.ts.net/
       - GENERIC_TIMEZONE=UTC
+      
+      # Encryption Key for Worker Sync (commented out to use the one in volume)
+      # - N8N_ENCRYPTION_KEY=nexus-os-secure-key-2026
 
-      # WhatsApp Business API — Phone Number ID from Meta Business Manager
-      # Number: +971526647253 -> Get ID from: https://business.facebook.com/wa/manage/phone-numbers/
-      - WHATSAPP_PHONE_NUMBER_ID=REGISTER_AT_META_TO_GET_ID
+      # n8n's OWN internal metadata DB (users, credentials, workflows, executions).
+      # This is NOT the business database — Supabase (cloud) stays the single source
+      # of truth for leads/inventory/etc. This is purely n8n's engine-internal storage,
+      # required because SQLite cannot safely be shared between the n8n + n8n-worker
+      # processes (that mismatch was corrupting data and wiping the owner account).
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=n8n-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=n8n_local_pw
 
       # Google OAuth2 — Gmail credential
       - GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
       - GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET_HERE
-      
-      # Database setup pointing to mock Supabase Postgres
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=supabase-postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=ai_os_db
-      - DB_POSTGRESDB_USER=ai_admin
-      - DB_POSTGRESDB_PASSWORD=ai_secure_password
-      
+
       # Queue setup (using Redis)
       - EXECUTIONS_MODE=queue
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_BULL_REDIS_PORT=6379
       - QUEUE_HEALTH_CHECK_ACTIVE=true
     depends_on:
-      supabase-postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
+      n8n-db:
+        condition: service_healthy
+    networks:
+      - nexus_net
     volumes:
       - n8n_data:/home/node/.n8n
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   n8n-worker:
     image: docker.n8n.io/n8nio/n8n
     container_name: n8n-worker
-    restart: unless-stopped
+    restart: always
+    env_file: .env
     command: worker
     environment:
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=supabase-postgres
+      - DB_POSTGRESDB_HOST=n8n-db
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=ai_os_db
-      - DB_POSTGRESDB_USER=ai_admin
-      - DB_POSTGRESDB_PASSWORD=ai_secure_password
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=n8n_local_pw
       - EXECUTIONS_MODE=queue
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_BULL_REDIS_PORT=6379
     depends_on:
-      supabase-postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
-
-  supabase-postgres:
-    # Using pgvector to act as a mock Supabase for AI applications
-    image: pgvector/pgvector:pg15
-    container_name: supabase-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=ai_admin
-      - POSTGRES_PASSWORD=ai_secure_password
-      - POSTGRES_DB=ai_os_db
-    ports:
-      - "5432:5432"
+      n8n-db:
+        condition: service_healthy
+    networks:
+      - nexus_net
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - n8n_data:/home/node/.n8n
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # n8n's dedicated internal Postgres — NOT the app's business database.
+  # Free, self-hosted, local only. Supabase (cloud) remains untouched and
+  # is still where all leads/inventory/CRM data lives.
+  n8n-db:
+    image: postgres:16-alpine
+    container_name: n8n-db
+    restart: always
+    environment:
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=n8n_local_pw
+      - POSTGRES_DB=n8n
+    networks:
+      - nexus_net
+    volumes:
+      - n8n_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ai_admin -d ai_os_db"]
+      test: ["CMD-SHELL", "pg_isready -U n8n"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  waha:
+    image: devlikeapro/waha
+    container_name: waha
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - WAHA_PRINT_QR=True
+      - WAHA_LOG_LEVEL=info
+    networks:
+      - nexus_net
+    volumes:
+      - waha_data:/app/.waha
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   redis:
     image: redis:7-alpine
     container_name: redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
+    restart: always
+    networks:
+      - nexus_net
     volumes:
       - redis_data:/data
     healthcheck:
@@ -97,8 +141,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  nexus_net:
+    driver: bridge
 
 volumes:
   n8n_data:
-  postgres_data:
+  n8n_db_data:
   redis_data:
+  waha_data:

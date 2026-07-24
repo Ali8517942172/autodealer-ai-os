@@ -7,37 +7,31 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "leads",
-        "limit": 50,
-        "sortRules": {
-          "sortRulesValues": [
-            {
-              "sortKey": "created_at",
-              "direction": "desc"
-            }
-          ]
-        }
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?select=*&order=created_at.desc&limit=50",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" }
+        ]},
+        "options": {}
       },
-      "id": "j10-002", "name": "Fetch All Active Leads", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [240, 200],
-      "credentials": { "supabaseApi": { "id": "SUPABASE_CRED_ID", "name": "Supabase API" } }
+      "id": "j10-002", "name": "Fetch All Active Leads", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [240, 200]
     },
     {
       "parameters": {
-        "resource": "custom",
-        "operation": "searchRead",
-        "model": "crm.lead",
-        "searchQuery": "=[[\"create_date\", \">=\", \"{{ new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0] }}\"]]",
-        "fieldsList": "name,contact_name,phone,email_from,expected_revenue,stage_id,create_date",
-        "limit": 50
+        "method": "POST",
+        "url": "={{ $env.ODOO_URL }}/jsonrpc",
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"call\",\n  \"params\": {\n    \"service\": \"object\",\n    \"method\": \"execute_kw\",\n    \"args\": [\n      \"{{ $env.ODOO_DB }}\",\n      {{ parseInt($env.ODOO_USER_ID) || 2 }},\n      \"{{ $env.ODOO_API_KEY }}\",\n      \"crm.lead\",\n      \"search_read\",\n      [[[\"create_date\", \">=\", \"{{ new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0] }}\"]]],\n      { \"fields\": [\"name\", \"contact_name\", \"phone\", \"email_from\", \"expected_revenue\", \"stage_id\", \"create_date\"], \"limit\": 50 }\n    ]\n  }\n}",
+        "options": {}
       },
-      "id": "j10-003", "name": "Fetch Odoo Leads", "type": "n8n-nodes-base.odoo", "typeVersion": 1, "position": [240, 400],
+      "id": "j10-003", "name": "Fetch Odoo Leads", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [240, 400],
       "credentials": { "odooApi": { "id": "ODOO_CRED_ID", "name": "Odoo ERP" } },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const leads = $items('Fetch All Active Leads').map(i => i.json);\nconst odooLeads = $items('Fetch Odoo Leads').map(i => i.json);\n\n// Build pipeline summary\nconst pipeline = {\n  total: leads.length,\n  by_priority: { HOT: 0, WARM: 0, COLD: 0, unscored: 0 },\n  by_status: {},\n  avg_score: 0,\n  total_potential_revenue: 0,\n  leads_last_24h: 0,\n  odoo_leads: odooLeads.length\n};\n\nconst now = Date.now();\nlet scoreSum = 0, scoreCount = 0;\n\nleads.forEach(l => {\n  pipeline.by_priority[l.ai_priority || 'unscored']++;\n  pipeline.by_status[l.status || 'unknown'] = (pipeline.by_status[l.status || 'unknown'] || 0) + 1;\n  if (l.ai_score) { scoreSum += l.ai_score; scoreCount++; }\n  if (l.budget_max) pipeline.total_potential_revenue += parseFloat(l.budget_max);\n  if (new Date(l.created_at).getTime() > now - 24*60*60*1000) pipeline.leads_last_24h++;\n});\n\npipeline.avg_score = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : 0;\n\nreturn [{ json: {\n  pipeline,\n  sample_leads: leads.slice(0, 5).map(l => `${l.name} (${l.ai_priority}/${l.status}, Score:${l.ai_score})`).join('; ')\n}}];"
+        "jsCode": "const supabaseLeads = $node['Fetch All Active Leads'].json;\nconst odooResponse = $node['Fetch Odoo Leads'].json;\n\nconst leads = Array.isArray(supabaseLeads) ? supabaseLeads : [];\nconst odooLeads = odooResponse?.result || [];\n\n// Build pipeline summary\nconst pipeline = {\n  total: leads.length,\n  by_priority: { HOT: 0, WARM: 0, COLD: 0, unscored: 0 },\n  by_status: {},\n  avg_score: 0,\n  total_potential_revenue: 0,\n  leads_last_24h: 0,\n  odoo_leads: odooLeads.length\n};\n\nconst now = Date.now();\nlet scoreSum = 0, scoreCount = 0;\n\nleads.forEach(l => {\n  pipeline.by_priority[l.ai_priority || 'unscored']++;\n  pipeline.by_status[l.status || 'unknown'] = (pipeline.by_status[l.status || 'unknown'] || 0) + 1;\n  if (l.ai_score) { scoreSum += l.ai_score; scoreCount++; }\n  if (l.budget_max) pipeline.total_potential_revenue += parseFloat(l.budget_max);\n  if (new Date(l.created_at).getTime() > now - 24*60*60*1000) pipeline.leads_last_24h++;\n});\n\npipeline.avg_score = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : 0;\n\nreturn [{ json: {\n  pipeline,\n  sample_leads: leads.slice(0, 5).map(l => `${l.name} (${l.ai_priority}/${l.status}, Score:${l.ai_score})`).join('; ')\n}}];"
       },
       "id": "j10-004", "name": "Aggregate 360 Data", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [480, 300]
     },

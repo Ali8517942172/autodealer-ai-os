@@ -1,154 +1,212 @@
 {
-  "name": "Slack Command Center - CRM Updates",
+  "name": "Slack Command Center - AI Agent",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "slack/command/crm-update",
+        "path": "slack-command",
         "responseMode": "lastNode",
         "options": {}
       },
-      "name": "Slack Slash Command Webhook",
+      "id": "1",
+      "name": "Slack Webhook (POST)",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        250,
-        300
-      ],
-      "webhookId": "12345678-1234-1234-1234-123456789abc"
+      "typeVersion": 1.1,
+      "position": [0, 300]
     },
     {
       "parameters": {
-        "keepOnlySet": true,
-        "values": {
-          "string": [
+        "jsCode": "return [{json: {command: $input.all()[0].json.body.text || $input.all()[0].json.text, user: $input.all()[0].json.body.user_name || 'user'}}];"
+      },
+      "id": "2",
+      "name": "Extract Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.command }}",
+        "options": {
+          "systemMessage": "You are NEXUS OS CRM Agent. Parse the user's natural language Slack command and execute the appropriate CRM operation using the provided tools. Respond with a clear, concise confirmation suitable for a Slack message."
+        }
+      },
+      "id": "3",
+      "name": "AI CRM Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-flash-1.5",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "4",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [450, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TRR9eUUk37850wgs",
+          "name": "Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "update_lead_status",
+        "description": "Updates a lead's status in Supabase. Requires email/phone and the new status (e.g. HOT, WARM, COLD, WON, LOST)",
+        "method": "PATCH",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "name": "leadId",
-              "value": "={{ $json.body.text.split(' ')[0] }}"
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
             },
             {
-              "name": "newStatus",
-              "value": "={{ $json.body.text.split(' ')[1] }}"
-            },
-            {
-              "name": "channelId",
-              "value": "={{ $json.body.channel_id }}"
-            },
-            {
-              "name": "userId",
-              "value": "={{ $json.body.user_id }}"
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
             }
           ]
         },
-        "options": {}
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "eq.{{$fromAI('email')}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"{{$fromAI('status')}}\"\n}"
       },
-      "name": "Extract Command Data",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
-      "position": [
-        450,
-        300
-      ]
+      "id": "5",
+      "name": "Update Lead Status",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [600, 500]
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE leads SET status = '{{ $json.newStatus }}', updated_at = NOW() WHERE id = '{{ $json.leadId }}' RETURNING id, status;",
-        "options": {}
-      },
-      "name": "Update Lead in Supabase",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.3,
-      "position": [
-        650,
-        300
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "2njx6fRNkElVRJ6x",
-          "name": "Supabase Postgres (Docker)"
+        "name": "search_leads",
+        "description": "Searches for leads in Supabase by name or phone.",
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "ilike.*{{$fromAI('name')}}*"
+            }
+          ]
         }
-      }
+      },
+      "id": "6",
+      "name": "Search Leads",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [750, 500]
     },
     {
       "parameters": {
-        "channel": "={{ $node[\"Extract Command Data\"].json.channelId }}",
-        "text": "=✅ <@{{ $node[\"Extract Command Data\"].json.userId }}> successfully updated Lead `{{ $node[\"Extract Command Data\"].json.leadId }}` to status `{{ $node[\"Extract Command Data\"].json.newStatus }}` in Supabase.",
-        "otherOptions": {}
+        "jsCode": "return [{json: {\n  response_type: 'in_channel',\n  blocks: [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: `*Agent Confirmation:* \\n${$input.all()[0].json.output}`\n      }\n    }\n  ]\n}}];"
       },
-      "name": "Send Slack Confirmation",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.1,
-      "position": [
-        850,
-        300
-      ],
-      "credentials": {
-        "slackApi": {
-          "id": "HPTEqLu6xjmhEXDN",
-          "name": "Slack - NEXUS OS Bot"
-        }
-      }
+      "id": "7",
+      "name": "Format Slack Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
     }
   ],
   "connections": {
-    "Slack Slash Command Webhook": {
+    "Slack Webhook (POST)": {
       "main": [
         [
           {
-            "node": "Extract Command Data",
+            "node": "Extract Command",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extract Command Data": {
+    "Extract Command": {
       "main": [
         [
           {
-            "node": "Update Lead in Supabase",
+            "node": "AI CRM Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Update Lead in Supabase": {
+    "AI CRM Agent": {
       "main": [
         [
           {
-            "node": "Send Slack Confirmation",
+            "node": "Format Slack Response",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI CRM Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Status": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI CRM Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Leads": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI CRM Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]
       ]
     }
-  },
-  "settings": {
-    "executionOrder": "v1",
-    "saveExecutionProgress": true,
-    "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
-  },
-  "staticData": null,
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "id": "wf_106",
-  "tags": [
-    {
-      "createdAt": "2026-07-17T15:00:00.000Z",
-      "updatedAt": "2026-07-17T15:00:00.000Z",
-      "id": "1",
-      "name": "Slack"
-    },
-    {
-      "createdAt": "2026-07-17T15:00:00.000Z",
-      "updatedAt": "2026-07-17T15:00:00.000Z",
-      "id": "2",
-      "name": "CRM"
-    }
-  ]
+  }
 }

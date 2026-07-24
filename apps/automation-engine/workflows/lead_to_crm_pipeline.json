@@ -14,9 +14,9 @@
     },
     {
       "parameters": {
-        "functionCode": "// AI Lead Scoring via Cowork Agent\nconst lead = items[0].json;\n\n// Score based on budget, timeline, and source\nlet score = 0;\nif (lead.budget_aed > 200000) score += 30;\nelse if (lead.budget_aed > 100000) score += 20;\nelse score += 10;\n\nif (lead.timeline === 'immediate') score += 30;\nelse if (lead.timeline === '1_month') score += 20;\nelse score += 10;\n\nif (lead.source === 'website') score += 15;\nif (lead.source === 'referral') score += 25;\nif (lead.trade_in) score += 15;\n\nlead.ai_score = score;\nlead.priority = score >= 60 ? 'HOT' : score >= 40 ? 'WARM' : 'COLD';\nlead.scored_at = new Date().toISOString();\nlead.scored_by = 'Cowork AI Agent';\n\nreturn [{ json: lead }];"
+        "functionCode": "// AI Lead Scoring via Sales Agent\nconst lead = items[0].json;\n\n// Score based on budget, timeline, and source\nlet score = 0;\nif (lead.budget_aed > 200000) score += 30;\nelse if (lead.budget_aed > 100000) score += 20;\nelse score += 10;\n\nif (lead.timeline === 'immediate') score += 30;\nelse if (lead.timeline === '1_month') score += 20;\nelse score += 10;\n\nif (lead.source === 'website') score += 15;\nif (lead.source === 'referral') score += 25;\nif (lead.trade_in) score += 15;\n\nlead.ai_score = score;\nlead.priority = score >= 60 ? 'HOT' : score >= 40 ? 'WARM' : 'COLD';\nlead.scored_at = new Date().toISOString();\nlead.scored_by = 'Sales Agent';\n\nreturn [{ json: lead }];"
       },
-      "name": "AI Lead Scoring (Cowork Agent)",
+      "name": "AI Lead Scoring (Sales Agent)",
       "type": "n8n-nodes-base.function",
       "position": [500, 300],
       "typeVersion": 1
@@ -99,10 +99,10 @@
   "connections": {
     "Webhook - New Lead": {
       "main": [
-        [{ "node": "AI Lead Scoring (Cowork Agent)", "type": "main", "index": 0 }]
+        [{ "node": "AI Lead Scoring (Sales Agent)", "type": "main", "index": 0 }]
       ]
     },
-    "AI Lead Scoring (Cowork Agent)": {
+    "AI Lead Scoring (Sales Agent)": {
       "main": [
         [{ "node": "Is HOT Lead?", "type": "main", "index": 0 }]
       ]

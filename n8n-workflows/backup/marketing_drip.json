@@ -17,22 +17,15 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "leads",
-        "limit": 1,
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "id",
-              "condition": "eq",
-              "keyValue": "={{ $json.lead_id }}"
-            }
-          ]
-        },
-        "columns": "status,ai_priority"
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $json.lead_id }}&select=status,ai_priority",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" }
+        ]},
+        "options": {}
       },
-      "id": "i9-004", "name": "Check: Still Cold?", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [720, 300],
-      "credentials": { "supabaseApi": { "id": "SUPABASE_CRED_ID", "name": "Supabase API" } },
+      "id": "i9-004", "name": "Check: Still Cold?", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 300],
       "onError": "continueRegularOutput"
     },
     {
@@ -70,15 +63,14 @@
     },
     {
       "parameters": {
-        "resource": "email",
-        "operation": "send",
-        "fromEmail": "NEXUS OS Sales <sales@nexuscorp.net>",
-        "toEmail": "={{ $json.email }}",
-        "subject": "=Welcome to NEXUS OS, {{ $json.name }}! 🚗",
-        "html": "={{ $json.emailHtml }}"
+        "method": "POST", "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"NEXUS OS Sales <sales@nexuscorp.net>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"Welcome to NEXUS OS, {{ $json.name }}! 🚗\",\n  \"html\": {{ JSON.stringify($json.emailHtml) }}\n}",
+        "options": {}
       },
-      "id": "i9-009", "name": "Send Email (Resend)", "type": "n8n-nodes-base.resend", "typeVersion": 1, "position": [1920, 400],
-      "credentials": { "resendApi": { "id": "RESEND_CRED_ID", "name": "Resend API" } },
+      "id": "i9-009", "name": "Send Email (Resend)", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1920, 400],
+      "credentials": { "httpHeaderAuth": { "id": "RESEND_CRED_ID", "name": "Resend Email API" } },
       "onError": "continueRegularOutput"
     },
     {
@@ -87,15 +79,14 @@
     },
     {
       "parameters": {
-        "resource": "email",
-        "operation": "send",
-        "fromEmail": "NEXUS OS Sales <sales@nexuscorp.net>",
-        "toEmail": "={{ $node['Prepare Lead Data'].json.email }}",
-        "subject": "=Did you find your dream car, {{ $node['Prepare Lead Data'].json.name }}? 🔑",
-        "html": "=<h2>Hi {{ $node['Prepare Lead Data'].json.name }},</h2><p>Just checking in — have you had a chance to browse our inventory?</p><p>We have new arrivals this week including premium SUVs and sedans in your range. Let us know if you need any help!</p><p><a href='https://nexuscorp.net/inventory'>Browse Inventory →</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>"
+        "method": "POST", "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"NEXUS OS Sales <sales@nexuscorp.net>\",\n  \"to\": [\"{{ $node['Prepare Lead Data'].json.email }}\"],\n  \"subject\": \"Did you find your dream car, {{ $node['Prepare Lead Data'].json.name }}? 🔑\",\n  \"html\": \"<h2>Hi {{ $node['Prepare Lead Data'].json.name }},</h2><p>Just checking in — have you had a chance to browse our inventory?</p><p>We have new arrivals this week including premium SUVs and sedans in your range. Let us know if you need any help!</p><p><a href='https://nexuscorp.net/inventory'>Browse Inventory →</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>\"\n}",
+        "options": {}
       },
-      "id": "i9-011", "name": "Email: Day 3 Follow-up", "type": "n8n-nodes-base.resend", "typeVersion": 1, "position": [2400, 400],
-      "credentials": { "resendApi": { "id": "RESEND_CRED_ID", "name": "Resend API" } },
+      "id": "i9-011", "name": "Email: Day 3 Follow-up", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [2400, 400],
+      "credentials": { "httpHeaderAuth": { "id": "RESEND_CRED_ID", "name": "Resend Email API" } },
       "onError": "continueRegularOutput"
     },
     {
@@ -104,15 +95,14 @@
     },
     {
       "parameters": {
-        "resource": "email",
-        "operation": "send",
-        "fromEmail": "NEXUS OS Sales <sales@nexuscorp.net>",
-        "toEmail": "={{ $node['Prepare Lead Data'].json.email }}",
-        "subject": "=🎉 Exclusive Offer — Just for You, {{ $node['Prepare Lead Data'].json.name }}!",
-        "html": "=<h2>Hi {{ $node['Prepare Lead Data'].json.name }},</h2><p>As a special thank you for your interest, we're offering you an <strong>exclusive 5% discount</strong> on your first purchase at NEXUS OS.</p><p>This offer expires in 48 hours. Don't miss out!</p><p><a href='https://nexuscorp.net/book'>Book Your Test Drive Now →</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>"
+        "method": "POST", "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"NEXUS OS Sales <sales@nexuscorp.net>\",\n  \"to\": [\"{{ $node['Prepare Lead Data'].json.email }}\"],\n  \"subject\": \"🎉 Exclusive Offer — Just for You, {{ $node['Prepare Lead Data'].json.name }}!\",\n  \"html\": \"<h2>Hi {{ $node['Prepare Lead Data'].json.name }},</h2><p>As a special thank you for your interest, we're offering you an <strong>exclusive 5% discount</strong> on your first purchase at NEXUS OS.</p><p>This offer expires in 48 hours. Don't miss out!</p><p><a href='https://nexuscorp.net/book'>Book Your Test Drive Now →</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>\"\n}",
+        "options": {}
       },
-      "id": "i9-013", "name": "Email: Day 7 Final Offer", "type": "n8n-nodes-base.resend", "typeVersion": 1, "position": [2880, 400],
-      "credentials": { "resendApi": { "id": "RESEND_CRED_ID", "name": "Resend API" } },
+      "id": "i9-013", "name": "Email: Day 7 Final Offer", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [2880, 400],
+      "credentials": { "httpHeaderAuth": { "id": "RESEND_CRED_ID", "name": "Resend Email API" } },
       "onError": "continueRegularOutput"
     }
   ],

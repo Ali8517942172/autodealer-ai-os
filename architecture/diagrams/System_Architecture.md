@@ -24,12 +24,10 @@ graph TD
     %% Core Databases
     subgraph "Data Storage"
         PG[(Supabase / Postgres)]
-        Mongo[(MongoDB Logs/Leads)]
-        Vect[(pgvector / RAG)]
+        Vect[(Supabase pgvector / RAG)]
     end
 
     Auth --> PG
-    Auth --> Mongo
 
     %% Business Modules (Apps)
     subgraph "NEXUS OS Modules"
@@ -42,10 +40,10 @@ graph TD
 
     %% Agents and Automation
     subgraph "AI Agents & Automation"
-        N8N[n8n / Make Engine]
-        Cowork((Cowork Agent\nSales Copilot))
-        Hermes((Hermes Agent\nMarketing))
-        Openclaw((Openclaw Agent\nCompliance RAG))
+        N8N[n8n / WAHA Engine]
+        Sales((Sales Agent\nSales Copilot))
+        Marketing((Marketing Agent\nMarketing))
+        Knowledge((Knowledge Agent\nCompliance RAG))
     end
 
     %% Connections
@@ -56,16 +54,15 @@ graph TD
     CRM <--> N8N
     Mktg <--> N8N
     
-    N8N <--> Cowork
-    N8N <--> Hermes
+    N8N <--> Sales
+    N8N <--> Marketing
     
-    RAG <--> Openclaw
-    Openclaw <--> Vect
+    RAG <--> Knowledge
+    Knowledge <--> Vect
     
     CRM --> PG
-    Mktg --> Mongo
+    Mktg --> PG
     Exec --> PG
-    Exec --> Mongo
 
     %% External Systems
     subgraph "External Dealership Systems"
@@ -79,5 +76,5 @@ graph TD
 
 ## Architecture Principles
 1. **Event-Driven:** Every inbound lead or CRM change triggers an event in the n8n automation engine.
-2. **AI Segregation:** Specific agents handle specific domains (Cowork for Sales, Hermes for Marketing, Openclaw for Knowledge Retrieval).
+2. **AI Segregation:** Specific agents handle specific domains (Sales Agent for Sales, Marketing Agent for Marketing, Knowledge Agent for Knowledge Retrieval).
 3. **Single Source of Truth:** Odoo is the master for inventory; Supabase is the master for customer state and access control.

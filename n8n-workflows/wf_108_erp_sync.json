@@ -1,0 +1,88 @@
+{
+  "name": "wf_108 ERP Sync - Odoo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "erp-sync",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "erp-sync-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "table": "leads",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            { "keyName": "status", "condition": "eq", "keyValue": "HOT" }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "Fetch HOT Leads from Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "custom",
+        "customResource": "crm.lead",
+        "operation": "create",
+        "fieldsToCreateOrUpdate": {
+          "fields": [
+            { "name": "name", "value": "={{$json.name || 'New Lead'}}" },
+            { "name": "email_from", "value": "={{$json.email || ''}}" },
+            { "name": "phone", "value": "={{$json.phone || ''}}" },
+            { "name": "description", "value": "={{$json.notes || 'HOT Lead from Nexus OS'}}" }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "Push to Odoo ERP",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "odooApi": { "id": "QFndoyD3gLoVLidE", "name": "Odoo - Nexus" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch HOT Leads from Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch HOT Leads from Supabase": {
+      "main": [
+        [
+          {
+            "node": "Push to Odoo ERP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -20,7 +20,7 @@
           "agent": "sales",
           "input": "Extract customer name, phone, email, and vehicle interest from this email: {{Body_Plain}}"
         },
-        "notes": "Uses Cowork AI agent to parse unstructured email into structured lead data"
+        "notes": "Uses the Sales Agent to parse unstructured email into structured lead data"
       }
     },
     {

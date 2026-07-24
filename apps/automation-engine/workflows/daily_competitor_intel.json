@@ -22,9 +22,9 @@
     },
     {
       "parameters": {
-        "functionCode": "// Hermes Agent: Analyze competitor pricing\nconst competitors = items.map(i => i.json);\nconst alerts = competitors.filter(c => c.ai_recommendation && c.ai_recommendation.includes('Reduce'));\n\nreturn [{\n  json: {\n    total_competitors_checked: competitors.length,\n    price_alerts: alerts.length,\n    summary: `Checked ${competitors.length} competitor listings. Found ${alerts.length} pricing opportunities.`,\n    alerts: alerts,\n    analyzed_by: 'Hermes AI Agent',\n    analyzed_at: new Date().toISOString()\n  }\n}];"
+        "functionCode": "// Marketing Agent: Analyze competitor pricing\nconst competitors = items.map(i => i.json);\nconst alerts = competitors.filter(c => c.ai_recommendation && c.ai_recommendation.includes('Reduce'));\n\nreturn [{\n  json: {\n    total_competitors_checked: competitors.length,\n    price_alerts: alerts.length,\n    summary: `Checked ${competitors.length} competitor listings. Found ${alerts.length} pricing opportunities.`,\n    alerts: alerts,\n    analyzed_by: 'Marketing Agent',\n    analyzed_at: new Date().toISOString()\n  }\n}];"
       },
-      "name": "Hermes Agent: Price Analysis",
+      "name": "Marketing Agent: Price Analysis",
       "type": "n8n-nodes-base.function",
       "position": [750, 300],
       "typeVersion": 1
@@ -56,9 +56,9 @@
       "main": [[{ "node": "Fetch Competitor Data", "type": "main", "index": 0 }]]
     },
     "Fetch Competitor Data": {
-      "main": [[{ "node": "Hermes Agent: Price Analysis", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Marketing Agent: Price Analysis", "type": "main", "index": 0 }]]
     },
-    "Hermes Agent: Price Analysis": {
+    "Marketing Agent: Price Analysis": {
       "main": [[
         { "node": "Post to Slack", "type": "main", "index": 0 },
         { "node": "Update CRM Price Alerts", "type": "main", "index": 0 }

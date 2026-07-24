@@ -1,9 +1,6 @@
 # AI-Assisted Development Workflow
 
-## JD Requirement
-> "Strong proficiency with modern AI coding tools such as Claude Code and Codex."
-
-This document describes how NEXUS OS was built using AI-assisted development tools, demonstrating practical proficiency with the exact tools mentioned in the job description.
+This document describes how NEXUS OS is built and maintained using AI-assisted development tools, so any contributor (human or AI) understands the working process.
 
 ---
 
@@ -23,7 +20,7 @@ This document describes how NEXUS OS was built using AI-assisted development too
    ├── Analyze business requirements
    ├── Design system architecture
    ├── Define database schemas
-   └── Map JD requirements to features
+   └── Map business requirements to features
 
 2. ARCHITECTURE (Claude Code)
    ├── Multi-service design
@@ -34,7 +31,7 @@ This document describes how NEXUS OS was built using AI-assisted development too
 3. IMPLEMENTATION (Claude Code + Codex)
    ├── Backend services (Node.js, FastAPI)
    ├── Database schemas (Supabase SQL)
-   ├── Automation workflows (n8n, Make, Zapier)
+   ├── Automation workflows (n8n, WAHA)
    └── Frontend components (React)
 
 4. TESTING (Codex)

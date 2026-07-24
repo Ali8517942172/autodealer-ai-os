@@ -1,8 +1,11 @@
 {
+  "name": "nexus-os",
+  "scripts": {
+    "build": "cd apps/executive-dashboard && npm install && npm run build"
+  },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.202",
     "dotenv": "^17.4.2",
     "isomorphic-git": "^1.38.7"
-  },
-  "name": "nexus-os"
+  }
 }

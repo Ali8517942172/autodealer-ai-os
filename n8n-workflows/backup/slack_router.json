@@ -1,0 +1,216 @@
+{
+  "name": "Slack Command Center — AI CRM Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack/command/crm-update",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "c3000001-0001-4c00-c000-000000000001",
+      "name": "Slack Slash Command",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "slack-crm-agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// PARSE Slack slash command payload\n// ──────────────────────────────────────────────\nconst raw = $input.first().json;\nconst body = raw.body || raw;\n\nreturn [{\n  json: {\n    userCommand: body.text || '',\n    channelId: body.channel_id || '',\n    userId: body.user_id || '',\n    userName: body.user_name || 'unknown',\n    teamId: body.team_id || '',\n    triggerId: body.trigger_id || ''\n  }\n}];"
+      },
+      "id": "c3000001-0002-4c00-c000-000000000002",
+      "name": "Parse Slack Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
+            { "name": "X-Title", "value": "NEXUS OS — Slack CRM Agent" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 500,\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are NEXUS CRM Agent inside Slack. Parse the user's natural-language command and determine the CRM operation to execute.\\n\\nAVAILABLE OPERATIONS:\\n1. update_status — Update a lead's status (new, contacted, qualified, negotiation, won, lost)\\n2. search_leads — Find leads by name, phone, email, or status\\n3. get_lead_summary — Get full details for a specific lead\\n4. create_deal — Create a new deal for a lead\\n5. check_inventory — Search available vehicles\\n6. get_pipeline_stats — Show pipeline statistics\\n\\nRETURN STRICTLY THIS JSON:\\n{\\n  \\\"operation\\\": \\\"<operation_name>\\\",\\n  \\\"params\\\": { <operation-specific parameters> },\\n  \\\"human_summary\\\": \\\"<one-line description of what you're doing>\\\"\\n}\\n\\nEXAMPLES:\\n• \\\"update Ahmed to qualified\\\" → { \\\"operation\\\": \\\"update_status\\\", \\\"params\\\": { \\\"name\\\": \\\"Ahmed\\\", \\\"new_status\\\": \\\"qualified\\\" }, \\\"human_summary\\\": \\\"Updating Ahmed's status to qualified\\\" }\\n• \\\"show me all hot leads\\\" → { \\\"operation\\\": \\\"search_leads\\\", \\\"params\\\": { \\\"filter\\\": \\\"ai_priority\\\", \\\"value\\\": \\\"HOT\\\" }, \\\"human_summary\\\": \\\"Searching for all HOT leads\\\" }\\n• \\\"how many leads today\\\" → { \\\"operation\\\": \\\"get_pipeline_stats\\\", \\\"params\\\": { \\\"period\\\": \\\"today\\\" }, \\\"human_summary\\\": \\\"Getting today's pipeline stats\\\" }\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.userCommand }}\"\n    }\n  ]\n}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "c3000001-0003-4c00-c000-000000000003",
+      "name": "AI CRM Agent — Parse Command",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OPENROUTER_CRED_ID",
+          "name": "OpenRouter API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// PARSE AI response and route to correct operation\n// ──────────────────────────────────────────────\nconst aiResponse = $input.first().json;\nconst slackData = $node['Parse Slack Payload'].json;\n\nlet parsed;\ntry {\n  const content = aiResponse.choices[0].message.content;\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = {\n    operation: 'error',\n    params: {},\n    human_summary: 'Could not understand command: ' + slackData.userCommand\n  };\n}\n\nreturn [{\n  json: {\n    ...slackData,\n    ...parsed\n  }\n}];"
+      },
+      "id": "c3000001-0004-4c00-c000-000000000004",
+      "name": "Parse AI Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.operation }}",
+        "rules": {
+          "rules": [
+            { "value2": "update_status", "output": 0 },
+            { "value2": "search_leads", "output": 1 },
+            { "value2": "get_pipeline_stats", "output": 2 }
+          ]
+        },
+        "fallbackOutput": 3
+      },
+      "id": "c3000001-0005-4c00-c000-000000000005",
+      "name": "Operation Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?name=ilike.*{{ $json.params.name || '' }}*",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" },
+            { "name": "Prefer", "value": "return=representation" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"{{ $json.params.new_status }}\",\n  \"updated_at\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "id": "c3000001-0006-4c00-c000-000000000006",
+      "name": "Execute: Update Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?or=(name.ilike.*{{ $json.params.value || '' }}*,ai_priority.eq.{{ $json.params.value || '' }},status.eq.{{ $json.params.value || '' }})&limit=10",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3000001-0007-4c00-c000-000000000007",
+      "name": "Execute: Search Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?select=ai_priority,status&limit=1000",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3000001-0008-4c00-c000-000000000008",
+      "name": "Execute: Pipeline Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// FORMAT Slack Block Kit response\n// ──────────────────────────────────────────────\nconst result = $input.first().json;\nconst context = $node['Parse AI Decision'].json;\nconst operation = context.operation;\n\nlet responseText = '';\n\nif (operation === 'update_status') {\n  const updated = Array.isArray(result) ? result : [result];\n  if (updated.length > 0 && updated[0].id) {\n    responseText = `✅ *Status Updated*\\n• Lead: ${updated[0].name}\\n• New Status: \\`${context.params.new_status}\\`\\n• Updated by: <@${context.userId}>`;\n  } else {\n    responseText = `⚠️ No lead found matching \"${context.params.name}\"`;\n  }\n} else if (operation === 'search_leads') {\n  const leads = Array.isArray(result) ? result : [];\n  if (leads.length === 0) {\n    responseText = `🔍 No leads found for \"${context.params.value}\"`;\n  } else {\n    const list = leads.slice(0, 5).map((l, i) => \n      `${i+1}. *${l.name}* — ${l.ai_priority || '?'} | ${l.status} | Score: ${l.ai_score || '?'}`\n    ).join('\\n');\n    responseText = `🔍 *Found ${leads.length} lead(s):*\\n${list}`;\n  }\n} else if (operation === 'get_pipeline_stats') {\n  const leads = Array.isArray(result) ? result : [];\n  const stats = {\n    total: leads.length,\n    hot: leads.filter(l => l.ai_priority === 'HOT').length,\n    warm: leads.filter(l => l.ai_priority === 'WARM').length,\n    cold: leads.filter(l => l.ai_priority === 'COLD').length,\n    won: leads.filter(l => l.status === 'won').length\n  };\n  responseText = `📊 *Pipeline Stats:*\\n🔥 HOT: ${stats.hot} | 🟡 WARM: ${stats.warm} | 🔵 COLD: ${stats.cold}\\n✅ Won: ${stats.won} | 📋 Total: ${stats.total}`;\n} else {\n  responseText = `❓ ${context.human_summary}\\nCommand: \\`${context.userCommand}\\``;\n}\n\nreturn [{ json: { text: responseText, channelId: context.channelId } }];"
+      },
+      "id": "c3000001-0009-4c00-c000-000000000009",
+      "name": "Format Slack Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"response_type\": \"in_channel\",\n  \"text\": {{ JSON.stringify($json.text) }}\n}",
+        "options": {}
+      },
+      "id": "c3000001-0010-4c00-c000-000000000010",
+      "name": "Respond to Slack",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1680, 300]
+    }
+  ],
+  "connections": {
+    "Slack Slash Command": {
+      "main": [[ { "node": "Parse Slack Payload", "type": "main", "index": 0 } ]]
+    },
+    "Parse Slack Payload": {
+      "main": [[ { "node": "AI CRM Agent — Parse Command", "type": "main", "index": 0 } ]]
+    },
+    "AI CRM Agent — Parse Command": {
+      "main": [[ { "node": "Parse AI Decision", "type": "main", "index": 0 } ]]
+    },
+    "Parse AI Decision": {
+      "main": [[ { "node": "Operation Router", "type": "main", "index": 0 } ]]
+    },
+    "Operation Router": {
+      "main": [
+        [{ "node": "Execute: Update Status", "type": "main", "index": 0 }],
+        [{ "node": "Execute: Search Leads", "type": "main", "index": 0 }],
+        [{ "node": "Execute: Pipeline Stats", "type": "main", "index": 0 }],
+        [{ "node": "Format Slack Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Execute: Update Status": {
+      "main": [[ { "node": "Format Slack Response", "type": "main", "index": 0 } ]]
+    },
+    "Execute: Search Leads": {
+      "main": [[ { "node": "Format Slack Response", "type": "main", "index": 0 } ]]
+    },
+    "Execute: Pipeline Stats": {
+      "main": [[ { "node": "Format Slack Response", "type": "main", "index": 0 } ]]
+    },
+    "Format Slack Response": {
+      "main": [[ { "node": "Respond to Slack", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "meta": { "templateCredsSetupCompleted": true },
+  "tags": [
+    { "name": "AI-Agent", "id": "tag-agent" },
+    { "name": "Slack", "id": "tag-slack" },
+    { "name": "CRM", "id": "tag-crm" }
+  ]
+}

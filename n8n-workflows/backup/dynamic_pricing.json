@@ -13,20 +13,15 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "vehicles",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "status",
-              "condition": "eq",
-              "keyValue": "available"
-            }
-          ]
-        }
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/vehicles?status=eq.available&select=*",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" }
+        ]},
+        "options": {}
       },
-      "id": "g7-003", "name": "Fetch Our Inventory", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [480, 300],
-      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } },
+      "id": "g7-003", "name": "Fetch Our Inventory", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [480, 300],
       "onError": "continueRegularOutput"
     },
     {
@@ -53,19 +48,19 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "audit_log",
-        "dataMode": "defineBelow",
-        "valuesToSend": {
-          "values": [
-            { "name": "action", "value": "daily_pricing_intelligence" },
-            { "name": "table_name", "value": "vehicles" },
-            { "name": "new_values", "value": "={{ $json }}" }
-          ]
-        }
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/audit_log",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ]},
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"daily_pricing_intelligence\",\n  \"table_name\": \"vehicles\",\n  \"new_values\": {{ JSON.stringify($json) }}\n}",
+        "options": {}
       },
-      "id": "g7-006", "name": "Log Analysis → Supabase", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [1200, 300],
-      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } },
+      "id": "g7-006", "name": "Log Analysis → Supabase", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1200, 300],
       "onError": "continueRegularOutput"
     },
     {

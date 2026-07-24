@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; font-size: 20px; }
+body { font-family: 'Inter', sans-serif; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 10px; }
+.page { display: none; }
+.page.active { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.nav-item.active { background: #eef0ff; color: #3525cd; font-weight: 600; }
+.nav-item.active .nav-icon { color: #3525cd; }
+.pulse-dot { animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.status-dot.pulse { animation: pulse 1.6s infinite; }
+
+/* Badges */
+.badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:9999px; font-size:11px; font-weight:700; letter-spacing:.02em; }
+.badge-hot { background:#ffdad6; color:#ba1a1a; }
+.badge-warm { background:#ffe3d3; color:#7e3000; }
+.badge-cold { background:#eaedff; color:#464555; }
+.badge-critical { background:#ffdad6; color:#ba1a1a; }
+.badge-warning { background:#ffe3d3; color:#7e3000; }
+.badge-safe { background:#dcfce9; color:#00532f; }
+
+/* AI Insights / Alerts */
+.insight-item, .alert-item { padding:12px; border-radius:10px; background:#f2f3ff; font-size:13px; line-height:1.5; border-left:3px solid #3525cd; }
+.insight-item.medium { border-left-color:#7e3000; }
+.insight-item.low { border-left-color:#006c49; }
+.channel-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eaedff; font-size:13px; }
+.performer-card .perf-name { font-weight:700; margin-bottom:8px; }
+.performer-card .perf-stat { display:flex; justify-content:space-between; padding:4px 0; }
+.competitor-item { padding:12px; border-radius:10px; background:#f2f3ff; font-size:13px; }
+.comp-name { font-weight:600; margin-bottom:4px; }
+.pl-item { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eaedff; }
+.pl-label { color:#464555; }
+.pl-value { font-weight:600; }
+.aging-label { width:100px; font-size:13px; color:#464555; }
+.event-entry { padding:6px 0; border-bottom:1px solid #eaedff; }
+.chat-msg.user { display:flex; gap:12px; flex-direction:row-reverse; }
+.chat-msg.user .msg-bubble { background:#3525cd; color:#fff; border-radius:12px 12px 0 12px; padding:12px 16px; max-width:80%; }
+.chat-msg.bot { display:flex; gap:12px; }
+.chat-msg.bot .msg-bubble { background:#f2f3ff; border-radius:12px 12px 12px 0; padding:12px 16px; max-width:80%; }
+.msg-avatar { width:32px; height:32px; border-radius:9999px; background:#3525cd; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.chat-msg.user .msg-avatar { background:#eaedff; color:#3525cd; }

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS OS — Contract Transparency Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#0B1F2E',
+          'ink-soft': '#16324a',
+          paper: '#F5F1E6',
+          'paper-line': '#ded6c2',
+          gold: '#C89B3C',
+          'gold-bright': '#E4B85A',
+          'red-flag': '#A8402F',
+          'green-ok': '#3E6B4F',
+        },
+        fontFamily: {
+          display: ['Newsreader', 'serif'],
+          mono: ['IBM Plex Mono', 'monospace'],
+          body: ['Inter', 'sans-serif'],
+        },
+        backgroundImage: {
+          'radial-gradient': 'radial-gradient(circle at 15% 10%, rgba(200,155,60,0.08), transparent 40%), radial-gradient(circle at 85% 90%, rgba(200,155,60,0.06), transparent 40%)'
+        },
+        boxShadow: {
+          'doc': '0 30px 60px -20px rgba(0,0,0,0.55), 0 2px 0 rgba(200,155,60,0.4)',
+        }
+      }
+    }
+  }
+</script>
+<style type="text/tailwindcss">
+  @layer utilities {
+    .bg-radial {
+      background-image: radial-gradient(circle at 15% 10%, rgba(200,155,60,0.08), transparent 40%), radial-gradient(circle at 85% 90%, rgba(200,155,60,0.06), transparent 40%);
+    }
+    
+    /* Toggle classes used by JS */
+    #fileChip.show { display: flex; }
+    #results.show { display: block; animation: rise 0.4s ease; }
+    
+    #dropzone.drag {
+      border-color: #0B1F2E;
+      background: rgba(11,31,46,0.03);
+    }
+    
+    .stamp.flag { color: #A8402F; }
+    .stamp.ok { color: #3E6B4F; }
+    .verdict.flag { background: rgba(168,64,47,0.08); border-left: 3px solid #A8402F; }
+    .verdict.ok { background: rgba(62,107,79,0.08); border-left: 3px solid #3E6B4F; }
+
+    .line-item {
+      @apply flex justify-between py-2.5 border-b border-paper-line text-[14.5px] hover:bg-black/5 transition-colors duration-200 px-2 -mx-2 rounded-sm;
+    }
+    .line-item .amt {
+      @apply font-mono font-medium;
+    }
+  }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body class="bg-ink text-paper font-body min-h-screen flex items-center justify-center p-5 sm:p-10 bg-radial">
+<div class="w-full max-w-[620px] mx-auto">
+  <div class="flex items-center gap-2.5 font-mono text-xs tracking-[0.18em] uppercase text-gold mb-[18px] before:content-[''] before:w-6 before:h-px before:bg-gold">
+    NEXUS OS · Transparency Agent
+  </div>
+  
+  <h1 class="font-display font-medium text-[clamp(32px,6vw,46px)] leading-[1.12] text-paper mb-3.5">
+    Know exactly what<br><em class="not-italic italic text-gold-bright">you're paying for.</em>
+  </h1>
+  
+  <p class="text-[15.5px] leading-[1.6] text-[#c9d2d9] max-w-[46ch] mb-10">
+    Upload your sale contract or RTA invoice. We cross-check every registration charge against the official RTA rate — no jargon, no guessing.
+  </p>
+
+  <div class="bg-paper text-ink rounded-[3px] shadow-doc relative overflow-hidden group hover:-translate-y-1 transition-transform duration-500">
+    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-ink via-gold to-ink"></div>
+    
+    <div class="pt-[38px] px-6 sm:px-[34px] pb-[34px]">
+      <div class="flex justify-between items-baseline border-b border-dashed border-paper-line pb-4 mb-6">
+        <span class="font-mono text-[11px] tracking-[0.1em] uppercase text-[#7a7360]">Contract Audit Request</span>
+        <span class="font-mono text-[11px] text-[#7a7360]" id="refNum"></span>
+      </div>
+
+      <div id="dropzone" class="border-[1.5px] border-dashed border-[#a99f80] rounded-sm py-11 px-5 text-center cursor-pointer transition-all duration-200 hover:border-ink hover:bg-[rgba(11,31,46,0.03)]">
+        <div class="font-display text-[30px] mb-2.5 text-ink-soft group-hover:scale-110 transition-transform duration-300">✦</div>
+        <div class="font-display text-[19px] text-ink mb-1.5">Drop your contract here</div>
+        <div class="font-mono text-xs text-[#8a8265]">or click to browse · JPG, PNG or PDF page</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,.pdf" class="hidden">
+      
+      <div class="hidden font-mono text-[13px] bg-ink text-paper py-2 px-3.5 rounded-sm mt-4 items-center justify-between gap-3 shadow-md transition-all duration-300" id="fileChip">
+        <span id="fileName" class="truncate flex-1"></span>
+        <button id="clearFile" class="bg-transparent border-none text-gold-bright font-mono cursor-pointer text-[13px] hover:text-white transition-colors duration-200 uppercase tracking-wide">remove</button>
+      </div>
+
+      <button id="submitBtn" disabled class="w-full mt-5 p-[15px] bg-ink text-paper border-none rounded-sm font-mono text-[13px] tracking-[0.08em] uppercase cursor-pointer transition-colors duration-200 hover:not:disabled:bg-ink-soft disabled:opacity-40 disabled:cursor-not-allowed">Run Audit</button>
+      
+      <div id="errorMsg" class="hidden text-red-flag font-mono text-[12.5px] mt-3.5"></div>
+
+      <div id="results" class="hidden mt-[26px]">
+        <div id="stampEl" class="inline-flex items-center gap-2 font-mono text-[12.5px] tracking-[0.08em] uppercase py-[7px] px-3.5 border-[1.5px] border-current rounded-sm -rotate-2 mb-5 shadow-sm"></div>
+        
+        <div id="lineItems" class="flex flex-col"></div>
+        
+        <div class="flex gap-3.5 mt-[18px]">
+          <div class="flex-1 p-3.5 bg-[#efe9d8] rounded-sm shadow-inner transition-colors hover:bg-[#e8e1cd] duration-300">
+            <div class="font-mono text-[10.5px] uppercase tracking-[0.06em] text-[#7a7360] mb-1.5">Charged</div>
+            <div class="font-mono text-[20px] text-ink font-semibold" id="chargedVal">—</div>
+          </div>
+          <div class="flex-1 p-3.5 bg-[#efe9d8] rounded-sm shadow-inner transition-colors hover:bg-[#e8e1cd] duration-300">
+            <div class="font-mono text-[10.5px] uppercase tracking-[0.06em] text-[#7a7360] mb-1.5">Official RTA Rate</div>
+            <div class="font-mono text-[20px] text-ink font-semibold" id="officialVal">—</div>
+          </div>
+        </div>
+        
+        <div id="verdictBox" class="mt-5 p-4 rounded-sm text-[14px] leading-[1.55] shadow-sm"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-7 font-mono text-[11px] text-[#6f7d88] text-center tracking-[0.04em]">POWERED BY Nexus OS — YOUR DATA IS ANALYZED, NOT STORED</div>
+</div>
+
+<script type="module" src="/contract-auditor.js"></script>
+</body>
+</html>

@@ -39,7 +39,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 1500,\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert KYC/AML Compliance Agent for automotive dealerships in the UAE. Analyze the provided document with forensic attention to detail.\\n\\nDOCUMENT TYPES YOU HANDLE:\\n• Emirates ID — Check name, ID number (784-XXXX-XXXXXXX-X), expiry, photo consistency\\n• Passport — Check nationality, validity, MRZ if visible\\n• Trade License — Verify company details and validity\\n• Vehicle Registration (Mulkiya) — Check plate, chassis, expiry\\n• Sales Contract — Detect hidden fees, compare against official RTA rates\\n• RTA Invoice — Verify registration fees match official schedule\\n\\nOFFICIAL UAE RTA FEES (2024-2026):\\n• New registration: AED 420\\n• Transfer: AED 350\\n• Export: AED 200\\n• Mortgage registration: AED 100\\n• Number plate: AED 35-50\\n\\nRETURN STRICTLY THIS JSON:\\n{\\n  \\\"document_type\\\": \\\"<type>\\\",\\n  \\\"extracted_data\\\": { \\\"name\\\": \\\"...\\\", \\\"id_number\\\": \\\"...\\\", \\\"expiry_date\\\": \\\"...\\\", \\\"nationality\\\": \\\"...\\\" },\\n  \\\"is_valid\\\": true/false,\\n  \\\"tampering_detected\\\": true/false,\\n  \\\"risk_level\\\": \\\"LOW\\\" | \\\"MEDIUM\\\" | \\\"HIGH\\\" | \\\"CRITICAL\\\",\\n  \\\"confidence_score\\\": 0-100,\\n  \\\"hidden_fees\\\": { \\\"detected\\\": true/false, \\\"total_hidden_aed\\\": 0, \\\"line_items\\\": [] },\\n  \\\"flags\\\": [\\\"list of concerns\\\"],\\n  \\\"verification_notes\\\": \\\"detailed notes\\\",\\n  \\\"recommended_action\\\": \\\"APPROVE\\\" | \\\"REVIEW\\\" | \\\"REJECT\\\"\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ $json.hasImage ? JSON.stringify([{\"type\": \"text\", \"text\": \"Analyze this KYC/AML document for a UAE car dealership:\"}, {\"type\": \"image_url\", \"image_url\": {\"url\": \"data:image/jpeg;base64,\" + $json.imageBase64}}]) : JSON.stringify(\"Analyze this KYC document text for a UAE car dealership:\\n\\n\" + $json.documentContent) }}\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 1500,\n  \"temperature\": 0.1,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert KYC/AML Compliance Agent for automotive dealerships in the UAE. Analyze the provided document with forensic attention to detail.\\n\\nDOCUMENT TYPES YOU HANDLE:\\n• Emirates ID — Check name, ID number (784-XXXX-XXXXXXX-X), expiry, photo consistency\\n• Passport — Check nationality, validity, MRZ if visible\\n• Trade License — Verify company details and validity\\n• Vehicle Registration (Mulkiya) — Check plate, chassis, expiry\\n• Sales Contract — Detect hidden fees, compare against official RTA rates\\n• RTA Invoice — Verify registration fees match official schedule\\n\\nOFFICIAL UAE RTA FEES (2024-2026):\\n• New registration: AED 420\\n• Transfer: AED 350\\n• Export: AED 200\\n• Mortgage registration: AED 100\\n• Number plate: AED 35-50\\n\\nRETURN STRICTLY THIS JSON:\\n{\\n  \\\"document_type\\\": \\\"<type>\\\",\\n  \\\"extracted_data\\\": { \\\"name\\\": \\\"...\\\", \\\"id_number\\\": \\\"...\\\", \\\"expiry_date\\\": \\\"...\\\", \\\"nationality\\\": \\\"...\\\" },\\n  \\\"is_valid\\\": true/false,\\n  \\\"tampering_detected\\\": true/false,\\n  \\\"risk_level\\\": \\\"LOW\\\" | \\\"MEDIUM\\\" | \\\"HIGH\\\" | \\\"CRITICAL\\\",\\n  \\\"confidence_score\\\": 0-100,\\n  \\\"hidden_fees\\\": { \\\"detected\\\": true/false, \\\"total_hidden_aed\\\": 0, \\\"line_items\\\": [] },\\n  \\\"flags\\\": [\\\"list of concerns\\\"],\\n  \\\"verification_notes\\\": \\\"detailed notes\\\",\\n  \\\"recommended_action\\\": \\\"APPROVE\\\" | \\\"REVIEW\\\" | \\\"REJECT\\\"\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ $json.hasImage ? JSON.stringify([{\"type\": \"text\", \"text\": \"Analyze this KYC/AML document for a UAE car dealership:\"}, {\"type\": \"image_url\", \"image_url\": {\"url\": \"data:image/jpeg;base64,\" + $json.imageBase64}}]) : JSON.stringify(\"Analyze this KYC document text for a UAE car dealership:\\n\\n\" + $json.documentContent) }}\n    }\n  ]\n}",
         "options": { "timeout": 30000 }
       },
       "id": "e5000001-0003-4e00-e000-000000000003",
@@ -63,28 +63,26 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "kyc_audits",
-        "dataMode": "defineBelow",
-        "valuesToSend": {
-          "values": [
-            { "name": "document_type", "value": "={{ $json.document_type }}" },
-            { "name": "is_valid", "value": "={{ $json.is_valid }}" },
-            { "name": "risk_level", "value": "={{ $json.risk_level }}" },
-            { "name": "confidence_score", "value": "={{ $json.confidence_score }}" },
-            { "name": "recommended_action", "value": "={{ $json.recommended_action }}" },
-            { "name": "flags", "value": "={{ $json.flags }}" }
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/audit_log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
-        }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"kyc_document_audit\",\n  \"table_name\": \"kyc_audits\",\n  \"new_values\": {\n    \"document_type\": \"{{ $json.document_type }}\",\n    \"is_valid\": {{ $json.is_valid }},\n    \"risk_level\": \"{{ $json.risk_level }}\",\n    \"confidence_score\": {{ $json.confidence_score }},\n    \"recommended_action\": \"{{ $json.recommended_action }}\",\n    \"flags\": {{ JSON.stringify($json.flags || []) }}\n  }\n}",
+        "options": {}
       },
       "id": "e5000001-0005-4e00-e000-000000000005",
       "name": "Log Audit → Supabase",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [960, 300],
-      "credentials": {
-        "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" }
-      },
       "onError": "continueRegularOutput"
     },
     {

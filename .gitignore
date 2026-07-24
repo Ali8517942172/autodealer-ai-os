@@ -27,3 +27,4 @@ docker-compose.override.yml
 
 .github/workflows/
 .vercel
+claude_desktop_config.json

@@ -3,9 +3,11 @@
 Central nervous system that connects all NEXUS OS modules through event-driven workflows.
 
 ## Automation Stack
-- **n8n** - Primary workflow automation (self-hosted)
-- **Make (Integromat)** - Backup/secondary automations
+- **n8n** - Sole workflow automation, AI agent, and RAG engine (self-hosted, Docker)
+- **WAHA** - Self-hosted WhatsApp HTTP API (QR-based), feeds n8n via webhook
 - **Webhooks** - Real-time event processing
+
+> Zapier and Make.com have been fully removed — n8n is the only automation engine, with no secondary/backup automation platform.
 
 ## Deployed Workflows
 
@@ -15,7 +17,7 @@ Website Form / WhatsApp / Phone
         ↓
    Webhook Intake
         ↓
-  Cowork AI Agent (Lead Scoring)
+  Sales Agent (Lead Scoring)
         ↓
    HOT Lead? ──── YES ──→ CRM + WhatsApp + Slack Alert
         │
@@ -29,7 +31,7 @@ Website Form / WhatsApp / Phone
         ↓
    Scrape Competitors
         ↓
-  Hermes AI Agent (Price Analysis)
+  Marketing Agent (Price Analysis)
         ↓
    Slack Report + CRM Price Alerts
 ```

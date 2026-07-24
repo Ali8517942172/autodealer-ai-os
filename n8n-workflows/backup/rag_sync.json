@@ -45,25 +45,20 @@
     },
     {
       "parameters": {
-        "operation": "upsert",
-        "table": "document_embeddings",
-        "dataMode": "defineBelow",
-        "valuesToSend": {
-          "values": [
-            { "name": "document_id", "value": "={{ $json.document_id }}" },
-            { "name": "title", "value": "={{ $json.title }}" },
-            { "name": "department", "value": "={{ $json.department }}" },
-            { "name": "chunk_index", "value": "={{ $json.chunk_index }}" },
-            { "name": "content", "value": "={{ $json.content }}" },
-            { "name": "embedding", "value": "={{ $json.embedding }}" },
-            { "name": "metadata", "value": "={{ $json.metadata }}" }
-          ]
-        }
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/document_embeddings",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" },
+          { "name": "Prefer", "value": "resolution=merge-duplicates" }
+        ]},
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\n  \"document_id\": \"{{ $json.document_id }}\",\n  \"title\": \"{{ $json.title }}\",\n  \"department\": \"{{ $json.department }}\",\n  \"chunk_index\": {{ $json.chunk_index }},\n  \"content\": {{ JSON.stringify($json.content) }},\n  \"embedding\": {{ $json.embedding }},\n  \"metadata\": {{ JSON.stringify($json.metadata) }}\n}",
+        "options": {}
       },
-      "id": "h8-006", "name": "Upsert → Supabase pgvector", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [1200, 400],
-      "credentials": {
-        "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" }
-      }
+      "id": "h8-006", "name": "Upsert → Supabase pgvector", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1200, 400]
     },
     {
       "parameters": {

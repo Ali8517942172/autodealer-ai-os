@@ -1,12 +1,13 @@
 // Nexus OS — Unified Automotive AI Platform
-// Direct integrations: Supabase + n8n (Tailscale) + Make.com
-// No Render backend dependency
+// Direct integrations: Supabase + n8n (Tailscale)
+// Architecture: Frontend → Supabase REST + n8n webhooks (Make.com REMOVED)
 
-const N8N = 'https://desktop-l3an0ma.tail2141f7.ts.net';
-const SUPABASE_URL = 'https://dsvuoovivysszdoiorch.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdnVvb3Zpdnlzc3pkb2lvcmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyOTg4NzUsImV4cCI6MjA5ODg3NDg3NX0.EUMpqvBNMwjQjLFmSjXcfuWdkGpDumHNmhiI5wA2W7g';
-const MAKE_ERP = 'https://hook.eu1.make.com/ptx1qx6rw7esr3pk50k4jch5fwg44ifz';
-const MAKE_ESC = 'https://hook.eu1.make.com/i7w3h8xccfhnfkh7nl431nk2oe7fyq75';
+const N8N = import.meta.env.VITE_N8N_BASE_URL;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// n8n webhook endpoints (migrated from Make.com — scenarios 6524449 + 6524643 replaced)
+const N8N_ERP_SYNC = `${N8N}/webhook/erp-sync`;
+const N8N_ESCALATION = `${N8N}/webhook/lead-escalation`;
 
 // ==========================================
 // PAGE NAVIGATION
@@ -55,24 +56,54 @@ async function loadDashboard() {
         document.getElementById('avgDays').textContent = '8.3 days';
 
         document.getElementById('aiInsights').innerHTML = `
-          <div class="insight-item"><div style="color:#ba1a1a;font-weight:700;font-size:11px;margin-bottom:4px;">HIGH PRIORITY</div>${hot} HOT leads need immediate follow-up. Average response window: 3 min.</div>
-          <div class="insight-item medium"><div style="color:#7e3000;font-weight:700;font-size:11px;margin-bottom:4px;">MEDIUM PRIORITY</div>Competitor Al Futtaim dropped Prado price by AED 5K — recommend matching.</div>
-          <div class="insight-item low"><div style="color:#006c49;font-weight:700;font-size:11px;margin-bottom:4px;">LOW PRIORITY</div>WhatsApp channel delivering 1,200% ROI — increase ad spend allocation.</div>`;
+          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:border-error/30 transition-colors mb-3">
+            <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-sm text-error">priority_high</span><span class="text-xs font-bold text-error uppercase">High Priority</span></div>
+            <p class="text-sm text-on-surface-variant leading-relaxed"><strong class="text-on-surface">${hot} HOT leads</strong> need immediate follow-up. Average response window: <span class="text-error font-bold">3 min</span>.</p>
+          </div>
+          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:border-tertiary/30 transition-colors mb-3">
+            <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-sm text-tertiary">analytics</span><span class="text-xs font-bold text-tertiary uppercase">Medium Priority</span></div>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Competitor Al Futtaim dropped Prado price by AED 5K — recommend <span class="text-tertiary font-bold">matching</span>.</p>
+          </div>
+          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:border-secondary/30 transition-colors">
+            <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-sm text-secondary">trending_up</span><span class="text-xs font-bold text-secondary uppercase">Low Priority</span></div>
+            <p class="text-sm text-on-surface-variant leading-relaxed">WhatsApp channel delivering <span class="text-secondary font-bold">1,200% ROI</span> — increase ad spend allocation.</p>
+          </div>`;
 
         document.getElementById('inventoryAlerts').innerHTML = `
-          <div class="alert-item"><div style="color:#ba1a1a;font-weight:700;margin-bottom:4px;">⚠ CRITICAL</div><strong>Nissan Patrol (VH-003)</strong> — 147 days<div style="color:#777587;font-size:12px;margin-top:4px;">Reduce price by AED 15K to move within 2 weeks</div></div>
-          <div class="alert-item"><div style="color:#7e3000;font-weight:700;margin-bottom:4px;">⚠ WARNING</div><strong>BMW X5 (VH-007)</strong> — 95 days<div style="color:#777587;font-size:12px;margin-top:4px;">Schedule social media campaign this week</div></div>`;
+          <div class="flex items-center gap-4 p-3 bg-outline-variant/10 rounded-lg border border-error/20 mb-3 hover:border-error/40 transition-colors">
+            <div class="flex-1">
+              <div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-on-surface">Nissan Patrol (VH-003)</span><span class="text-[10px] text-error font-bold px-2 py-0.5 bg-error/10 rounded uppercase">Critical</span></div>
+              <p class="text-xs text-on-surface-variant">In stock: <strong class="text-error">147 days</strong>. Reduce price by AED 15K to move within 2 weeks.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-3 bg-outline-variant/10 rounded-lg border border-tertiary/20 hover:border-tertiary/40 transition-colors">
+            <div class="flex-1">
+              <div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-on-surface">BMW X5 (VH-007)</span><span class="text-[10px] text-tertiary font-bold px-2 py-0.5 bg-tertiary/10 rounded uppercase">Warning</span></div>
+              <p class="text-xs text-on-surface-variant">In stock: <strong class="text-tertiary">95 days</strong>. Schedule social media campaign this week.</p>
+            </div>
+          </div>`;
 
         document.getElementById('marketingROI').innerHTML = `
-          <div class="channel-item"><span>📱 WhatsApp</span><span style="color:#006c49;font-weight:700;">1,200%</span></div>
-          <div class="channel-item"><span>📘 Facebook/IG</span><span style="color:#3525cd;font-weight:700;">800%</span></div>
-          <div class="channel-item"><span>🔍 Google Ads</span><span style="color:#7e3000;font-weight:700;">700%</span></div>`;
+          <div class="flex items-center justify-between p-3 bg-outline-variant/10 rounded-lg border border-outline-variant/20 mb-3 hover:bg-outline-variant/20 transition-colors">
+            <span class="flex items-center gap-2 text-sm text-on-surface"><span class="text-xl">📱</span> WhatsApp</span>
+            <span class="text-secondary font-bold font-mono text-base">1,200%</span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-outline-variant/10 rounded-lg border border-outline-variant/20 mb-3 hover:bg-outline-variant/20 transition-colors">
+            <span class="flex items-center gap-2 text-sm text-on-surface"><span class="text-xl">📘</span> Facebook/IG</span>
+            <span class="text-primary font-bold font-mono text-base">800%</span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:bg-outline-variant/20 transition-colors">
+            <span class="flex items-center gap-2 text-sm text-on-surface"><span class="text-xl">🔍</span> Google Ads</span>
+            <span class="text-tertiary font-bold font-mono text-base">700%</span>
+          </div>`;
 
         document.getElementById('topPerformer').innerHTML = `
-          <div style="font-weight:700;margin-bottom:8px;">🏆 Mohammed Al Rashid</div>
-          <div class="perf-stat"><span>Deals Closed</span><strong>8</strong></div>
-          <div class="perf-stat"><span>Revenue</span><strong>AED 1.9M</strong></div>
-          <div class="perf-stat"><span>Commission</span><strong>AED 95,000</strong></div>`;
+          <div class="p-5 bg-primary/10 rounded-xl border border-primary/20 shadow-inner">
+            <div class="font-bold text-on-surface mb-5 flex items-center gap-2 text-base">🏆 Mohammed Al Rashid</div>
+            <div class="flex justify-between text-sm mb-3 pb-3 border-b border-primary/10"><span class="text-on-surface-variant">Deals Closed</span><strong class="text-primary text-base">8</strong></div>
+            <div class="flex justify-between text-sm mb-3 pb-3 border-b border-primary/10"><span class="text-on-surface-variant">Revenue</span><strong class="text-primary text-base">AED 1.9M</strong></div>
+            <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Commission</span><strong class="text-secondary text-base">AED 95,000</strong></div>
+          </div>`;
 
         document.getElementById('todayRevenue').textContent = 'AED 420K';
         document.getElementById('mtdRevenue').textContent = 'AED 4.2M';
@@ -132,17 +163,17 @@ async function askRAG() {
     input.value = '';
     messages.scrollTop = messages.scrollHeight;
     const typingId = 'typing-' + Date.now();
-    messages.innerHTML += `<div class="chat-msg bot" id="${typingId}"><div class="msg-avatar"><span class="material-symbols-outlined" style="font-size:14px">smart_toy</span></div><div class="msg-bubble"><em style="color:#777587">Openclaw is thinking...</em></div></div>`;
+    messages.innerHTML += `<div class="chat-msg bot" id="${typingId}"><div class="msg-avatar"><span class="material-symbols-outlined" style="font-size:14px">smart_toy</span></div><div class="msg-bubble"><em style="color:#777587">Knowledge Agent is thinking...</em></div></div>`;
     messages.scrollTop = messages.scrollHeight;
     const ragResponses = {
         'warranty': 'Based on Warranty Policy (Section 3.1):\n\n• Standard: 3 years / 100,000 km\n• Powertrain: 5 years / 150,000 km\n• Battery (hybrid): 8 years\n\n📄 Source: warranty_policy_v4.2.pdf, Page 12',
         'leave': 'Based on HR Policy (Section 5.2):\n\n• Annual Leave: 30 days/year\n• Sick Leave: 15 days\n• Maternity: 60 days\n\n📄 Source: hr_handbook_2026.pdf, Section 5',
         'commission': 'Sales Compensation Policy:\n\n• Margin < AED 10K → 3%\n• AED 10K-25K → 5%\n• AED 25K-50K → 7%\n• > AED 50K → 10%\n\n📄 Source: sales_compensation_policy.pdf, Page 4',
         'trade': 'Trade-In SOP (Section 7.1):\n\n1. Physical inspection (30 min)\n2. OBD diagnostic\n3. Market value check (3 sources)\n4. Manager approval >AED 100K\n\n📄 Source: trade_in_appraisal_sop.pdf, Page 8',
-        'default': 'I searched the knowledge base. Ask about: warranty coverage, leave policy, commission structure, or trade-in process.\n\n📄 Agent: Openclaw (Knowledge & Compliance)'
+        'default': 'I searched the knowledge base. Ask about: warranty coverage, leave policy, commission structure, or trade-in process.\n\n📄 Agent: Knowledge Agent (Compliance)'
     };
     const key = Object.keys(ragResponses).find(k => question.toLowerCase().includes(k)) || 'default';
-    document.getElementById(typingId).querySelector('.msg-bubble').innerHTML = `<strong>Openclaw Agent</strong><p>${ragResponses[key].replace(/\n/g,'<br>')}</p>`;
+    document.getElementById(typingId).querySelector('.msg-bubble').innerHTML = `<strong>Knowledge Agent</strong><p>${ragResponses[key].replace(/\n/g,'<br>')}</p>`;
     messages.scrollTop = messages.scrollHeight;
 }
 
@@ -225,15 +256,15 @@ function addLiveEvent(type, msg) {
 async function triggerMakeLeadSync() {
     addLiveEvent('MAKE_TRIGGER', 'Syncing HOT leads to Odoo ERP via Make.com…');
     try {
-        const res = await fetch(MAKE_ERP, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ trigger: 'dashboard', timestamp: new Date().toISOString() }) });
+        const res = await fetch(N8N_ERP_SYNC, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ trigger: 'dashboard', timestamp: new Date().toISOString() }) });
         addLiveEvent('MAKE_SUCCESS', `ERP sync triggered — status ${res.status}`);
     } catch(e) { addLiveEvent('MAKE_ERROR', e.message); }
 }
 
 async function triggerEscalation(vehicleId) {
-    addLiveEvent('MAKE_ESCALATE', `Escalating ${vehicleId} via Make.com…`);
+    addLiveEvent('N8N_ESCALATIONALATE', `Escalating ${vehicleId} via Make.com…`);
     try {
-        const res = await fetch(MAKE_ESC, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ vehicle_id: vehicleId, priority: 'CRITICAL', timestamp: new Date().toISOString() }) });
+        const res = await fetch(N8N_ESCALATION, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ vehicle_id: vehicleId, priority: 'CRITICAL', timestamp: new Date().toISOString() }) });
         addLiveEvent('MAKE_SUCCESS', `Escalation sent — Slack + Email notified`);
     } catch(e) { addLiveEvent('MAKE_ERROR', e.message); }
 }
@@ -254,7 +285,7 @@ function loadEventLog() {
         { time: '09:10:00', type: 'KYC_AUDIT', msg: 'Contract Auditor: Emirates ID verified (LOW risk)' },
         { time: '09:15:22', type: 'DEAL_CLOSED', msg: 'Fatima: Lexus LX 600 → AED 420K — Supabase synced' },
         { time: '09:15:24', type: 'ERP_SYNC', msg: 'Make.com: Odoo deal INV-2026-0147 created' },
-        { time: '09:30:00', type: 'RAG_QUERY', msg: 'Employee asked warranty coverage → Openclaw cited Page 12' },
+        { time: '09:30:00', type: 'RAG_QUERY', msg: 'Employee asked warranty coverage → Knowledge Agent cited Page 12' },
         { time: '09:45:00', type: 'SLACK_ALERT', msg: '#sales-hot-leads: Fatima Al-Mansouri (97/100) escalated' }
     ];
     const log = document.getElementById('eventLog');

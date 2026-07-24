@@ -1,0 +1,248 @@
+{
+  "name": "NEXUS Master Lead Router — AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexus-inbound-lead",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      },
+      "id": "a1000001-0001-4a00-a000-000000000001",
+      "name": "Webhook Catch-All",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "nexus-master-lead-intake"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// VALIDATE & ENRICH incoming lead payload\n// ──────────────────────────────────────────────\nconst raw = $input.first().json;\nconst body = raw.body || raw;\n\nconst lead = {\n  name:    body.name    || body.full_name  || 'Unknown',\n  email:   body.email   || null,\n  phone:   body.phone   || body.mobile     || null,\n  source:  body.source  || body.utm_source || 'website',\n  message: body.message || body.notes      || body.inquiry || '',\n  vehicle_interest: body.vehicle_interest || body.vehicle || null,\n  budget_min: parseFloat(body.budget_min) || null,\n  budget_max: parseFloat(body.budget_max) || null,\n  timeline: body.timeline || null,\n  has_trade_in: body.has_trade_in === true || body.has_trade_in === 'true',\n  received_at: new Date().toISOString()\n};\n\n// Basic validation\nif (!lead.name || lead.name === 'Unknown') {\n  if (!lead.email && !lead.phone) {\n    throw new Error('Lead must have at least a name, email, or phone');\n  }\n}\n\nreturn [{ json: lead }];"
+      },
+      "id": "a1000001-0002-4a00-a000-000000000002",
+      "name": "Validate & Enrich Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
+            { "name": "X-Title", "value": "NEXUS OS — Lead Scoring Agent" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 600,\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are NEXUS OS Lead Scoring Agent for a premium automotive dealership in the UAE. Your job is to analyze every incoming lead and provide an intelligent score.\\n\\nSCORING RULES:\\n• 80-100 = HOT — Immediate purchase intent, specific vehicle, ready to visit showroom, mentions financing\\n• 50-79  = WARM — Genuine interest but browsing, comparing options, timeline 1-3 months\\n• 1-49   = COLD — General inquiry, no urgency, price shopping, timeline 3+ months or unknown\\n\\nCONTEXT: The dealership sells premium pre-owned vehicles (Toyota, Honda, Mercedes, BMW, etc.) in Dubai/UAE. Average deal size is AED 80,000-300,000. AED 50/day holding cost per vehicle.\\n\\nRETURN STRICTLY THIS JSON (no extra text):\\n{\\n  \\\"score\\\": <number 1-100>,\\n  \\\"priority\\\": \\\"HOT\\\" | \\\"WARM\\\" | \\\"COLD\\\",\\n  \\\"intent\\\": \\\"<one-line summary of what the customer wants>\\\",\\n  \\\"buy_probability\\\": <0.0 to 1.0>,\\n  \\\"recommended_action\\\": \\\"<what sales team should do next>\\\",\\n  \\\"reasoning\\\": \\\"<brief explanation of the score>\\\"\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Score this lead:\\n\\nName: {{ $json.name }}\\nSource: {{ $json.source }}\\nMessage: {{ $json.message }}\\nVehicle Interest: {{ $json.vehicle_interest || 'Not specified' }}\\nBudget: {{ $json.budget_min ? 'AED ' + $json.budget_min + ' - ' + $json.budget_max : 'Not specified' }}\\nTimeline: {{ $json.timeline || 'Not specified' }}\\nHas Trade-in: {{ $json.has_trade_in }}\"\n    }\n  ]\n}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "a1000001-0003-4a00-a000-000000000003",
+      "name": "AI Lead Scoring Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OPENROUTER_CRED_ID",
+          "name": "OpenRouter API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// PARSE AI SCORING RESPONSE + MERGE WITH LEAD\n// ──────────────────────────────────────────────\nconst aiResponse = $input.first().json;\nconst lead = $node['Validate & Enrich Input'].json;\n\nlet scoring;\ntry {\n  const content = aiResponse.choices[0].message.content;\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  scoring = JSON.parse(cleaned);\n} catch (e) {\n  // FALLBACK: If AI fails, default to WARM (safe middle ground)\n  scoring = {\n    score: 55,\n    priority: 'WARM',\n    intent: 'AI scoring failed — manual review needed',\n    buy_probability: 0.5,\n    recommended_action: 'Manually review this lead',\n    reasoning: 'AI parse error: ' + e.message\n  };\n}\n\n// Merge lead data with AI scoring\nconst enrichedLead = {\n  ...lead,\n  ai_score: scoring.score,\n  ai_priority: scoring.priority,\n  ai_intent: scoring.intent,\n  ai_probability: scoring.buy_probability,\n  status: 'new',\n  recommended_action: scoring.recommended_action,\n  scoring_reasoning: scoring.reasoning,\n  scored_at: new Date().toISOString()\n};\n\nreturn [{ json: enrichedLead }];"
+      },
+      "id": "a1000001-0004-4a00-a000-000000000004",
+      "name": "Parse AI Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL || 'https://dsvuoovivysszdoiorch.supabase.co' }}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.name }}\",\n  \"email\": {{ $json.email ? '\"' + $json.email + '\"' : 'null' }},\n  \"phone\": {{ $json.phone ? '\"' + $json.phone + '\"' : 'null' }},\n  \"source\": \"{{ $json.source }}\",\n  \"status\": \"new\",\n  \"ai_score\": {{ $json.ai_score }},\n  \"ai_priority\": \"{{ $json.ai_priority }}\",\n  \"ai_intent\": \"{{ $json.ai_intent }}\",\n  \"ai_probability\": {{ $json.ai_probability }},\n  \"vehicle_interest\": {{ $json.vehicle_interest ? '\"' + $json.vehicle_interest + '\"' : 'null' }},\n  \"budget_min\": {{ $json.budget_min || 'null' }},\n  \"budget_max\": {{ $json.budget_max || 'null' }},\n  \"timeline\": {{ $json.timeline ? '\"' + $json.timeline + '\"' : 'null' }},\n  \"has_trade_in\": {{ $json.has_trade_in }}\n}",
+        "options": {}
+      },
+      "id": "a1000001-0005-4a00-a000-000000000005",
+      "name": "Upsert Lead → Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [940, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// MERGE: Get lead ID from Supabase + scoring data\n// ──────────────────────────────────────────────\nconst supabaseResponse = $input.first().json;\nconst scoredLead = $node['Parse AI Decision'].json;\n\n// Supabase returns array — get the first item\nconst savedLead = Array.isArray(supabaseResponse) ? supabaseResponse[0] : supabaseResponse;\n\nreturn [{\n  json: {\n    ...scoredLead,\n    lead_id: savedLead?.id || 'unknown',\n    supabase_saved: !!savedLead?.id\n  }\n}];"
+      },
+      "id": "a1000001-0006-4a00-a000-000000000006",
+      "name": "Merge Lead ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.ai_priority }}",
+        "rules": {
+          "rules": [
+            { "value2": "HOT", "output": 0 },
+            { "value2": "WARM", "output": 1 },
+            { "value2": "COLD", "output": 2 }
+          ]
+        }
+      },
+      "id": "a1000001-0007-4a00-a000-000000000007",
+      "name": "Priority Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1380, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// HOT LEAD: Build Slack alert + prep for downstream\n// ──────────────────────────────────────────────\nconst lead = $input.first().json;\n\nconst slackPayload = {\n  channel: 'C0BJ5PLTPDJ',\n  text: `🔥 *HOT LEAD ALERT* — Score: ${lead.ai_score}/100`,\n  blocks: [\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: '🔥 HOT LEAD — Immediate Action Required' }\n    },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: `*Name:*\\n${lead.name}` },\n        { type: 'mrkdwn', text: `*Score:*\\n${lead.ai_score}/100` },\n        { type: 'mrkdwn', text: `*Source:*\\n${lead.source}` },\n        { type: 'mrkdwn', text: `*Vehicle:*\\n${lead.vehicle_interest || 'Not specified'}` }\n      ]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: `*AI Intent:* ${lead.ai_intent}\\n*Action:* ${lead.recommended_action}` }\n    },\n    {\n      type: 'context',\n      elements: [\n        { type: 'mrkdwn', text: `Lead ID: ${lead.lead_id} | ${lead.scored_at}` }\n      ]\n    }\n  ]\n};\n\nreturn [{ json: { ...lead, slackPayload } }];"
+      },
+      "id": "a1000001-0008-4a00-a000-000000000008",
+      "name": "Build HOT Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// WARM LEAD: Prep for WhatsApp outreach + drip\n// ──────────────────────────────────────────────\nconst lead = $input.first().json;\n\nreturn [{\n  json: {\n    ...lead,\n    drip_stage: 'warm_initial',\n    next_action: 'whatsapp_outreach',\n    message_template: `Hi ${lead.name}, thank you for your interest in ${lead.vehicle_interest || 'our vehicles'}! I'm from NEXUS OS premium dealership. Would you like to schedule a viewing?`\n  }\n}];"
+      },
+      "id": "a1000001-0009-4a00-a000-000000000009",
+      "name": "Prep WARM Outreach",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// COLD LEAD: Enroll in automated drip campaign\n// ──────────────────────────────────────────────\nconst lead = $input.first().json;\n\nreturn [{\n  json: {\n    ...lead,\n    drip_stage: 'cold_day0',\n    enrolled_at: new Date().toISOString(),\n    next_action: 'marketing_drip_7day'\n  }\n}];"
+      },
+      "id": "a1000001-0010-4a00-a000-000000000010",
+      "name": "Enroll COLD Drip",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL || 'https://dsvuoovivysszdoiorch.supabase.co' }}/rest/v1/audit_log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"lead_scored_and_routed\",\n  \"table_name\": \"leads\",\n  \"record_id\": \"{{ $json.lead_id }}\",\n  \"new_values\": {\n    \"ai_score\": {{ $json.ai_score }},\n    \"ai_priority\": \"{{ $json.ai_priority }}\",\n    \"ai_intent\": \"{{ $json.ai_intent }}\",\n    \"routed_to\": \"{{ $json.next_action || $json.ai_priority + '_pipeline' }}\",\n    \"scoring_reasoning\": \"{{ $json.scoring_reasoning }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "a1000001-0011-4a00-a000-000000000011",
+      "name": "Audit Log → Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1860, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"lead_id\": \"{{ $node['Merge Lead ID'].json.lead_id }}\",\n  \"ai_score\": {{ $node['Merge Lead ID'].json.ai_score }},\n  \"ai_priority\": \"{{ $node['Merge Lead ID'].json.ai_priority }}\",\n  \"ai_intent\": \"{{ $node['Merge Lead ID'].json.ai_intent }}\",\n  \"routed_to\": \"{{ $node['Merge Lead ID'].json.ai_priority }}_pipeline\",\n  \"recommended_action\": \"{{ $node['Merge Lead ID'].json.recommended_action }}\"\n}",
+        "options": {}
+      },
+      "id": "a1000001-0012-4a00-a000-000000000012",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2080, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Catch-All": {
+      "main": [[ { "node": "Validate & Enrich Input", "type": "main", "index": 0 } ]]
+    },
+    "Validate & Enrich Input": {
+      "main": [[ { "node": "AI Lead Scoring Agent", "type": "main", "index": 0 } ]]
+    },
+    "AI Lead Scoring Agent": {
+      "main": [[ { "node": "Parse AI Decision", "type": "main", "index": 0 } ]]
+    },
+    "Parse AI Decision": {
+      "main": [[ { "node": "Upsert Lead → Supabase", "type": "main", "index": 0 } ]]
+    },
+    "Upsert Lead → Supabase": {
+      "main": [[ { "node": "Merge Lead ID", "type": "main", "index": 0 } ]]
+    },
+    "Merge Lead ID": {
+      "main": [[ { "node": "Priority Router", "type": "main", "index": 0 } ]]
+    },
+    "Priority Router": {
+      "main": [
+        [{ "node": "Build HOT Alert", "type": "main", "index": 0 }],
+        [{ "node": "Prep WARM Outreach", "type": "main", "index": 0 }],
+        [{ "node": "Enroll COLD Drip", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build HOT Alert": {
+      "main": [[ { "node": "Audit Log → Supabase", "type": "main", "index": 0 } ]]
+    },
+    "Prep WARM Outreach": {
+      "main": [[ { "node": "Audit Log → Supabase", "type": "main", "index": 0 } ]]
+    },
+    "Enroll COLD Drip": {
+      "main": [[ { "node": "Audit Log → Supabase", "type": "main", "index": 0 } ]]
+    },
+    "Audit Log → Supabase": {
+      "main": [[ { "node": "Respond to Webhook", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": true },
+  "tags": [
+    { "name": "Core", "id": "tag-core" },
+    { "name": "AI-Agent", "id": "tag-agent" },
+    { "name": "Lead-Pipeline", "id": "tag-leads" }
+  ]
+}

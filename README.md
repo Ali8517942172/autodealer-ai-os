@@ -1,10 +1,8 @@
 # NEXUS OS
 
-**NEXUS OS** is an enterprise AI operating system for automotive dealerships that unifies CRM, Marketing, Knowledge Management, Sales Intelligence, Inventory Lifecycle, and Business Automation into a single platform.
+**NEXUS OS** is a production AI operating system for automotive dealerships that unifies CRM, Marketing, Knowledge Management, Sales Intelligence, Inventory Lifecycle, and Business Automation into a single platform.
 
-The platform is designed to increase dealership profitability, reduce operational overhead, improve lead conversion, and enable AI-assisted decision making across every department.
-
-> *Reference implementation created for the NEXUS OS Corp AI Engineer portfolio challenge.*
+The platform is designed to increase dealership profitability, reduce operational overhead, improve lead conversion, and enable AI-assisted decision making across every department. This is a live, production system built for a real paying dealership client.
 
 ---
 
@@ -24,22 +22,22 @@ The platform is designed to increase dealership profitability, reduce operationa
 
 ## Platform Modules
 
-### 1. AI-Powered CRM (`apps/ai-crm/`)
+### 1. AI-Powered CRM
 **Business Problem:** Leads from multiple channels (website, WhatsApp, walk-ins, referrals) are handled inconsistently. Response times vary from minutes to days. No standardized qualification process.
 
 **Solution:** AI-first CRM that automatically scores every lead, assigns priority, routes to the right salesperson, and triggers multi-channel follow-up — all within 60 seconds of lead creation.
 
-### 2. Marketing Intelligence OS (`apps/marketing-os/`)
+### 2. Marketing Intelligence OS
 **Business Problem:** Marketing team has no visibility into competitor pricing. Campaigns are created based on intuition rather than data. No way to measure true ROI per channel.
 
 **Solution:** Daily automated competitor scraping with AI-powered pricing recommendations. Campaign generator that creates multi-channel content (Google, Meta, WhatsApp) based on actual market gaps. Revenue attribution that connects marketing spend directly to closed deals.
 
-### 3. Enterprise Knowledge Assistant (`apps/enterprise-rag/`)
+### 3. Enterprise Knowledge Assistant
 **Business Problem:** Company policies, vehicle manuals, warranty terms, and sales procedures are buried in PDF folders. Employees waste hours searching for answers. New hires take weeks to become productive.
 
 **Solution:** Multi-agent RAG system where specialized AI agents (Compliance, Sales Support, Marketing) answer questions with exact source citations. Supports HR policies, finance procedures, warranty terms, sales SOPs, and vehicle documentation.
 
-### 4. Vehicle Inventory Intelligence (`apps/inventory-intel/`)
+### 4. Vehicle Inventory Intelligence
 **Business Problem:** Vehicles sit in stock for months without price reviews. Holding costs (AED 50/day) silently erode margins. No systematic way to track the full vehicle lifecycle from purchase to resale.
 
 **Solution:** AI-powered inventory lifecycle management that tracks every vehicle from import through sale, calculates real-time holding costs, flags aging stock, predicts demand, and recommends optimal pricing.
@@ -47,7 +45,6 @@ The platform is designed to increase dealership profitability, reduce operationa
 ### 5. Automation Engine (`apps/automation-engine/`)
 **Business Problem:** Business processes require manual handoffs between CRM, ERP, WhatsApp, email, and spreadsheets. Data gets lost. Steps get skipped. No audit trail.
 
-**Solution:** Event-driven automation hub powered by n8n and Make that connects every system. When a lead arrives, it automatically flows through scoring, CRM creation, salesperson assignment, WhatsApp confirmation, and dashboard update — without human intervention.
 
 ### 6. Executive Dashboard (`apps/executive-dashboard/`)
 **Business Problem:** Management relies on end-of-month reports to make decisions. No real-time visibility into sales pipeline, inventory health, marketing ROI, or team performance.
@@ -71,7 +68,7 @@ The platform is designed to increase dealership profitability, reduce operationa
 
 ## Dealership Financial Intelligence
 
-Built by an engineer with professional accounting background. The platform doesn't just track cars — it tracks money.
+The platform doesn't just track cars — it tracks money.
 
 | Metric | Description |
 |--------|-------------|
@@ -99,11 +96,11 @@ Each agent is specialized for a specific business domain:
 | Agent | Role | Trigger |
 |-------|------|---------|
 | Lead Agent | Scores and qualifies incoming leads | New lead event |
-| Sales Agent (Cowork) | Assists salesperson with quotes, follow-ups | Salesperson request |
+| Sales Agent | Assists salesperson with quotes, follow-ups | Salesperson request |
 | Finance Agent | Checks loan eligibility, calculates EMI | Finance application |
 | Inventory Agent | Monitors stock aging, recommends pricing | Daily cron / manual |
-| Marketing Agent (Hermes) | Generates campaigns, analyzes competitors | Campaign request / daily |
-| Knowledge Agent (Openclaw) | Answers policy/manual questions with citations | Employee query |
+| Marketing Agent | Generates campaigns, analyzes competitors | Campaign request / daily |
+| Knowledge Agent | Answers policy/manual questions with citations | Employee query |
 | Compliance Agent | Validates warranty claims, checks regulations | Claim submission |
 | Manager Agent | Summarizes team performance, flags issues | Daily digest |
 
@@ -128,7 +125,7 @@ Claim Filed  → Event Bus → RAG + Service + Compliance + Customer Update
 |----------|---------------|
 | Authentication | Supabase Auth with JWT |
 | Authorization | Role-Based Access Control (RBAC) |
-| Database | Supabase (Postgres), MongoDB, pgvector |
+| Database | Supabase (Postgres + Auth + pgvector + Storage + Realtime) |
 | API Documentation | OpenAPI / Swagger |
 | Containerization | Docker + Docker Compose |
 | CI/CD | GitHub Actions |
@@ -147,12 +144,21 @@ Claim Filed  → Event Bus → RAG + Service + Compliance + Customer Update
 | Layer | Technology |
 |-------|-----------|
 | Frontend | ReactJS, Vite, Tailwind CSS |
-| Backend | Node.js (Express), Python (FastAPI) |
-| Databases | Supabase (Postgres + Auth), MongoDB, pgvector |
+| Backend | Node.js (Express) |
+| Database | Supabase (Postgres + Auth + pgvector) — single source of truth |
 | AI/LLM | OpenRouter, LangChain, LangGraph |
-| Automation | n8n, Make |
+| Automation | n8n, WAHA (WhatsApp Agent) |
 | ERP | Odoo (integration layer) |
-| Deployment | Docker, Docker Compose |
+
+---
+
+## Deployment Phase (Current → Target)
+
+| Phase | Where It Runs |
+|-------|---------------|
+| **Now (Build Phase)** | n8n and WAHA run locally via Docker Compose. Supabase (Postgres + Auth + pgvector) is already the live cloud database — it is never local. |
+| **Target (Go-Live Phase)** | Once the OS is production-ready: n8n and WAHA move to **Render**. The React frontend deploys to **Vercel**. **Supabase stays the single backend/database/auth layer throughout** — nothing changes there between phases. |
+
 
 ---
 
@@ -182,51 +188,20 @@ nexus-os/
 ├── docs/                      # Business flows, AI dev workflow, setup guides
 ├── apps/
 │   ├── ai-crm/                # AI-First CRM (React + Node.js + Supabase)
-│   ├── ai-gateway/            # Centralized AI/LLM Gateway (FastAPI + OpenRouter)
-│   ├── marketing-os/          # Marketing Intelligence (Node.js + MongoDB)
-│   ├── enterprise-rag/        # Multi-Agent Knowledge Assistant (FastAPI + pgvector)
-│   ├── inventory-intel/       # Vehicle Lifecycle Management (Node.js + Supabase)
-│   ├── odoo-integration/      # Odoo ERP Integration (Node.js + XML-RPC)
-│   ├── automation-engine/     # n8n / Make / Zapier Workflows
+│   ├── automation-engine/     # n8n Workflows & WAHA WhatsApp Agent
 │   └── executive-dashboard/   # Real-time Analytics (React)
 └── README.md
 ```
 
 ---
 
-## Complete JD Requirements Mapping
-
-Every requirement from the NEXUS OS Corp AI Engineer (Vibe Coder) job description is implemented:
-
-| JD Requirement | Where It's Implemented | How |
-|---------------|----------------------|-----|
-| **Supabase** | `ai-crm/`, `inventory-intel/`, `enterprise-rag/` | Auth, RBAC, Postgres, pgvector, Realtime, Storage |
-| **MongoDB** | `marketing-os/` | AI memory, competitor data, campaign analytics |
-| **Openclaw Agent** | `ai-gateway/` | Knowledge & Compliance agent via `/api/v1/agent/run` |
-| **Hermes Agent** | `ai-gateway/` | Marketing Intelligence agent |
-| **Cowork Agent** | `ai-gateway/` | Sales Copilot agent |
-| **n8n** | `automation-engine/workflows/` | Lead pipeline, competitor intel, daily reports |
-| **Make** | `automation-engine/workflows/` | Google Sheets → CRM sync |
-| **Zapier** | `automation-engine/workflows/` | Gmail inquiry → AI parsing → CRM lead |
-| **ReactJS + Vite + Tailwind** | `ai-crm/frontend/` | CRM dashboard UI |
-| **Node.js** | `ai-crm/backend/`, `marketing-os/`, `inventory-intel/`, `odoo-integration/` | API Gateway, business logic |
-| **Python (FastAPI)** | `enterprise-rag/`, `ai-gateway/` | AI services, RAG engine, agent orchestration |
-| **Odoo ERP** | `odoo-integration/` | Sales, Inventory, Accounting, Purchase sync |
-| **Claude Code / Codex** | `docs/AI_Development_Workflow.md` | Entire development methodology |
-| **API Development** | Every service | REST APIs with `/api/v1/` versioning, Swagger |
-| **Docker** | `docker-compose.yml` | Full platform orchestration |
-| **Production Systems** | All services | Health checks, .env, audit logs, RBAC, error handling |
-
----
-
-## Cost to Run
+## Cost to Run (Current Build Phase)
 
 | Component | Cost |
 |-----------|------|
 | React + Vite + Tailwind | Free |
-| Node.js + FastAPI | Free |
+| Node.js | Free |
 | Supabase (Free Tier) | Free |
-| MongoDB Atlas (Free Tier) | Free |
 | n8n (Self-hosted) | Free |
 | Odoo Community Edition | Free |
 | OpenRouter (Free Models) | Free |
