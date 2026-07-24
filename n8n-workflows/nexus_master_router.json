@@ -12,7 +12,10 @@
       "name": "Webhook Catch-All",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [0, 300]
+      "position": [
+        0,
+        300
+      ]
     },
     {
       "parameters": {
@@ -22,7 +25,10 @@
       "name": "Validate & Enrich Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 300]
+      "position": [
+        220,
+        300
+      ]
     },
     {
       "parameters": {
@@ -36,7 +42,10 @@
       "name": "AI Lead Scoring Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
-      "position": [450, 300]
+      "position": [
+        450,
+        300
+      ]
     },
     {
       "parameters": {
@@ -49,7 +58,10 @@
       "name": "OpenRouter Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
-      "position": [450, 500],
+      "position": [
+        450,
+        500
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "TRR9eUUk37850wgs",
@@ -59,71 +71,77 @@
     },
     {
       "parameters": {
-        "name": "lookup_lead",
-        "description": "Lookup existing lead in Supabase by email or phone. Requires email or phone parameter.",
-        "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
-            }
-          ]
-        },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "email",
-              "value": "eq.{{$fromAI('email')}}"
-            }
-          ]
-        }
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Lookup existing lead in Supabase by email or phone. Requires email or phone parameter."
       },
       "id": "5",
       "name": "Supabase Lead Lookup",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [600, 500]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     },
     {
       "parameters": {
-        "name": "upsert_lead",
-        "description": "Creates or updates a lead in Supabase (merge on email). Requires name, email, phone, message, score, and intent.",
-        "method": "POST",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "upsert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
             {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
+              "fieldId": "name",
+              "fieldValue": "{{$fromAI('name')}}"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+              "fieldId": "email",
+              "fieldValue": "{{$fromAI('email')}}"
             },
             {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates"
+              "fieldId": "phone",
+              "fieldValue": "{{$fromAI('phone')}}"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "{{$fromAI('message')}}"
+            },
+            {
+              "fieldId": "score",
+              "fieldValue": "{{$fromAI('score')}}"
+            },
+            {
+              "fieldId": "intent",
+              "fieldValue": "{{$fromAI('intent')}}"
             }
           ]
         },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"name\": \"{{$fromAI('name')}}\",\n  \"email\": \"{{$fromAI('email')}}\",\n  \"phone\": \"{{$fromAI('phone')}}\",\n  \"message\": \"{{$fromAI('message')}}\",\n  \"score\": {{$fromAI('score')}},\n  \"intent\": \"{{$fromAI('intent')}}\"\n}"
+        "description": "Creates or updates a lead in Supabase (merge on email). Requires name, email, phone, message, score, and intent."
       },
       "id": "12",
       "name": "Supabase Lead Upsert",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [600, 650]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        650
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     },
     {
       "parameters": {
@@ -133,7 +151,10 @@
       "name": "Parse AI Decision",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [700, 300]
+      "position": [
+        700,
+        300
+      ]
     },
     {
       "parameters": {
@@ -221,7 +242,10 @@
       "name": "Intent Switch",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [920, 300]
+      "position": [
+        920,
+        300
+      ]
     },
     {
       "parameters": {
@@ -231,7 +255,10 @@
       "name": "Slack Router (HOT)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1200, 100]
+      "position": [
+        1200,
+        100
+      ]
     },
     {
       "parameters": {
@@ -241,7 +268,10 @@
       "name": "ERP Sync (HOT)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1200, 0]
+      "position": [
+        1200,
+        0
+      ]
     },
     {
       "parameters": {
@@ -251,7 +281,10 @@
       "name": "WhatsApp BDC (WARM)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1200, 300]
+      "position": [
+        1200,
+        300
+      ]
     },
     {
       "parameters": {
@@ -261,34 +294,48 @@
       "name": "Marketing Drip (COLD)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1200, 500]
+      "position": [
+        1200,
+        500
+      ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/audit_log",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
+        "resource": "row",
+        "tableId": "audit_log",
+        "operation": "insert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
             {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
+              "fieldId": "workflow",
+              "fieldValue": "Master Router"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+              "fieldId": "status",
+              "fieldValue": "Success"
+            },
+            {
+              "fieldId": "lead_score",
+              "fieldValue": "{{$json.ai_decision.score}"
             }
           ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"workflow\": \"Master Router\",\n  \"status\": \"Success\",\n  \"lead_score\": {{$json.ai_decision.score}},\n  \"intent\": \"{{$json.ai_decision.intent}}\"\n}"
+        }
       },
       "id": "11",
       "name": "Audit Log",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1450, 300]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     }
   ],
   "connections": {

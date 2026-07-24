@@ -12,7 +12,10 @@
       "name": "WAHA Webhook (POST)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [0, 300]
+      "position": [
+        0,
+        300
+      ]
     },
     {
       "parameters": {
@@ -22,12 +25,15 @@
       "name": "Extract Message & Sender",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [200, 300]
+      "position": [
+        200,
+        300
+      ]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.message }}",
+        "text": "={{ $json.message }}\n\nRETURN STRICT JSON OUTPUT ONLY.",
         "options": {
           "systemMessage": "You are NEXUS OS BDC Agent for a premium automotive dealership in UAE. You help customers find vehicles, answer questions about pricing & availability, and book test drives. Be bilingual (EN/AR)."
         }
@@ -36,7 +42,10 @@
       "name": "AI BDC Sales Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
-      "position": [450, 300]
+      "position": [
+        450,
+        300
+      ]
     },
     {
       "parameters": {
@@ -49,7 +58,10 @@
       "name": "OpenRouter Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
-      "position": [450, 500],
+      "position": [
+        450,
+        500
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "TRR9eUUk37850wgs",
@@ -66,42 +78,33 @@
       "name": "Window Buffer Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.2,
-      "position": [550, 500]
+      "position": [
+        550,
+        500
+      ]
     },
     {
       "parameters": {
-        "name": "search_inventory",
-        "description": "Query Supabase vehicles table by make/model/budget",
-        "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/inventory",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
-            }
-          ]
-        },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "make",
-              "value": "ilike.*{{$fromAI('make')}}*"
-            }
-          ]
-        }
+        "resource": "row",
+        "tableId": "inventory",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Query Supabase vehicles table by make/model/budget"
       },
       "id": "6",
       "name": "search_inventory",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [700, 500]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        700,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     },
     {
       "parameters": {
@@ -115,34 +118,44 @@
       "name": "Send Reply via WAHA HTTP API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [800, 300]
+      "position": [
+        800,
+        300
+      ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/communication_logs",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
+        "resource": "row",
+        "tableId": "communication_logs",
+        "operation": "insert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
             {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
+              "fieldId": "sender",
+              "fieldValue": "{{$('Extract Message & Sender').item.json.sender}}"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+              "fieldId": "message",
+              "fieldValue": "{{$json.output}}"
             }
           ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"sender\": \"{{$('Extract Message & Sender').item.json.sender}}\",\n  \"message\": \"{{$json.output}}\",\n  \"direction\": \"outbound\"\n}"
+        }
       },
       "id": "8",
       "name": "Log Conversation",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1000, 300]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     }
   ],
   "connections": {

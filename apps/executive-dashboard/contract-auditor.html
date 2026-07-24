@@ -36,8 +36,7 @@
     }
   }
 </script>
-<style type="text/tailwindcss">
-  @layer utilities {
+<style>
     .bg-radial {
       background-image: radial-gradient(circle at 15% 10%, rgba(200,155,60,0.08), transparent 40%), radial-gradient(circle at 85% 90%, rgba(200,155,60,0.06), transparent 40%);
     }
@@ -57,12 +56,14 @@
     .verdict.ok { background: rgba(62,107,79,0.08); border-left: 3px solid #3E6B4F; }
 
     .line-item {
-      @apply flex justify-between py-2.5 border-b border-paper-line text-[14.5px] hover:bg-black/5 transition-colors duration-200 px-2 -mx-2 rounded-sm;
+      display: flex; justify-content: space-between; padding: 0.625rem 0.5rem;
+      border-bottom: 1px solid #ded6c2; font-size: 14.5px;
+      margin-left: -0.5rem; margin-right: -0.5rem; border-radius: 0.125rem;
+      transition: background-color 0.2s;
     }
-    .line-item .amt {
-      @apply font-mono font-medium;
-    }
-  }
+    .line-item:hover { background-color: rgba(0,0,0,0.05); }
+    .line-item:last-child { border-bottom-width: 0; }
+    .line-item .amt { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
 
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 </style>

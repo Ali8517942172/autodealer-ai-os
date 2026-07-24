@@ -12,46 +12,37 @@
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [0, 300]
+      "position": [
+        0,
+        300
+      ]
     },
     {
       "parameters": {
-        "name": "Fetch Escalated Lead",
-        "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
-            }
-          ]
-        },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "id",
-              "value": "eq.{{$input.all()[0].json.body.lead_id || $input.all()[0].json.lead_id}}"
-            }
-          ]
-        }
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "getAll",
+        "limit": 10
       },
       "id": "2",
       "name": "Fetch Escalated Lead",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [200, 300]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "Analyze this escalated lead: {{$json}}. Summarize the situation, explain why it might have been escalated, and recommend next steps for the senior rep. Output a professional summary.",
+        "text": "Analyze this escalated lead: {{$json}}. Summarize the situation, explain why it might have been escalated, and recommend next steps for the senior rep. Output a professional summary.\n\nRETURN STRICT JSON OUTPUT ONLY.",
         "options": {
           "systemMessage": "You are an AI Escalation Analyst for NEXUS OS. You review leads that are stuck or escalated, analyze their history, and provide concise, actionable recommendations for human managers."
         }
@@ -60,7 +51,10 @@
       "name": "AI Escalation Analyst",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
-      "position": [450, 300]
+      "position": [
+        450,
+        300
+      ]
     },
     {
       "parameters": {
@@ -73,7 +67,10 @@
       "name": "OpenRouter Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
-      "position": [450, 500],
+      "position": [
+        450,
+        500
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "TRR9eUUk37850wgs",
@@ -83,128 +80,130 @@
     },
     {
       "parameters": {
-        "name": "get_lead_timeline",
-        "description": "Fetches the communication history for the lead.",
-        "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/communication_logs",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
-            }
-          ]
-        },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "sender",
-              "value": "eq.{{$fromAI('email')}}"
-            }
-          ]
-        }
+        "resource": "row",
+        "tableId": "communication_logs",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Fetches the communication history for the lead."
       },
       "id": "5",
       "name": "get_lead_timeline",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [600, 500]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     },
     {
       "parameters": {
-        "name": "find_available_rep",
-        "description": "Finds a senior sales rep available for assignment.",
-        "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/users?role=eq.senior_rep&status=eq.online",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
+        "resource": "row",
+        "tableId": "users",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Finds a senior sales rep available for assignment."
+      },
+      "id": "6",
+      "name": "find_available_rep",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        750,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "fromEmail": "={{$env.RESEND_FROM_EMAIL}}",
+        "toEmail": "aliasgher892@gmail.com",
+        "subject": "URGENT: Lead Escalation Required",
+        "html": "<p><strong>AI Analysis:</strong></p><p>{{$json.output}}</p>"
+      },
+      "id": "7",
+      "name": "Send Email via Resend",
+      "type": "n8n-nodes-base.resend",
+      "typeVersion": 1,
+      "position": [
+        800,
+        200
+      ],
+      "credentials": {
+        "resendApi": {
+          "id": "AUsufgmxQqmkeIPw",
+          "name": "Resend Email API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "C0BJ5PLTPDJ",
+        "text": "*\ud83d\udea8 Escalated Lead Alert*\\n\\n*AI Summary:*\\n{{$json.output}}",
+        "otherOptions": {}
+      },
+      "id": "8",
+      "name": "Send Slack Alert (#sales-hot-leads)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        400
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "HPTEqLu6xjmhEXDN",
+          "name": "Slack - Nexus Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "audit_log",
+        "operation": "insert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
             {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
+              "fieldId": "workflow",
+              "fieldValue": "Lead Escalation"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+              "fieldId": "status",
+              "fieldValue": "Success"
             }
           ]
         }
       },
-      "id": "6",
-      "name": "find_available_rep",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [750, 500]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.RESEND_API_KEY}}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"{{$env.RESEND_FROM_EMAIL}}\",\n  \"to\": \"aliasgher892@gmail.com\",\n  \"subject\": \"URGENT: Lead Escalation Required\",\n  \"html\": \"<p><strong>AI Analysis:</strong></p><p>{{$json.output}}</p>\"\n}"
-      },
-      "id": "7",
-      "name": "Send Email via Resend",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [800, 200]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{$env.SLACK_WEBHOOK_URL}}",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": \"*🚨 Escalated Lead Alert*\\n\\n*AI Summary:*\\n{{$json.output}}\"\n}"
-      },
-      "id": "8",
-      "name": "Send Slack Alert (#sales-hot-leads)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [800, 400]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/audit_log",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"workflow\": \"Lead Escalation\",\n  \"status\": \"Success\",\n  \"summary\": \"{{$json.output}}\"\n}"
-      },
       "id": "9",
       "name": "Audit Log",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1100, 300]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     }
   ],
   "connections": {

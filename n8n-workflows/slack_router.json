@@ -12,7 +12,10 @@
       "name": "Slack Webhook (POST)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [0, 300]
+      "position": [
+        0,
+        300
+      ]
     },
     {
       "parameters": {
@@ -22,12 +25,15 @@
       "name": "Extract Command",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [200, 300]
+      "position": [
+        200,
+        300
+      ]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.command }}",
+        "text": "={{ $json.command }}\n\nRETURN STRICT JSON OUTPUT ONLY.",
         "options": {
           "systemMessage": "You are NEXUS OS CRM Agent. Parse the user's natural language Slack command and execute the appropriate CRM operation using the provided tools. Respond with a clear, concise confirmation suitable for a Slack message."
         }
@@ -36,7 +42,10 @@
       "name": "AI CRM Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
-      "position": [450, 300]
+      "position": [
+        450,
+        300
+      ]
     },
     {
       "parameters": {
@@ -49,7 +58,10 @@
       "name": "OpenRouter Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
-      "position": [450, 500],
+      "position": [
+        450,
+        500
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "TRR9eUUk37850wgs",
@@ -59,76 +71,57 @@
     },
     {
       "parameters": {
-        "name": "update_lead_status",
-        "description": "Updates a lead's status in Supabase. Requires email/phone and the new status (e.g. HOT, WARM, COLD, WON, LOST)",
-        "method": "PATCH",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "update",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
             {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
+              "fieldId": "status",
+              "fieldValue": "{{$fromAI('status')}}"
             }
           ]
         },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "email",
-              "value": "eq.{{$fromAI('email')}}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"status\": \"{{$fromAI('status')}}\"\n}"
+        "description": "Updates a lead's status in Supabase. Requires email/phone and the new status (e.g. HOT, WARM, COLD, WON, LOST)"
       },
       "id": "5",
       "name": "Update Lead Status",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [600, 500]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     },
     {
       "parameters": {
-        "name": "search_leads",
-        "description": "Searches for leads in Supabase by name or phone.",
-        "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{$env.SUPABASE_KEY}}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.SUPABASE_KEY}}"
-            }
-          ]
-        },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "name",
-              "value": "ilike.*{{$fromAI('name')}}*"
-            }
-          ]
-        }
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Searches for leads in Supabase by name or phone."
       },
       "id": "6",
       "name": "Search Leads",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [750, 500]
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        750,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
     },
     {
       "parameters": {
@@ -138,7 +131,10 @@
       "name": "Format Slack Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [700, 300]
+      "position": [
+        700,
+        300
+      ]
     }
   ],
   "connections": {

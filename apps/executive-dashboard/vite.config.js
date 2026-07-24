@@ -7,6 +7,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        contractAuditor: resolve(__dirname, 'contract-auditor.html')
       }
     }
   },

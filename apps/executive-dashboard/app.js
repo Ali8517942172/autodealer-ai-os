@@ -44,6 +44,18 @@ async function loadDashboard() {
         const leadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=priority,score,status&limit=100`, { headers: h });
         const leads = await leadsRes.json();
 
+        if (!Array.isArray(leads)) {
+            console.error("Dashboard load error: Supabase API returned an error:", leads);
+            document.getElementById('hotLeads').textContent = "-";
+            document.getElementById('warmLeads').textContent = "-";
+            document.getElementById('coldLeads').textContent = "-";
+            document.getElementById('pipelineValue').textContent = "AED 0";
+            document.getElementById('convRate').textContent = "—";
+            document.getElementById('avgDays').textContent = "—";
+            document.getElementById('aiInsights').innerHTML = `<div class="p-4 text-error text-sm">Failed to load data. Please check Supabase API Key.</div>`;
+            return;
+        }
+
         const hot = leads.filter(l => l.priority === 'HOT' || l.score >= 80).length;
         const warm = leads.filter(l => l.priority === 'WARM' || (l.score >= 50 && l.score < 80)).length;
         const cold = leads.length - hot - warm;
