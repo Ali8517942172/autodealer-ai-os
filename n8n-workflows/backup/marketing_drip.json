@@ -48,7 +48,7 @@
           { "name": "X-Title", "value": "NEXUS OS — Email Content Agent" }
         ]},
         "sendBody": true, "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 300,\n  \"temperature\": 0.8,\n  \"messages\": [{\n    \"role\": \"system\",\n    \"content\": \"You are a marketing copywriter for NEXUS OS premium automotive dealership in Dubai. Write a short, compelling welcome email (max 100 words). Include: personal greeting, mention their vehicle interest if known, one compelling reason to visit, and a clear CTA. Return ONLY the email body HTML (no subject line). Use professional but warm tone.\"\n  },{\n    \"role\": \"user\",\n    \"content\": \"Write a Day 1 welcome email for:\\nName: {{ $json.name }}\\nVehicle Interest: {{ $json.vehicle_interest }}\\nBudget: {{ $json.budget }}\\nSource: {{ $json.source }}\"\n  }]\n}",
+        "jsonBody": "={{ { model: 'google/gemini-flash-1.5', max_tokens: 300, temperature: 0.8, messages: [ { role: 'system', content: 'You are a marketing copywriter for NEXUS OS premium automotive dealership in Dubai. Write a short, compelling welcome email (max 100 words). Include: personal greeting, mention their vehicle interest if known, one compelling reason to visit, and a clear CTA. Return ONLY the email body HTML (no subject line). Use professional but warm tone.' }, { role: 'user', content: 'Write a Day 1 welcome email for:\\nName: ' + $json.name + '\\nVehicle Interest: ' + $json.vehicle_interest + '\\nBudget: ' + $json.budget + '\\nSource: ' + $json.source } ] } }}",
         "options": { "timeout": 10000 }
       },
       "id": "i9-007", "name": "AI: Generate Welcome Email", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1440, 400],

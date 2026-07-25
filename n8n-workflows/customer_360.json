@@ -51,7 +51,7 @@
           { "name": "X-Title", "value": "NEXUS OS — Customer Intelligence" }
         ]},
         "sendBody": true, "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 400,\n  \"temperature\": 0.3,\n  \"messages\": [{\n    \"role\": \"system\",\n    \"content\": \"You are a Customer Intelligence Analyst for a UAE automotive dealership. Analyze the pipeline data and provide:\\n1. 📊 Pipeline Health Score (A/B/C/D)\\n2. ⚠️ Top Risk (one-line)\\n3. 💡 Top Opportunity (one-line)\\n4. 🎯 Recommended Action (one-line)\\n\\nKeep it under 80 words. Be data-driven.\"\n  },{\n    \"role\": \"user\",\n    \"content\": \"PIPELINE DATA:\\n{{ JSON.stringify($json.pipeline) }}\\n\\nSAMPLE LEADS:\\n{{ $json.sample_leads }}\"\n  }]\n}",
+        "jsonBody": "={{ { model: 'google/gemini-flash-1.5', max_tokens: 400, temperature: 0.3, messages: [{ role: 'system', content: 'You are a Customer Intelligence Analyst for a UAE automotive dealership. Analyze the pipeline data and provide:\\n1. 📊 Pipeline Health Score (A/B/C/D)\\n2. ⚠️ Top Risk (one-line)\\n3. 💡 Top Opportunity (one-line)\\n4. 🎯 Recommended Action (one-line)\\n\\nKeep it under 80 words. Be data-driven.' }, { role: 'user', content: 'PIPELINE DATA:\\n' + JSON.stringify($json.pipeline) + '\\n\\nSAMPLE LEADS:\\n' + $json.sample_leads }] } }}",
         "options": { "timeout": 12000 }
       },
       "id": "j10-005", "name": "AI Customer Intelligence", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 300],
@@ -59,7 +59,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ai = $input.first().json;\nconst data = $node['Aggregate 360 Data'].json;\nlet insight;\ntry { insight = ai.choices[0].message.content.trim(); } catch(e) { insight = 'AI analysis unavailable.'; }\n\nconst p = data.pipeline;\nreturn [{ json: {\n  slackMessage: `📊 *Customer 360 Report*\\n\\n*Pipeline:* ${p.total} leads | 🔥 HOT: ${p.by_priority.HOT} | 🟡 WARM: ${p.by_priority.WARM} | 🔵 COLD: ${p.by_priority.COLD}\\n*Avg Score:* ${p.avg_score}/100 | *New (24h):* ${p.leads_last_24h}\\n*Potential Revenue:* AED ${p.total_potential_revenue.toLocaleString()}\\n*Odoo CRM:* ${p.odoo_leads} leads synced\\n\\n*🤖 AI Insight:*\\n${insight}`,\n  insight,\n  pipeline: p\n}}];"
+        "jsCode": "const ai = $input.first().json;\nconst data = $items('Aggregate 360 Data')[0].json;\nlet insight;\ntry { insight = ai.choices[0].message.content.trim(); } catch(e) { insight = 'AI analysis unavailable.'; }\n\nconst p = data.pipeline;\nreturn [{ json: {\n  slackMessage: `📊 *Customer 360 Report*\\n\\n*Pipeline:* ${p.total} leads | 🔥 HOT: ${p.by_priority.HOT} | 🟡 WARM: ${p.by_priority.WARM} | 🔵 COLD: ${p.by_priority.COLD}\\n*Avg Score:* ${p.avg_score}/100 | *New (24h):* ${p.leads_last_24h}\\n*Potential Revenue:* AED ${p.total_potential_revenue.toLocaleString()}\\n*Odoo CRM:* ${p.odoo_leads} leads synced\\n\\n*🤖 AI Insight:*\\n${insight}`,\n  insight,\n  pipeline: p\n}}];"
       },
       "id": "j10-006", "name": "Build Report", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 300]
     },

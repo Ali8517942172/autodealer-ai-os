@@ -42,7 +42,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "Analyze this escalated lead: {{$json}}. Summarize the situation, explain why it might have been escalated, and recommend next steps for the senior rep. Output a professional summary.\n\nRETURN STRICT JSON OUTPUT ONLY.",
+        "text": "=Analyze this escalated lead: {{$json}}. Summarize the situation, explain why it might have been escalated, and recommend next steps for the senior rep. Output a professional summary.\n\nRETURN STRICT JSON OUTPUT ONLY.",
         "options": {
           "systemMessage": "You are an AI Escalation Analyst for NEXUS OS. You review leads that are stuck or escalated, analyze their history, and provide concise, actionable recommendations for human managers."
         }
@@ -73,8 +73,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TRR9eUUk37850wgs",
-          "name": "Header Auth"
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
         }
       }
     },
@@ -131,7 +131,7 @@
         "fromEmail": "={{$env.RESEND_FROM_EMAIL}}",
         "toEmail": "aliasgher892@gmail.com",
         "subject": "URGENT: Lead Escalation Required",
-        "html": "<p><strong>AI Analysis:</strong></p><p>{{$json.output}}</p>"
+        "html": "=<p><strong>AI Analysis:</strong></p><p>{{$json.output}}</p>"
       },
       "id": "7",
       "name": "Send Email via Resend",
@@ -153,7 +153,7 @@
         "resource": "message",
         "operation": "post",
         "channel": "C0BJ5PLTPDJ",
-        "text": "*\ud83d\udea8 Escalated Lead Alert*\\n\\n*AI Summary:*\\n{{$json.output}}",
+        "text": "=*🚨 Escalated Lead Alert*\\n\\n*AI Summary:*\\n{{$json.output}}",
         "otherOptions": {}
       },
       "id": "8",

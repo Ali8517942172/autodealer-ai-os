@@ -21,11 +21,11 @@
           { "name": "X-Title", "value": "NEXUS OS — RAG Embeddings" }
         ]},
         "sendBody": true, "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"openai/text-embedding-ada-002\",\n  \"input\": {{ JSON.stringify($json.content) }}\n}",
+        "jsonBody": "{\n  \"model\": \"openai/text-embedding-ada-002\",\n  \"input\": {{ JSON.stringify($json.content) }}\n}",
         "options": { "timeout": 15000 }
       },
       "id": "h8-003", "name": "Generate Embedding", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [480, 300],
-      "credentials": { "httpHeaderAuth": { "id": "OPENROUTER_CRED_ID", "name": "OpenRouter API" } },
+      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } },
       "onError": "continueRegularOutput",
       "retryOnFail": true,
       "maxTries": 3,
@@ -33,13 +33,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst docInfo = $node['Chunk & Enrich'].json;\n\nlet embedding;\nif (response.data?.[0]?.embedding) {\n  embedding = response.data[0].embedding;\n} else {\n  // If embedding fails after retries, skip this chunk\n  return [{ json: { skip: true, error: 'Embedding generation failed', document_id: docInfo.document_id } }];\n}\n\nreturn [{ json: {\n  document_id: docInfo.document_id,\n  title: docInfo.title,\n  department: docInfo.department,\n  chunk_index: docInfo.chunk_index,\n  content: docInfo.content,\n  embedding: JSON.stringify(embedding),\n  metadata: docInfo.metadata\n}}];"
+        "jsCode": "return $input.all().map((item, i) => {\n  const response = item.json;\n  const docInfo = $('Chunk & Enrich').item(i).json;\n\n  let embedding;\n  if (response.data?.[0]?.embedding) {\n    embedding = response.data[0].embedding;\n  } else {\n    return { json: { skip: true, error: 'Embedding generation failed', document_id: docInfo.document_id } };\n  }\n\n  return { json: {\n    document_id: docInfo.document_id,\n    title: docInfo.title,\n    department: docInfo.department,\n    chunk_index: docInfo.chunk_index,\n    content: docInfo.content,\n    embedding: JSON.stringify(embedding),\n    metadata: docInfo.metadata\n  }};\n});"
       },
       "id": "h8-004", "name": "Parse Embedding", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [720, 300]
     },
     {
       "parameters": {
-        "conditions": { "boolean": [{ "value1": "={{ $json.skip }}", "value2": true }] }
+        "conditions": { "boolean": [{ "value1": "=$json.skip", "value2": true }] }
       },
       "id": "h8-005", "name": "Skip Failed?", "type": "n8n-nodes-base.if", "typeVersion": 2, "position": [960, 300]
     },
@@ -50,13 +50,13 @@
         "dataMode": "defineBelow",
         "valuesToSend": {
           "values": [
-            { "name": "document_id", "value": "={{ $json.document_id }}" },
-            { "name": "title", "value": "={{ $json.title }}" },
-            { "name": "department", "value": "={{ $json.department }}" },
-            { "name": "chunk_index", "value": "={{ $json.chunk_index }}" },
-            { "name": "content", "value": "={{ $json.content }}" },
-            { "name": "embedding", "value": "={{ $json.embedding }}" },
-            { "name": "metadata", "value": "={{ $json.metadata }}" }
+            { "name": "document_id", "value": "=$json.document_id" },
+            { "name": "title", "value": "=$json.title" },
+            { "name": "department", "value": "=$json.department" },
+            { "name": "chunk_index", "value": "=$json.chunk_index" },
+            { "name": "content", "value": "=$json.content" },
+            { "name": "embedding", "value": "=$json.embedding" },
+            { "name": "metadata", "value": "=$json.metadata" }
           ]
         }
       },
@@ -68,7 +68,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={ \"status\": \"success\", \"document_id\": \"{{ $json.document_id }}\", \"chunks_stored\": 1 }",
+        "responseBody": "{ \"status\": \"success\", \"document_id\": \"{{ $json.document_id }}\", \"chunks_stored\": 1 }",
         "options": {}
       },
       "id": "h8-007", "name": "Respond", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [1440, 400]

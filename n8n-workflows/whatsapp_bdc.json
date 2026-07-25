@@ -64,8 +64,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TRR9eUUk37850wgs",
-          "name": "Header Auth"
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
         }
       }
     },
@@ -133,11 +133,11 @@
           "fieldValues": [
             {
               "fieldId": "sender",
-              "fieldValue": "{{$('Extract Message & Sender').item.json.sender}}"
+              "fieldValue": "={{$('Extract Message & Sender').item.json.sender}}"
             },
             {
               "fieldId": "message",
-              "fieldValue": "{{$json.output}}"
+              "fieldValue": "={{$json.output}}"
             }
           ]
         }
