@@ -29,7 +29,7 @@ This document describes how NEXUS OS is built and maintained using AI-assisted d
    └── Integration strategy
 
 3. IMPLEMENTATION (Claude Code + Codex)
-   ├── Backend services (Node.js, FastAPI)
+   ├── Backend services (Node.js dashboard, n8n automation/AI/RAG engine — no separate Python/FastAPI service)
    ├── Database schemas (Supabase SQL)
    ├── Automation workflows (n8n, WAHA)
    └── Frontend components (React)
