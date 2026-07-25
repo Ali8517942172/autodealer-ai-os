@@ -1,50 +1,54 @@
 {
-  "name": "Finance Calculator — AI Finance Advisor",
+  "id": "unMMpeL9uuPO79pp",
+  "name": "Finance Calc: Auto Loan Equity & Credit Score",
   "nodes": [
     {
-      "parameters": { "path": "finance-calc", "responseMode": "lastNode", "options": {} },
-      "id": "f6-001", "name": "Webhook Trigger", "type": "n8n-nodes-base.webhook", "typeVersion": 1.1, "position": [0, 300], "webhookId": "finance-calc-agent"
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "finance-calc",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst b = raw.body || raw;\n\nconst data = {\n  vehicleValue: parseFloat(b.vehicleValue) || 0,\n  loanPayoffAmount: parseFloat(b.loanPayoffAmount) || 0,\n  creditScore: parseInt(b.creditScore) || 700,\n  monthlyIncome: parseFloat(b.monthlyIncome || b.monthly_salary) || 0,\n  existingEMI: parseFloat(b.existingEMI) || 0,\n  loanTenure: parseInt(b.loanTenure) || 60,\n  downPayment: parseFloat(b.downPayment) || 0,\n  nationality: b.nationality || 'UAE',\n  employmentMonths: parseInt(b.employmentMonths || b.employment_months) || 12\n};\n\n// --- CALCULATIONS ---\ndata.equity = data.vehicleValue - data.loanPayoffAmount;\ndata.equityStatus = data.equity >= 0 ? 'Positive' : 'Negative';\n\n// Finance Tier\nif (data.creditScore >= 720) data.financeTier = 'Prime Plus';\nelse if (data.creditScore >= 680) data.financeTier = 'Prime';\nelse if (data.creditScore >= 620) data.financeTier = 'Near Prime';\nelse data.financeTier = 'Subprime';\n\n// DTI Ratio\nconst loanAmount = data.vehicleValue - data.downPayment;\nconst estimatedRate = data.creditScore >= 720 ? 2.99 : data.creditScore >= 680 ? 4.49 : data.creditScore >= 620 ? 6.99 : 9.99;\nconst monthlyRate = estimatedRate / 100 / 12;\nconst emi = loanAmount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -data.loanTenure));\ndata.estimatedEMI = Math.round(emi);\ndata.estimatedRate = estimatedRate;\ndata.loanAmount = loanAmount;\n\ndata.dti = data.monthlyIncome > 0 ? ((data.existingEMI + emi) / data.monthlyIncome * 100).toFixed(1) : 'N/A';\ndata.dtiStatus = parseFloat(data.dti) <= 50 ? 'ELIGIBLE' : parseFloat(data.dti) <= 65 ? 'BORDERLINE' : 'HIGH_RISK';\n\n// UAE Bank recommendations\ndata.recommendedBanks = [];\nif (data.creditScore >= 700 && data.nationality === 'UAE') data.recommendedBanks.push('Emirates NBD', 'ADCB', 'FAB');\nelse if (data.creditScore >= 650) data.recommendedBanks.push('Mashreq', 'RAKBank', 'DIB');\nelse data.recommendedBanks.push('Al Hilal', 'Ajman Bank');\n\nreturn [{ json: data }];"
+        "jsCode": "// Accept a raw webhook POST (payload under .body) or a direct/sub-workflow call.\nconst raw = $input.first().json;\nconst src = raw.body || raw;\n\nconst vehicleValue = parseFloat(src.vehicleValue);\nconst loanPayoffAmount = parseFloat(src.loanPayoffAmount);\n// Credit score is entered manually by the rep from the customer's AECB report --\n// real-time bureau lookups require a licensed financial-institution agreement in\n// the UAE, so this stays a manual field rather than an automated external call.\nconst creditScore = parseInt(src.creditScore, 10);\n\nconst errors = [];\nif (!Number.isFinite(vehicleValue) || vehicleValue <= 0) {\n  errors.push('vehicleValue must be a positive number (AED).');\n}\nif (!Number.isFinite(loanPayoffAmount) || loanPayoffAmount < 0) {\n  errors.push('loanPayoffAmount must be zero or a positive number (AED).');\n}\nif (!Number.isFinite(creditScore) || creditScore < 300 || creditScore > 900) {\n  errors.push('A valid AECB credit score (300-900) is required. Ask the customer for their latest AECB report.');\n}\n\nif (errors.length) {\n  return [{ json: { status: 'error', errors: errors, calculatedAt: new Date().toISOString() } }];\n}\n\nconst equity = vehicleValue - loanPayoffAmount;\nconst ltv = vehicleValue > 0 ? Math.round((loanPayoffAmount / vehicleValue) * 1000) / 10 : null;\n\nlet financeTier = 'Subprime';\nlet indicativeApr = 12.5;\nif (creditScore >= 720)      { financeTier = 'Prime Plus'; indicativeApr = 3.99; }\nelse if (creditScore >= 680) { financeTier = 'Prime';      indicativeApr = 5.49; }\nelse if (creditScore >= 620) { financeTier = 'Near Prime'; indicativeApr = 7.99; }\n\nreturn [{\n  json: {\n    status: 'success',\n    equity_aed: Math.round(equity),\n    equity_status: equity >= 0 ? 'Positive' : 'Negative',\n    loan_to_value_pct: ltv,\n    credit_score: creditScore,\n    finance_tier: financeTier,\n    indicative_apr_pct: indicativeApr,\n    vehicle_value_aed: Math.round(vehicleValue),\n    loan_payoff_aed: Math.round(loanPayoffAmount),\n    disclaimer: 'Indicative only. Final APR and approval are set by the lender, not by NEXUS OS.',\n    calculated_at: new Date().toISOString()\n  }\n}];"
       },
-      "id": "f6-002", "name": "Calculate Finance Intelligence", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 300]
-    },
-    {
-      "parameters": {
-        "method": "POST", "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": { "parameters": [
-          { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
-          { "name": "X-Title", "value": "NEXUS OS — Finance Advisor" }
-        ]},
-        "sendBody": true, "specifyBody": "json",
-        "jsonBody": "={{ {\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 400,\n  \"temperature\": 0.3,\n  \"messages\": [{\n    \"role\": \"system\",\n    \"content\": \"You are a UAE automotive finance advisor. Given the financial data, provide a concise 3-line recommendation: (1) Eligibility verdict, (2) Best financing option, (3) Risk flag if any. Be specific about UAE market. Max 80 words.\"\n  },{\n    \"role\": \"user\",\n    \"content\": `Vehicle: AED ${$json.vehicleValue}\\nLoan Amount: AED ${$json.loanAmount}\\nDown Payment: AED ${$json.downPayment}\\nCredit Score: ${$json.creditScore} (${$json.financeTier})\\nMonthly Income: AED ${$json.monthlyIncome}\\nExisting EMI: AED ${$json.existingEMI}\\nEstimated New EMI: AED ${$json.estimatedEMI}\\nDTI: ${$json.dti}% (${$json.dtiStatus})\\nEquity: AED ${$json.equity} (${$json.equityStatus})\\nNationality: ${$json.nationality}\\nEmployment: ${$json.employmentMonths} months`\n  }]\n} }}",
-        "options": { "timeout": 10000 }
-      },
-      "id": "f6-003", "name": "AI Finance Advisor", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [500, 300],
-      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const aiResp = $input.first().json;\nconst calc = $node['Calculate Finance Intelligence'].json;\n\nlet advice = 'Manual review recommended.';\ntry { advice = aiResp.choices[0].message.content.trim(); } catch(e) {}\n\nreturn [{ json: {\n  status: 'success',\n  equity: calc.equity,\n  equityStatus: calc.equityStatus,\n  creditScore: calc.creditScore,\n  financeTier: calc.financeTier,\n  estimatedEMI: calc.estimatedEMI,\n  estimatedRate: calc.estimatedRate + '%',\n  loanAmount: calc.loanAmount,\n  dti: calc.dti + '%',\n  dtiStatus: calc.dtiStatus,\n  recommendedBanks: calc.recommendedBanks,\n  ai_recommendation: advice,\n  calculatedAt: new Date().toISOString()\n}}];"
-      },
-      "id": "f6-004", "name": "Build Response", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [740, 300]
-    },
-    {
-      "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify($json) }}", "options": {} },
-      "id": "f6-005", "name": "Respond", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [980, 300]
+      "id": "3",
+      "name": "Calculate Equity & Tier",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": { "main": [[ { "node": "Calculate Finance Intelligence", "type": "main", "index": 0 } ]] },
-    "Calculate Finance Intelligence": { "main": [[ { "node": "AI Finance Advisor", "type": "main", "index": 0 } ]] },
-    "AI Finance Advisor": { "main": [[ { "node": "Build Response", "type": "main", "index": 0 } ]] },
-    "Build Response": { "main": [[ { "node": "Respond", "type": "main", "index": 0 } ]] }
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Equity & Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
-  "tags": [{ "name": "AI-Agent", "id": "tag-agent" }, { "name": "Finance", "id": "tag-finance" }]
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all"
+  }
 }

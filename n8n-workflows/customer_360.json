@@ -1,89 +1,309 @@
 {
-  "name": "Customer 360 — AI Intelligence Agent",
+  "id": "AZkGM5M4c1uzSH7S",
+  "name": "Customer 360 - Data Aggregation",
   "nodes": [
     {
-      "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] } },
-      "id": "j10-001", "name": "Schedule (Every 6h)", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.1, "position": [0, 300]
-    },
-    {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "leads",
-        "limit": 50,
-        "sortRules": {
-          "sortRulesValues": [
+        "rule": {
+          "interval": [
             {
-              "sortKey": "created_at",
-              "direction": "desc"
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
             }
           ]
         }
       },
-      "id": "j10-002", "name": "Fetch All Active Leads", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [240, 200],
-      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } }
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        304
+      ],
+      "id": "aa815068-820c-4d66-95e3-b5a5a60a498a"
     },
     {
       "parameters": {
         "resource": "custom",
-        "operation": "searchRead",
-        "model": "crm.lead",
-        "searchQuery": "=[[\"create_date\", \">=\", \"{{ new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0] }}\"]]",
-        "fieldsList": "name,contact_name,phone,email_from,expected_revenue,stage_id,create_date",
-        "limit": 50
+        "customResource": "=res.partner",
+        "operation": "getAll",
+        "options": {
+          "fieldsList": [
+            "id",
+            "name",
+            "email",
+            "phone"
+          ]
+        }
       },
-      "id": "j10-003", "name": "Fetch Odoo Leads", "type": "n8n-nodes-base.odoo", "typeVersion": 1, "position": [240, 400],
-      "credentials": { "odooApi": { "id": "QFndoyD3gLoVLidE", "name": "Odoo - Nexus" } },
-      "onError": "continueRegularOutput"
+      "name": "Odoo - Get Customers",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        224,
+        304
+      ],
+      "id": "403fa8d6-7136-40d1-b7c0-e953af28c95f",
+      "credentials": {
+        "odooApi": {
+          "id": "3a0Bmxys3KlURmtx",
+          "name": "Odoo API"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const leads = $items('Fetch All Active Leads').map(i => i.json);\nconst odooLeads = $items('Fetch Odoo Leads').map(i => i.json);\n\n// Build pipeline summary\nconst pipeline = {\n  total: leads.length,\n  by_priority: { HOT: 0, WARM: 0, COLD: 0, unscored: 0 },\n  by_status: {},\n  avg_score: 0,\n  total_potential_revenue: 0,\n  leads_last_24h: 0,\n  odoo_leads: odooLeads.length\n};\n\nconst now = Date.now();\nlet scoreSum = 0, scoreCount = 0;\n\nleads.forEach(l => {\n  pipeline.by_priority[l.ai_priority || 'unscored']++;\n  pipeline.by_status[l.status || 'unknown'] = (pipeline.by_status[l.status || 'unknown'] || 0) + 1;\n  if (l.ai_score) { scoreSum += l.ai_score; scoreCount++; }\n  if (l.budget_max) pipeline.total_potential_revenue += parseFloat(l.budget_max);\n  if (new Date(l.created_at).getTime() > now - 24*60*60*1000) pipeline.leads_last_24h++;\n});\n\npipeline.avg_score = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : 0;\n\nreturn [{ json: {\n  pipeline,\n  sample_leads: leads.slice(0, 5).map(l => `${l.name} (${l.ai_priority}/${l.status}, Score:${l.ai_score})`).join('; ')\n}}];"
+        "batchSize": 1,
+        "options": {}
       },
-      "id": "j10-004", "name": "Aggregate 360 Data", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [480, 300]
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 2,
+      "position": [
+        448,
+        304
+      ],
+      "id": "5b31a2d2-72ca-4249-bd2c-75570f09f151"
     },
     {
       "parameters": {
-        "method": "POST", "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "operation": "getAll",
+        "limit": 20,
+        "simple": false,
+        "filters": {
+          "sender": "={{  $json.email }}"
+        },
+        "options": {}
+      },
+      "name": "Gmail - Get Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        672,
+        208
+      ],
+      "id": "de16255d-f002-4f8c-9d17-a5fbc2cc7bc9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1Cgivoyjt7psAirH",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "query": "={{ $('Split In Batches').first().json.email }}",
+        "limit": 20,
+        "options": {}
+      },
+      "name": "Slack - Search Mentions",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        400
+      ],
+      "id": "2c43a24f-34a0-479e-86dd-dde6c024fa17",
+      "credentials": {
+        "slackApi": {
+          "id": "HPTEqLu6xjmhEXDN",
+          "name": "Slack - NEXUS OS Bot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "useDataOfInput": 1,
+        "options": {}
+      },
+      "name": "Merge Customer Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        304
+      ],
+      "id": "7537a90b-2b10-49fa-9407-591423af725d"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate everything we know about the customer currently in the loop.\nconst customer = $('Split In Batches').first().json;\n\nlet emails = [];\ntry {\n  emails = $('Gmail - Get Emails').all().filter(i => i.json && i.json.id);\n} catch (e) { emails = []; }\n\nlet slackMessages = [];\ntry {\n  slackMessages = $('Slack - Search Mentions').all().filter(i => i.json && (i.json.ts || i.json.text));\n} catch (e) { slackMessages = []; }\n\n// Odoo returns boolean false for empty char fields - normalise to null.\nconst clean = (v) => (v === false || v === 'false' || v === '' || v === undefined) ? null : v;\n\nreturn [{\n  json: {\n    customer_id: String(customer.id),\n    name: clean(customer.name),\n    email: clean(customer.email),\n    phone: clean(customer.phone),\n    total_emails: emails.length,\n    total_slack_messages: slackMessages.length,\n    last_synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Transform & Unify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        304
+      ],
+      "id": "5f9b532c-ad0d-4067-b591-10a14852cfae"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/customer_360_profiles",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "customer_id"
+            }
+          ]
+        },
         "sendHeaders": true,
-        "headerParameters": { "parameters": [
-          { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
-          { "name": "X-Title", "value": "NEXUS OS — Customer Intelligence" }
-        ]},
-        "sendBody": true, "specifyBody": "json",
-        "jsonBody": "={{ { model: 'google/gemini-flash-1.5', max_tokens: 400, temperature: 0.3, messages: [{ role: 'system', content: 'You are a Customer Intelligence Analyst for a UAE automotive dealership. Analyze the pipeline data and provide:\\n1. 📊 Pipeline Health Score (A/B/C/D)\\n2. ⚠️ Top Risk (one-line)\\n3. 💡 Top Opportunity (one-line)\\n4. 🎯 Recommended Action (one-line)\\n\\nKeep it under 80 words. Be data-driven.' }, { role: 'user', content: 'PIPELINE DATA:\\n' + JSON.stringify($json.pipeline) + '\\n\\nSAMPLE LEADS:\\n' + $json.sample_leads }] } }}",
-        "options": { "timeout": 12000 }
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
       },
-      "id": "j10-005", "name": "AI Customer Intelligence", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 300],
-      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } }
-    },
-    {
-      "parameters": {
-        "jsCode": "const ai = $input.first().json;\nconst data = $items('Aggregate 360 Data')[0].json;\nlet insight;\ntry { insight = ai.choices[0].message.content.trim(); } catch(e) { insight = 'AI analysis unavailable.'; }\n\nconst p = data.pipeline;\nreturn [{ json: {\n  slackMessage: `📊 *Customer 360 Report*\\n\\n*Pipeline:* ${p.total} leads | 🔥 HOT: ${p.by_priority.HOT} | 🟡 WARM: ${p.by_priority.WARM} | 🔵 COLD: ${p.by_priority.COLD}\\n*Avg Score:* ${p.avg_score}/100 | *New (24h):* ${p.leads_last_24h}\\n*Potential Revenue:* AED ${p.total_potential_revenue.toLocaleString()}\\n*Odoo CRM:* ${p.odoo_leads} leads synced\\n\\n*🤖 AI Insight:*\\n${insight}`,\n  insight,\n  pipeline: p\n}}];"
+      "name": "Supabase - Upsert Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1328,
+        304
+      ],
+      "id": "1a6c65bc-3c23-46ac-b3f1-9ca76f4bef1f",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ewCXyGq2VCV76foT",
+          "name": "Custom Auth account"
+        },
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
       },
-      "id": "j10-006", "name": "Build Report", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 300]
-    },
-    {
-      "parameters": {
-        "channel": "C0BJ5PLTPDJ",
-        "text": "={{ $json.slackMessage }}",
-        "otherOptions": {}
-      },
-      "id": "j10-007", "name": "Post to Slack", "type": "n8n-nodes-base.slack", "typeVersion": 2.1, "position": [1200, 300],
-      "credentials": { "slackApi": { "id": "HPTEqLu6xjmhEXDN", "name": "Slack - Nexus Bot" } },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
     }
   ],
   "connections": {
-    "Schedule (Every 6h)": { "main": [
-      [ { "node": "Fetch All Active Leads", "type": "main", "index": 0 }, { "node": "Fetch Odoo Leads", "type": "main", "index": 0 } ]
-    ]},
-    "Fetch All Active Leads": { "main": [[ { "node": "Aggregate 360 Data", "type": "main", "index": 0 } ]] },
-    "Fetch Odoo Leads": { "main": [[ { "node": "Aggregate 360 Data", "type": "main", "index": 1 } ]] },
-    "Aggregate 360 Data": { "main": [[ { "node": "AI Customer Intelligence", "type": "main", "index": 0 } ]] },
-    "AI Customer Intelligence": { "main": [[ { "node": "Build Report", "type": "main", "index": 0 } ]] },
-    "Build Report": { "main": [[ { "node": "Post to Slack", "type": "main", "index": 0 } ]] }
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Odoo - Get Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo - Get Customers": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Get Emails": {
+      "main": [
+        [
+          {
+            "node": "Merge Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Search Mentions": {
+      "main": [
+        [
+          {
+            "node": "Merge Customer Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Customer Data": {
+      "main": [
+        [
+          {
+            "node": "Transform & Unify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform & Unify": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Upsert Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        null,
+        [
+          {
+            "node": "Gmail - Get Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack - Search Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Upsert Profile": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
-  "tags": [{ "name": "AI-Agent", "id": "tag-agent" }, { "name": "CRM", "id": "tag-crm" }]
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  }
 }

@@ -1,139 +1,162 @@
 {
+  "id": "qHAtd3RckAKRBUkE",
   "name": "Ask-AI — RAG Query Agent",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "ask-ai",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
         "options": {}
       },
-      "id": "ask-001",
+      "id": "68ac82e1-1e52-4d73-85e9-ac2a5ff13373",
       "name": "Webhook - Ask AI",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [0, 300],
-      "webhookId": "ask-ai-rag-query"
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst body = raw.body || raw;\nconst question = body.question || body.query || body.q || '';\n\nif (!question.trim()) {\n  return [{ json: { error: 'No question provided', status: 'error' } }];\n}\n\nreturn [{ json: { question: question.trim() } }];"
+        "jsCode": "const raw = $input.first().json;\nconst body = raw.body || raw;\nconst question = String(body.question || body.query || body.q || '').trim();\n\nif (!question) {\n  throw new Error('No question provided. POST a JSON body like { \"question\": \"What is our warranty policy?\" }');\n}\n\n// Postgres full-text search over rag_documents.search_vector.\n// websearch_to_tsquery ANDs every term, which returns nothing for a natural\n// sentence, so build an OR-joined to_tsquery instead and let ranking decide.\nconst STOP = new Set(['what','which','who','whom','whose','when','where','why','how','is','are','was','were','be','been','being','do','does','did','the','a','an','and','or','of','to','in','on','for','with','about','our','my','your','their','we','i','you','they','it','this','that','these','those','can','could','should','would','will','shall','may','might','must','have','has','had','if','at','by','from','as','me','tell','explain','please']);\n\nconst terms = question\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, ' ')\n  .split(/\\s+/)\n  .filter(t => t.length > 2 && !STOP.has(t));\n\nconst unique = [...new Set(terms)];\n// Fall back to the raw words if stopword removal stripped everything.\nconst finalTerms = unique.length ? unique : question.toLowerCase().replace(/[^a-z0-9\\s]/g, ' ').split(/\\s+/).filter(Boolean);\n\nif (!finalTerms.length) {\n  throw new Error('Could not derive any searchable terms from the question: ' + question);\n}\n\nreturn [{ json: { question, tsquery: finalTerms.join(' | ') } }];"
       },
-      "id": "ask-002",
+      "id": "f9131ea6-fe99-46ec-b0b2-2118c2a071c4",
       "name": "Extract Question",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [240, 300]
+      "position": [
+        240,
+        0
+      ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
+        "method": "GET",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/rag_documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
           "parameters": [
-            { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
-            { "name": "X-Title", "value": "NEXUS OS — RAG Embedding Query" }
+            {
+              "name": "select",
+              "value": "id,doc_title,section,content,source_file,page_number"
+            },
+            {
+              "name": "search_vector",
+              "value": "=fts(english).{{ $json.tsquery }}"
+            },
+            {
+              "name": "limit",
+              "value": "6"
+            }
           ]
         },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"openai/text-embedding-ada-002\",\n  \"input\": {{ JSON.stringify($json.question) }}\n}",
-        "options": { "timeout": 15000 }
+        "options": {
+          "timeout": 15000
+        }
       },
-      "id": "ask-003",
-      "name": "Embed Question",
+      "id": "93e77314-44a4-4ded-8b56-b598e5c3e360",
+      "name": "Supabase Knowledge Search",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [480, 300],
-      "credentials": {
-        "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" }
-      },
+      "position": [
+        608,
+        0
+      ],
       "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 1000
-    },
-    {
-      "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst question = $('Extract Question').first().json.question;\n\nlet embedding;\nif (response.data?.[0]?.embedding) {\n  embedding = response.data[0].embedding;\n} else {\n  return [{ json: { error: 'Failed to generate question embedding', question } }];\n}\n\n// Format embedding for pgvector cosine similarity query\nconst embeddingStr = '[' + embedding.join(',') + ']';\n\nreturn [{ json: {\n  question,\n  embedding_str: embeddingStr\n} }];"
-      },
-      "id": "ask-004",
-      "name": "Parse Question Embedding",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [720, 300]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{$env.SUPABASE_URL || 'https://dsvuoovivysszdoiorch.supabase.co'}}/rest/v1/rpc/match_documents",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"query_embedding\": {{ $json.embedding_str }},\n  \"match_threshold\": 0.72,\n  \"match_count\": 5\n}",
-        "options": { "timeout": 10000 }
-      },
-      "id": "ask-005",
-      "name": "Supabase pgvector Search",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [960, 300],
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
-        "httpHeaderAuth": { "id": "SyZEhmMRL9vUAzSK", "name": "Supabase REST (HTTP)" }
+        "httpHeaderAuth": {
+          "id": "L4pRhS1d4Xhfyh5c",
+          "name": "Resend API (Header)"
+        },
+        "httpCustomAuth": {
+          "id": "ewCXyGq2VCV76foT",
+          "name": "Custom Auth account"
+        },
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
       }
     },
     {
       "parameters": {
-        "jsCode": "const results = $input.first().json;\nconst question = $('Extract Question').first().json.question;\n\n// Build context from retrieved documents\nlet context = '';\nconst sources = [];\n\nif (Array.isArray(results)) {\n  results.forEach((doc, i) => {\n    context += `[Source ${i+1}] ${doc.title || 'Document'}: ${doc.content}\\n\\n`;\n    sources.push({\n      title: doc.title || 'Unknown',\n      similarity: doc.similarity ? doc.similarity.toFixed(3) : 'N/A',\n      department: doc.department || 'general'\n    });\n  });\n} else {\n  context = 'No relevant documents found in the knowledge base.';\n}\n\nreturn [{ json: {\n  question,\n  context: context.substring(0, 4000),\n  sources,\n  doc_count: sources.length\n} }];"
+        "jsCode": "const question = $('Extract Question').first().json.question;\n\n// PostgREST returns an array of rows; n8n splits it into one item per row.\nconst rows = $input.all()\n  .map(i => i.json)\n  .filter(r => r && r.content);\n\nlet context = '';\nconst sources = [];\n\nrows.forEach((doc, i) => {\n  const title = doc.doc_title || 'Document';\n  const section = doc.section ? ` / ${doc.section}` : '';\n  context += `[Source ${i + 1}] ${title}${section}:\\n${doc.content}\\n\\n`;\n  sources.push({\n    title: title,\n    section: doc.section || null,\n    source_file: doc.source_file || null,\n    page_number: doc.page_number ?? null\n  });\n});\n\nif (!rows.length) {\n  context = 'No relevant documents were found in the NEXUS OS knowledge base for this question.';\n}\n\nreturn [{ json: {\n  question,\n  context: context.substring(0, 8000),\n  sources,\n  doc_count: sources.length\n} }];"
       },
-      "id": "ask-006",
+      "id": "519e2179-c2c2-4379-b486-ca766491c176",
       "name": "Build RAG Context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1200, 300]
+      "position": [
+        1200,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
-            { "name": "X-Title", "value": "NEXUS OS — Ask AI Agent" }
+            {
+              "name": "HTTP-Referer",
+              "value": "https://nexuscorp.net"
+            },
+            {
+              "name": "X-Title",
+              "value": "NEXUS OS - Ask AI Agent"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"google/gemini-2.0-flash-001\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are the NEXUS OS AI Assistant for an automotive dealership. Answer questions accurately using ONLY the provided context. If the context doesn't contain enough information, say so clearly. Always cite which source you used. Be concise and professional. Respond in the same language the user asks in.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Context from knowledge base ({{ $json.doc_count }} documents found):\\n\\n{{ $json.context }}\\n\\n---\\nQuestion: {{ $json.question }}\"\n    }\n  ],\n  \"temperature\": 0.3,\n  \"max_tokens\": 1000\n}",
-        "options": { "timeout": 30000 }
+        "jsonBody": "={{ JSON.stringify({ model: 'google/gemini-2.5-flash', temperature: 0.3, max_tokens: 1000, messages: [ { role: 'system', content: 'You are the NEXUS OS AI Assistant for an automotive dealership. Answer questions accurately using ONLY the provided context. If the context does not contain enough information, say so clearly rather than guessing. Always cite which numbered source you used. Be concise and professional. Respond in the same language the user asked in.' }, { role: 'user', content: 'Context from knowledge base (' + $json.doc_count + ' documents found):\\n\\n' + $json.context + '\\n\\n---\\nQuestion: ' + $json.question } ] }) }}",
+        "options": {
+          "timeout": 60000
+        }
       },
-      "id": "ask-007",
+      "id": "4517ea89-eb8c-430d-b6dd-ed3f54ddfc12",
       "name": "AI Agent - Generate Answer",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1440, 300],
-      "credentials": {
-        "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" }
-      },
+      "position": [
+        1440,
+        0
+      ],
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 1500
+      "waitBetweenTries": 1500,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "DSkhGhMjUxdWrTTR",
+          "name": "Header Auth account"
+        },
+        "openRouterApi": {
+          "id": "UUtKrBzkQOztAOzZ",
+          "name": "OpenRouter account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const aiResponse = $input.first().json;\nconst context = $('Build RAG Context').first().json;\n\nlet answer = 'Sorry, I could not generate an answer.';\nif (aiResponse.choices?.[0]?.message?.content) {\n  answer = aiResponse.choices[0].message.content;\n}\n\nreturn [{ json: {\n  question: context.question,\n  answer: answer,\n  sources: context.sources,\n  documents_consulted: context.doc_count,\n  model: 'google/gemini-2.0-flash-001',\n  timestamp: new Date().toISOString()\n} }];"
+        "jsCode": "const aiResponse = $input.first().json;\nconst context = $('Build RAG Context').first().json;\n\nlet answer = 'Sorry, I could not generate an answer.';\nif (aiResponse.error) {\n  answer = 'The AI model call failed: ' + JSON.stringify(aiResponse.error).substring(0, 300);\n} else if (aiResponse.choices && aiResponse.choices[0] && aiResponse.choices[0].message) {\n  answer = aiResponse.choices[0].message.content;\n}\n\nreturn [{ json: {\n  question: context.question,\n  answer: answer,\n  sources: context.sources,\n  documents_consulted: context.doc_count,\n  model: 'google/gemini-2.5-flash',\n  timestamp: new Date().toISOString()\n} }];"
       },
-      "id": "ask-008",
+      "id": "efeb38cb-0748-46b0-aee2-11ca8dad61c9",
       "name": "Format Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1680, 300]
+      "position": [
+        1680,
+        0
+      ]
     },
     {
       "parameters": {
@@ -141,24 +164,91 @@
         "responseBody": "={{ JSON.stringify($json) }}",
         "options": {}
       },
-      "id": "ask-009",
+      "id": "f76c861f-0e5a-49d4-ab75-93ed2a4a048f",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1920, 300]
+      "position": [
+        1920,
+        0
+      ]
     }
   ],
   "connections": {
-    "Webhook - Ask AI": { "main": [[ { "node": "Extract Question", "type": "main", "index": 0 } ]] },
-    "Extract Question": { "main": [[ { "node": "Embed Question", "type": "main", "index": 0 } ]] },
-    "Embed Question": { "main": [[ { "node": "Parse Question Embedding", "type": "main", "index": 0 } ]] },
-    "Parse Question Embedding": { "main": [[ { "node": "Supabase pgvector Search", "type": "main", "index": 0 } ]] },
-    "Supabase pgvector Search": { "main": [[ { "node": "Build RAG Context", "type": "main", "index": 0 } ]] },
-    "Build RAG Context": { "main": [[ { "node": "AI Agent - Generate Answer", "type": "main", "index": 0 } ]] },
-    "AI Agent - Generate Answer": { "main": [[ { "node": "Format Response", "type": "main", "index": 0 } ]] },
-    "Format Response": { "main": [[ { "node": "Respond to Webhook", "type": "main", "index": 0 } ]] }
+    "Webhook - Ask AI": {
+      "main": [
+        [
+          {
+            "node": "Extract Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build RAG Context": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Generate Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Generate Answer": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Knowledge Search": {
+      "main": [
+        [
+          {
+            "node": "Build RAG Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Question": {
+      "main": [
+        [
+          {
+            "node": "Supabase Knowledge Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all"
   }
 }

@@ -1,0 +1,494 @@
+{
+  "name": "NEXUS Master Lead Router - AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexus-inbound-lead",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Catch-All",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json: {lead: $input.all()[0].json.body || $input.all()[0].json}}];"
+      },
+      "id": "2",
+      "name": "Validate & Enrich Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Analyze the lead data provided in the input. Score the lead from 1-100 based on the information. Classify intent as HOT, WARM, or COLD. Use tools to check if the lead exists, and upsert them to the database. \n\nRETURN STRICT JSON OUTPUT ONLY with schema: { \"score\": 85, \"intent\": \"HOT\", \"reason\": \"string\" }",
+        "options": {
+          "systemMessage": "You are NEXUS AI, an expert lead scoring agent for a premium car dealership. You evaluate leads and route them accordingly."
+        }
+      },
+      "id": "3",
+      "name": "AI Lead Scoring Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-3.5-sonnet",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "4",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        450,
+        500
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Lookup existing lead in Supabase by email or phone. Requires email or phone parameter."
+      },
+      "id": "5",
+      "name": "Supabase Lead Lookup",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "upsert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "name",
+              "fieldValue": "{{$fromAI('name')}}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "{{$fromAI('email')}}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "{{$fromAI('phone')}}"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "{{$fromAI('message')}}"
+            },
+            {
+              "fieldId": "score",
+              "fieldValue": "{{$fromAI('score')}}"
+            },
+            {
+              "fieldId": "intent",
+              "fieldValue": "{{$fromAI('intent')}}"
+            }
+          ]
+        },
+        "description": "Creates or updates a lead in Supabase (merge on email). Requires name, email, phone, message, score, and intent."
+      },
+      "id": "12",
+      "name": "Supabase Lead Upsert",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        650
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const aiOutput = JSON.parse($input.all()[0].json.output || $input.all()[0].json.text || '{}');\n  return [{json: { ...$input.all()[0].json, ai_decision: aiOutput }}];\n} catch(e) {\n  return [{json: { ...$input.all()[0].json, ai_decision: { intent: 'COLD', score: 0 } }}];\n}"
+      },
+      "id": "6",
+      "name": "Parse AI Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "7876a310-724d-4be9-b4be-b33362a2a0a2",
+                    "leftValue": "={{ $json.ai_decision.intent }}",
+                    "rightValue": "HOT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HOT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "7876a310-724d-4be9-b4be-b33362a2a0a3",
+                    "leftValue": "={{ $json.ai_decision.intent }}",
+                    "rightValue": "WARM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WARM"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "7876a310-724d-4be9-b4be-b33362a2a0a4",
+                    "leftValue": "={{ $json.ai_decision.intent }}",
+                    "rightValue": "COLD",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COLD"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 3
+        }
+      },
+      "id": "7",
+      "name": "Intent Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        920,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "VmnIXo7tM30zqawp"
+      },
+      "id": "8",
+      "name": "Slack Router (HOT)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "bxNBzBrcOtcFpMPn"
+      },
+      "id": "13",
+      "name": "ERP Sync (HOT)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "BiyHk9ZXxJUVGbf6"
+      },
+      "id": "9",
+      "name": "WhatsApp BDC (WARM)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "G7FhvMY2ucW5Fg7X"
+      },
+      "id": "10",
+      "name": "Marketing Drip (COLD)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "audit_log",
+        "operation": "insert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "workflow",
+              "fieldValue": "Master Router"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "Success"
+            },
+            {
+              "fieldId": "lead_score",
+              "fieldValue": "{{$json.ai_decision.score}}"
+            }
+          ]
+        }
+      },
+      "id": "11",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Catch-All": {
+      "main": [
+        [
+          {
+            "node": "Validate & Enrich Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Enrich Input": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Scoring Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Lead Lookup": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Lead Upsert": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Decision": {
+      "main": [
+        [
+          {
+            "node": "Intent Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Switch": {
+      "main": [
+        [
+          {
+            "node": "Slack Router (HOT)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "ERP Sync (HOT)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp BDC (WARM)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marketing Drip (COLD)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Router (HOT)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ERP Sync (HOT)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp BDC (WARM)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketing Drip (COLD)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

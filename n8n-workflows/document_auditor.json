@@ -1,150 +1,261 @@
 {
-  "name": "KYC/AML Document Auditor — AI Compliance Agent",
+  "id": "qTnh3nwWheFJbFkU",
+  "name": "KYC/AML Document Auditor",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "audit-kyc",
         "responseMode": "lastNode",
-        "options": { "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] } }
+        "options": {}
       },
-      "id": "e5000001-0001-4e00-e000-000000000001",
+      "id": "2d1b8c04-f584-486a-8b1e-62e9c20a4b67",
       "name": "Receive Document",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [0, 300]
+      "position": [
+        -208,
+        0
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst body = raw.body || raw;\n\nlet documentContent = '';\nlet imageBase64 = null;\nlet documentType = 'unknown';\n\nif (body.document_base64) {\n  imageBase64 = body.document_base64;\n  documentContent = 'Image document provided';\n  documentType = 'image';\n} else if (body.document_text) {\n  documentContent = body.document_text;\n  documentType = 'text';\n} else if (body.text) {\n  documentContent = body.text;\n  documentType = 'text';\n} else {\n  documentContent = JSON.stringify(body);\n  documentType = 'raw';\n}\n\nreturn [{ json: {\n  documentContent,\n  imageBase64,\n  hasImage: !!imageBase64,\n  documentType,\n  submittedAt: new Date().toISOString(),\n  clientIp: raw.headers?.['x-forwarded-for'] || 'unknown'\n}}];"
+        "jsCode": "// Extract document content from webhook payload\nconst items = $input.all();\nconst item = items[0].json;\n\n// Try to get file data from binary or body\nlet documentContent = '';\nlet imageBase64 = null;\n\nif (item.body && item.body.document_base64) {\n  imageBase64 = item.body.document_base64;\n  documentContent = 'Image document provided as base64';\n} else if (item.body && item.body.document_text) {\n  documentContent = item.body.document_text;\n} else if (item.body && item.body.text) {\n  documentContent = item.body.text;\n} else {\n  documentContent = JSON.stringify(item.body || item);\n}\n\nreturn [{\n  json: {\n    documentContent,\n    imageBase64,\n    hasImage: !!imageBase64\n  }\n}];"
       },
-      "id": "e5000001-0002-4e00-e000-000000000002",
+      "id": "prep-doc-node",
       "name": "Prepare Document",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [240, 300]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
-            { "name": "X-Title", "value": "NEXUS OS — KYC Compliance Agent" }
+            {
+              "name": "HTTP-Referer",
+              "value": "https://nexuscorp.net"
+            },
+            {
+              "name": "X-Title",
+              "value": "NEXUS OS - KYC Auditor"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  model: \"google/gemini-flash-1.5\",\n  max_tokens: 1500,\n  temperature: 0.1,\n  response_format: { type: \"json_object\" },\n  messages: [\n    {\n      role: \"system\",\n      content: \"You are an expert KYC/AML Compliance Agent for automotive dealerships in the UAE. Analyze the provided document with forensic attention to detail.\\n\\nDOCUMENT TYPES YOU HANDLE:\\n• Emirates ID — Check name, ID number (784-XXXX-XXXXXXX-X), expiry, photo consistency\\n• Passport — Check nationality, validity, MRZ if visible\\n• Trade License — Verify company details and validity\\n• Vehicle Registration (Mulkiya) — Check plate, chassis, expiry\\n• Sales Contract — Detect hidden fees, compare against official RTA rates\\n• RTA Invoice — Verify registration fees match official schedule\\n\\nOFFICIAL UAE RTA FEES (2024-2026):\\n• New registration: AED 420\\n• Transfer: AED 350\\n• Export: AED 200\\n• Mortgage registration: AED 100\\n• Number plate: AED 35-50\\n\\nRETURN STRICTLY THIS JSON:\\n{\\n  \\\"document_type\\\": \\\"<type>\\\",\\n  \\\"extracted_data\\\": { \\\"name\\\": \\\"...\\\", \\\"id_number\\\": \\\"...\\\", \\\"expiry_date\\\": \\\"...\\\", \\\"nationality\\\": \\\"...\\\" },\\n  \\\"is_valid\\\": true/false,\\n  \\\"tampering_detected\\\": true/false,\\n  \\\"risk_level\\\": \\\"LOW\\\" | \\\"MEDIUM\\\" | \\\"HIGH\\\" | \\\"CRITICAL\\\",\\n  \\\"confidence_score\\\": 0-100,\\n  \\\"hidden_fees\\\": { \\\"detected\\\": true/false, \\\"total_hidden_aed\\\": 0, \\\"line_items\\\": [] },\\n  \\\"flags\\\": [\\\"list of concerns\\\"],\\n  \\\"verification_notes\\\": \\\"detailed notes\\\",\\n  \\\"recommended_action\\\": \\\"APPROVE\\\" | \\\"REVIEW\\\" | \\\"REJECT\\\"\\n}\"\n    },\n    {\n      role: \"user\",\n      content: $json.hasImage ? [{type: \"text\", text: \"Analyze this KYC/AML document for a UAE car dealership:\"}, {type: \"image_url\", image_url: {url: \"data:image/jpeg;base64,\" + $json.imageBase64}}] : \"Analyze this KYC document text for a UAE car dealership:\\n\\n\" + $json.documentContent\n    }\n  ]\n} }}",
-        "options": { "timeout": 30000 }
+        "jsonBody": "={{ JSON.stringify({ model: 'google/gemini-2.5-flash', max_tokens: 1500, messages: [ { role: 'system', content: 'You are a professional KYC/AML Document Auditor for car buyers. Analyze the provided document and extract: Full Name, Date of Birth, Expiry Date, Document Type, Validity. Check for any signs of tampering or inconsistencies. Respond STRICTLY in JSON format: { \"fullName\": \"...\", \"dateOfBirth\": \"...\", \"expiryDate\": \"...\", \"documentType\": \"...\", \"isValid\": true/false, \"tamperingDetected\": true/false, \"confidenceScore\": 0-100, \"remarks\": \"...\" }' }, { role: 'user', content: $json.hasImage ? [ { type: 'text', text: 'Analyze this KYC document:' }, { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + $json.imageBase64 } } ] : ('Analyze this KYC document text:\\n\\n' + $json.documentContent) } ] }) }}",
+        "options": {
+          "timeout": 60000
+        }
       },
-      "id": "e5000001-0003-4e00-e000-000000000003",
-      "name": "AI Compliance Agent",
+      "id": "e96f1d24-3435-46c4-bfa2-3531b26c2712",
+      "name": "OpenRouter Vision (KYC Analysis)",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [480, 300],
+      "typeVersion": 4.1,
+      "position": [
+        224,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
       "credentials": {
-        "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" }
+        "httpHeaderAuth": {
+          "id": "DSkhGhMjUxdWrTTR",
+          "name": "Header Auth account"
+        },
+        "openRouterApi": {
+          "id": "UUtKrBzkQOztAOzZ",
+          "name": "OpenRouter account"
+        }
       }
     },
     {
       "parameters": {
-        "jsCode": "const aiResponse = $input.first().json;\nconst docInfo = $('Prepare Document').item.json;\n\nlet result;\ntry {\n  const content = aiResponse.choices[0].message.content;\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  result = JSON.parse(cleaned);\n} catch (e) {\n  result = {\n    document_type: 'PARSE_ERROR',\n    is_valid: false,\n    tampering_detected: false,\n    risk_level: 'HIGH',\n    confidence_score: 0,\n    flags: ['AI response parse error'],\n    verification_notes: 'Manual review required',\n    recommended_action: 'REVIEW'\n  };\n}\n\nresult.audit_timestamp = docInfo.submittedAt;\nresult.document_input_type = docInfo.documentType;\n\nreturn [{ json: result }];"
+        "jsCode": "const response = $input.first().json;\n\nconst fail = (remarks) => {\n  const r = { fullName: 'PARSE_ERROR', isValid: false, tamperingDetected: false, confidenceScore: 0, remarks };\n  return [{ json: { auditResult: JSON.stringify(r), parsed: r } }];\n};\n\n// The vision call can fail or return an API-level error object.\nif (response.error) {\n  return fail('OpenRouter returned an error: ' + JSON.stringify(response.error).substring(0, 300));\n}\nif (!response.choices || !response.choices[0] || !response.choices[0].message) {\n  return fail('Unexpected OpenRouter response shape: ' + JSON.stringify(response).substring(0, 300));\n}\n\nconst content = response.choices[0].message.content || '';\n\nlet auditResult;\ntry {\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  auditResult = JSON.parse(cleaned);\n} catch (e) {\n  return fail('Failed to parse AI response as JSON: ' + content.substring(0, 200));\n}\n\n// Normalise the fields the IF node depends on so a missing key can never\n// silently approve a document.\nauditResult.isValid = auditResult.isValid === true;\nauditResult.tamperingDetected = auditResult.tamperingDetected === true;\nauditResult.confidenceScore = Number(auditResult.confidenceScore) || 0;\n\nreturn [{ json: { auditResult: JSON.stringify(auditResult), parsed: auditResult } }];"
       },
-      "id": "e5000001-0004-4e00-e000-000000000004",
-      "name": "Parse Audit Result",
+      "id": "6eb678c1-155e-49cd-a24a-fb48721c4355",
+      "name": "Parse JSON Output",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [720, 300]
+      "position": [
+        448,
+        0
+      ]
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "kyc_audits",
-        "dataMode": "defineBelow",
-        "valuesToSend": {
-          "values": [
-            { "name": "document_type", "value": "={{ $json.document_type }}" },
-            { "name": "is_valid", "value": "={{ $json.is_valid }}" },
-            { "name": "risk_level", "value": "={{ $json.risk_level }}" },
-            { "name": "confidence_score", "value": "={{ $json.confidence_score }}" },
-            { "name": "recommended_action", "value": "={{ $json.recommended_action }}" },
-            { "name": "flags", "value": "={{ $json.flags }}" }
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "APPROVED"
+            },
+            {
+              "name": "message",
+              "value": "KYC Document is valid and verified."
+            },
+            {
+              "name": "details",
+              "value": "={{ $json.auditResult }}"
+            }
           ]
-        }
+        },
+        "options": {}
       },
-      "id": "e5000001-0005-4e00-e000-000000000005",
-      "name": "Log Audit → Supabase",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [960, 300],
-      "credentials": {
-        "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" }
+      "id": "18f45a0b-1798-4c31-96ec-ecad1a63e6e8",
+      "name": "Approved",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "REJECTED"
+            },
+            {
+              "name": "message",
+              "value": "KYC Document failed validation or tampering detected."
+            },
+            {
+              "name": "details",
+              "value": "={{ $json.auditResult }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "onError": "continueRegularOutput"
+      "id": "01c905ab-ee57-41a6-8968-3e4b7b3b3a0f",
+      "name": "Rejected",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        912,
+        112
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "string": [
-            { "value1": "={{ $('Parse Audit Result').item.json.recommended_action }}", "value2": "REJECT" }
-          ]
-        }
-      },
-      "id": "e5000001-0006-4e00-e000-000000000006",
-      "name": "Is Rejected?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [1200, 300]
-    },
-    {
-      "parameters": {
-        "channel": "C0BJ5PLTPDJ",
-        "text": "=🚫 *KYC REJECTION ALERT*\n\n*Document Type:* {{ $('Parse Audit Result').item.json.document_type }}\n*Risk Level:* {{ $('Parse Audit Result').item.json.risk_level }}\n*Flags:* {{ ($('Parse Audit Result').item.json.flags || []).join(', ') }}\n*Notes:* {{ $('Parse Audit Result').item.json.verification_notes }}",
-        "otherOptions": {}
-      },
-      "id": "e5000001-0007-4e00-e000-000000000007",
-      "name": "Slack: Compliance Alert",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.1,
-      "position": [1440, 200],
-      "credentials": {
-        "slackApi": { "id": "HPTEqLu6xjmhEXDN", "name": "Slack - Nexus Bot" }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($('Parse Audit Result').item.json) }}",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "688892c4-07bd-4643-bb8b-36385949c0d7",
+              "leftValue": "={{ $json.parsed.isValid === true && $json.parsed.tamperingDetected === false }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
         "options": {}
       },
-      "id": "e5000001-0008-4e00-e000-000000000008",
-      "name": "Respond with Result",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [1440, 400]
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        0
+      ],
+      "id": "aa9b2221-e90f-4680-affe-ef96f582486f",
+      "name": "Validation Check"
     }
   ],
   "connections": {
-    "Receive Document": { "main": [[ { "node": "Prepare Document", "type": "main", "index": 0 } ]] },
-    "Prepare Document": { "main": [[ { "node": "AI Compliance Agent", "type": "main", "index": 0 } ]] },
-    "AI Compliance Agent": { "main": [[ { "node": "Parse Audit Result", "type": "main", "index": 0 } ]] },
-    "Parse Audit Result": { "main": [[ { "node": "Log Audit → Supabase", "type": "main", "index": 0 } ]] },
-    "Log Audit → Supabase": { "main": [[ { "node": "Is Rejected?", "type": "main", "index": 0 } ]] },
-    "Is Rejected?": {
+    "Receive Document": {
       "main": [
-        [{ "node": "Slack: Compliance Alert", "type": "main", "index": 0 }],
-        [{ "node": "Respond with Result", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Prepare Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Slack: Compliance Alert": { "main": [[ { "node": "Respond with Result", "type": "main", "index": 0 } ]] }
+    "Prepare Document": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter Vision (KYC Analysis)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Vision (KYC Analysis)": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Output": {
+      "main": [
+        [
+          {
+            "node": "Validation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Check": {
+      "main": [
+        [
+          {
+            "node": "Approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
-  "meta": { "templateCredsSetupCompleted": true },
-  "tags": [{ "name": "AI-Agent", "id": "tag-agent" }, { "name": "Compliance", "id": "tag-kyc" }]
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate",
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all"
+  }
 }

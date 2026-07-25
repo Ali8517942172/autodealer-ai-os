@@ -1,0 +1,304 @@
+{
+  "name": "Lead Escalation - AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-escalation",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "leads",
+        "operation": "getAll",
+        "limit": 10
+      },
+      "id": "2",
+      "name": "Fetch Escalated Lead",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this escalated lead: {{$json}}. Summarize the situation, explain why it might have been escalated, and recommend next steps for the senior rep. Output a professional summary.\n\nRETURN STRICT JSON OUTPUT ONLY.",
+        "options": {
+          "systemMessage": "You are an AI Escalation Analyst for NEXUS OS. You review leads that are stuck or escalated, analyze their history, and provide concise, actionable recommendations for human managers."
+        }
+      },
+      "id": "3",
+      "name": "AI Escalation Analyst",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-3.5-sonnet",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "4",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        450,
+        500
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "communication_logs",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Fetches the communication history for the lead."
+      },
+      "id": "5",
+      "name": "get_lead_timeline",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "users",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Finds a senior sales rep available for assignment."
+      },
+      "id": "6",
+      "name": "find_available_rep",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        750,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "fromEmail": "={{$env.RESEND_FROM_EMAIL}}",
+        "toEmail": "aliasgher892@gmail.com",
+        "subject": "URGENT: Lead Escalation Required",
+        "html": "=<p><strong>AI Analysis:</strong></p><p>{{$json.output}}</p>"
+      },
+      "id": "7",
+      "name": "Send Email via Resend",
+      "type": "n8n-nodes-base.resend",
+      "typeVersion": 1,
+      "position": [
+        800,
+        200
+      ],
+      "credentials": {
+        "resendApi": {
+          "id": "AUsufgmxQqmkeIPw",
+          "name": "Resend Email API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "C0BJ5PLTPDJ",
+        "text": "=*🚨 Escalated Lead Alert*\\n\\n*AI Summary:*\\n{{$json.output}}",
+        "otherOptions": {}
+      },
+      "id": "8",
+      "name": "Send Slack Alert (#sales-hot-leads)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        400
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "HPTEqLu6xjmhEXDN",
+          "name": "Slack - Nexus Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "audit_log",
+        "operation": "insert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "workflow",
+              "fieldValue": "Lead Escalation"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "Success"
+            }
+          ]
+        }
+      },
+      "id": "9",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Escalated Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Escalated Lead": {
+      "main": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Escalation Analyst": {
+      "main": [
+        [
+          {
+            "node": "Send Email via Resend",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Slack Alert (#sales-hot-leads)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_lead_timeline": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "find_available_rep": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email via Resend": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Alert (#sales-hot-leads)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

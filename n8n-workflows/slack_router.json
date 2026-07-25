@@ -1,4 +1,5 @@
 {
+  "id": "VmnIXo7tM30zqawp",
   "name": "Slack Command Center - AI Agent",
   "nodes": [
     {
@@ -14,26 +15,26 @@
       "typeVersion": 1.1,
       "position": [
         0,
-        300
+        304
       ]
     },
     {
       "parameters": {
-        "jsCode": "return [{json: {command: $input.all()[0].json.body.text || $input.all()[0].json.text, user: $input.all()[0].json.body.user_name || 'user'}}];"
+        "jsCode": "// Slack slash commands arrive as form-encoded fields under .body\nconst raw = $input.first().json;\nconst b = raw.body || raw;\n\nconst command = String(b.text || raw.text || '').trim();\nif (!command) {\n  throw new Error('Empty Slack command. Usage: /nexus find lead ahmed');\n}\n\nreturn [{ json: {\n  command,\n  user: b.user_name || b.user_id || 'unknown',\n  channel: b.channel_name || b.channel_id || null\n} }];"
       },
       "id": "2",
       "name": "Extract Command",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        200,
-        300
+        208,
+        304
       ]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.command }}\n\nRETURN STRICT JSON OUTPUT ONLY.",
+        "text": "={{ $json.command }}",
         "options": {
           "systemMessage": "You are NEXUS OS CRM Agent. Parse the user's natural language Slack command and execute the appropriate CRM operation using the provided tools. Respond with a clear, concise confirmation suitable for a Slack message."
         }
@@ -43,85 +44,9 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
       "position": [
-        450,
-        300
+        464,
+        304
       ]
-    },
-    {
-      "parameters": {
-        "model": "google/gemini-flash-1.5",
-        "options": {
-          "baseURL": "https://openrouter.ai/api/v1"
-        }
-      },
-      "id": "4",
-      "name": "OpenRouter Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1,
-      "position": [
-        450,
-        500
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "2hBISF8xyersMO9B",
-          "name": "OpenRouter API"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "tableId": "leads",
-        "operation": "update",
-        "dataToSend": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "status",
-              "fieldValue": "{{$fromAI('status')}}"
-            }
-          ]
-        },
-        "description": "Updates a lead's status in Supabase. Requires email/phone and the new status (e.g. HOT, WARM, COLD, WON, LOST)"
-      },
-      "id": "5",
-      "name": "Update Lead Status",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        600,
-        500
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "WxfEocKnaEZhpmoV",
-          "name": "Supabase - Nexus"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "tableId": "leads",
-        "operation": "getAll",
-        "limit": 10,
-        "description": "Searches for leads in Supabase by name or phone."
-      },
-      "id": "6",
-      "name": "Search Leads",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        750,
-        500
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "WxfEocKnaEZhpmoV",
-          "name": "Supabase - Nexus"
-        }
-      }
     },
     {
       "parameters": {
@@ -132,9 +57,104 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        700,
-        300
+        784,
+        304
       ]
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "maxTokens": 1024,
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        336,
+        512
+      ],
+      "id": "2f03e8b0-0c37-4aab-9dff-d5bd88726a83",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "UUtKrBzkQOztAOzZ",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('email', 'The exact email address of the lead whose status should be updated', 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $fromAI('status', 'New status for the lead: HOT, WARM, COLD, CONTACTED, QUALIFIED, WON or LOST', 'string') }}"
+            }
+          ]
+        }
+      },
+      "id": "8b96935a-144b-45aa-890d-a4c91816b47b",
+      "name": "Update Lead Status",
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        608,
+        512
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 20,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "name",
+              "condition": "ilike",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions0_Field_Value', `Partial or full lead NAME to search for, wrapped in % wildcards, e.g. %Ahmed%. Pass %% to ignore this filter.`, 'string') }}"
+            },
+            {
+              "keyName": "email",
+              "condition": "ilike",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions1_Field_Value', `Partial or full lead EMAIL to search for, wrapped in % wildcards, e.g. %@gmail.com%. Pass %% to ignore this filter.`, 'string') }}"
+            }
+          ]
+        }
+      },
+      "id": "25aaa5fe-3b20-4e96-bd0d-ee1fcc4cc829",
+      "name": "Search Leads",
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        752,
+        512
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      }
     }
   ],
   "connections": {
@@ -171,7 +191,7 @@
         ]
       ]
     },
-    "OpenRouter Model": {
+    "OpenRouter Chat Model": {
       "ai_languageModel": [
         [
           {
@@ -204,5 +224,15 @@
         ]
       ]
     }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all"
   }
 }

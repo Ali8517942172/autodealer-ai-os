@@ -1,0 +1,94 @@
+{
+  "name": "Competitor Pricing — AI Intelligence Agent",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 24 }] } },
+      "id": "g7-001", "name": "Daily Schedule", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.1, "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ──────────────────────────────────────────────\n// COMPETITOR DATA COLLECTION\n// TODO: Replace with real scraper APIs when available\n// Currently uses realistic UAE market mock data\n// ──────────────────────────────────────────────\nconst competitors = [\n  { dealer: 'Al-Futtaim Toyota', brand: 'Toyota', models: [\n    { model: 'Camry 2024', price_aed: 104500, condition: 'new' },\n    { model: 'RAV4 2024', price_aed: 122000, condition: 'new' },\n    { model: 'Land Cruiser 2024', price_aed: 289000, condition: 'new' }\n  ]},\n  { dealer: 'Al-Futtaim Honda', brand: 'Honda', models: [\n    { model: 'Civic 2024', price_aed: 89900, condition: 'new' },\n    { model: 'Accord 2024', price_aed: 116500, condition: 'new' },\n    { model: 'CR-V 2024', price_aed: 117500, condition: 'new' }\n  ]},\n  { dealer: 'Gargash Mercedes', brand: 'Mercedes-Benz', models: [\n    { model: 'C200 2024', price_aed: 215000, condition: 'new' },\n    { model: 'E300 2024', price_aed: 295000, condition: 'new' },\n    { model: 'GLC 300 2024', price_aed: 255000, condition: 'new' }\n  ]},\n  { dealer: 'Al Nabooda', brand: 'Audi', models: [\n    { model: 'A4 2024', price_aed: 189000, condition: 'new' },\n    { model: 'Q5 2024', price_aed: 235000, condition: 'new' }\n  ]}\n];\n\nreturn [{ json: { competitors, scraped_at: new Date().toISOString(), source: 'mock_v2' } }];"
+      },
+      "id": "g7-002", "name": "Collect Competitor Data", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "vehicles",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "available"
+            }
+          ]
+        }
+      },
+      "id": "g7-003", "name": "Fetch Our Inventory", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [480, 300],
+      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
+          { "name": "X-Title", "value": "NEXUS OS — Pricing Intelligence" }
+        ]},
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 800,\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{\n    \"role\": \"system\",\n    \"content\": \"You are an AI Pricing Intelligence Analyst for a UAE automotive dealership. Analyze competitor prices and our inventory to recommend pricing adjustments.\\n\\nFACTORS TO CONSIDER:\\n1. Competitor pricing for similar models\\n2. Days in stock (holding cost = AED 50/day)\\n3. Vehicle condition (new vs pre-owned)\\n4. Market demand patterns in UAE\\n5. Gross margin preservation (minimum 8% margin)\\n\\nRETURN JSON:\\n{\\n  \\\"market_summary\\\": \\\"<2-line market overview>\\\",\\n  \\\"recommendations\\\": [\\n    {\\n      \\\"vehicle_id\\\": \\\"<id>\\\",\\n      \\\"make_model\\\": \\\"<name>\\\",\\n      \\\"current_price\\\": <number>,\\n      \\\"recommended_price\\\": <number>,\\n      \\\"change_pct\\\": <number>,\\n      \\\"reason\\\": \\\"<why>\\\",\\n      \\\"urgency\\\": \\\"HIGH\\\" | \\\"MEDIUM\\\" | \\\"LOW\\\"\\n    }\\n  ],\\n  \\\"aging_alerts\\\": [\\\"vehicles aged 60+ days that need attention\\\"]\\n}\"\n  },{\n    \"role\": \"user\",\n    \"content\": \"COMPETITOR PRICES:\\n\" + JSON.stringify($node['Collect Competitor Data'].json.competitors) + \"\\n\\nOUR INVENTORY:\\n\" + JSON.stringify($input.first().json)\n  }]\n} }}",
+        "options": { "timeout": 20000 }
+      },
+      "id": "g7-004", "name": "AI Pricing Intelligence", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 300],
+      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResp = $input.first().json;\nlet analysis;\ntry {\n  const c = aiResp.choices[0].message.content;\n  analysis = JSON.parse(c.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim());\n} catch(e) {\n  analysis = { market_summary: 'AI analysis failed', recommendations: [], aging_alerts: [] };\n}\n\nreturn [{ json: { ...analysis, analyzed_at: new Date().toISOString() } }];"
+      },
+      "id": "g7-005", "name": "Parse Pricing Analysis", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "audit_log",
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            { "name": "action", "value": "daily_pricing_intelligence" },
+            { "name": "table_name", "value": "vehicles" },
+            { "name": "new_values", "value": "={{ $json }}" }
+          ]
+        }
+      },
+      "id": "g7-006", "name": "Log Analysis → Supabase", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [1200, 300],
+      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "channel": "C0BJ5PLTPDJ",
+        "text": "=📊 *Daily Pricing Intelligence Report*\n\n{{ $node['Parse Pricing Analysis'].json.market_summary }}\n\n*Recommendations:* {{ ($node['Parse Pricing Analysis'].json.recommendations || []).length }} adjustments suggested\n*Aging Alerts:* {{ ($node['Parse Pricing Analysis'].json.aging_alerts || []).length }} vehicles flagged\n\n_Analysis completed at {{ $node['Parse Pricing Analysis'].json.analyzed_at }}_",
+        "otherOptions": {}
+      },
+      "id": "g7-007", "name": "Slack: Daily Report", "type": "n8n-nodes-base.slack", "typeVersion": 2.1, "position": [1200, 100],
+      "credentials": { "slackApi": { "id": "HPTEqLu6xjmhEXDN", "name": "Slack - Nexus Bot" } },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Daily Schedule": { "main": [[ { "node": "Collect Competitor Data", "type": "main", "index": 0 } ]] },
+    "Collect Competitor Data": { "main": [[ { "node": "Fetch Our Inventory", "type": "main", "index": 0 } ]] },
+    "Fetch Our Inventory": { "main": [[ { "node": "AI Pricing Intelligence", "type": "main", "index": 0 } ]] },
+    "AI Pricing Intelligence": { "main": [[ { "node": "Parse Pricing Analysis", "type": "main", "index": 0 } ]] },
+    "Parse Pricing Analysis": { "main": [
+      [ { "node": "Log Analysis → Supabase", "type": "main", "index": 0 } ],
+      [ { "node": "Slack: Daily Report", "type": "main", "index": 0 } ]
+    ]}
+  },
+  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
+  "tags": [{ "name": "AI-Agent", "id": "tag-agent" }, { "name": "Pricing", "id": "tag-pricing" }]
+}

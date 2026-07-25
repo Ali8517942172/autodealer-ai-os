@@ -1,94 +1,426 @@
 {
-  "name": "Competitor Pricing — AI Intelligence Agent",
+  "id": "LphiGg4iqF1bn6El",
+  "name": "Competitor Price Scraping & Supabase Update",
   "nodes": [
     {
-      "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 24 }] } },
-      "id": "g7-001", "name": "Daily Schedule", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.1, "position": [0, 300]
-    },
-    {
       "parameters": {
-        "jsCode": "// ──────────────────────────────────────────────\n// COMPETITOR DATA COLLECTION\n// TODO: Replace with real scraper APIs when available\n// Currently uses realistic UAE market mock data\n// ──────────────────────────────────────────────\nconst competitors = [\n  { dealer: 'Al-Futtaim Toyota', brand: 'Toyota', models: [\n    { model: 'Camry 2024', price_aed: 104500, condition: 'new' },\n    { model: 'RAV4 2024', price_aed: 122000, condition: 'new' },\n    { model: 'Land Cruiser 2024', price_aed: 289000, condition: 'new' }\n  ]},\n  { dealer: 'Al-Futtaim Honda', brand: 'Honda', models: [\n    { model: 'Civic 2024', price_aed: 89900, condition: 'new' },\n    { model: 'Accord 2024', price_aed: 116500, condition: 'new' },\n    { model: 'CR-V 2024', price_aed: 117500, condition: 'new' }\n  ]},\n  { dealer: 'Gargash Mercedes', brand: 'Mercedes-Benz', models: [\n    { model: 'C200 2024', price_aed: 215000, condition: 'new' },\n    { model: 'E300 2024', price_aed: 295000, condition: 'new' },\n    { model: 'GLC 300 2024', price_aed: 255000, condition: 'new' }\n  ]},\n  { dealer: 'Al Nabooda', brand: 'Audi', models: [\n    { model: 'A4 2024', price_aed: 189000, condition: 'new' },\n    { model: 'Q5 2024', price_aed: 235000, condition: 'new' }\n  ]}\n];\n\nreturn [{ json: { competitors, scraped_at: new Date().toISOString(), source: 'mock_v2' } }];"
-      },
-      "id": "g7-002", "name": "Collect Competitor Data", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 300]
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "vehicles",
-        "filters": {
-          "conditions": [
+        "rule": {
+          "interval": [
             {
-              "keyName": "status",
-              "condition": "eq",
-              "keyValue": "available"
+              "field": "hours",
+              "hoursInterval": 24
             }
           ]
         }
       },
-      "id": "g7-003", "name": "Fetch Our Inventory", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [480, 300],
-      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } },
+      "id": "e1f13b65-0a88-4444-a0ab-48e0c8bdf92a",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// The Supabase 'inventory' table has: id, model, vin, status, days_in_stock,\n// price_aed, cost_aed, gross_margin, ... There is no brand/make/year column,\n// so build the search query from what actually exists.\nconst item = $json;\nconst model = String(item.model || '').trim();\n\nif (!model) {\n  // Nothing searchable - skip this row rather than querying 'undefined UAE price'\n  return [];\n}\n\nreturn [{ json: {\n  id: item.id,\n  model: model,\n  vin: item.vin || null,\n  localPrice: Number(item.price_aed) || null,\n  daysInStock: Number(item.days_in_stock) || 0,\n  searchQuery: `${model} price UAE dealership`\n} }];"
+      },
+      "id": "a7af0b27-7266-4f26-be34-d943fd45566c",
+      "name": "Build Apify Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apify~rag-web-browser/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $json.searchQuery, maxResults: 3, outputFormats: ['markdown'] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "cd288bec-24e5-4660-ac8d-2f35bfda0290",
+      "name": "Apify - Search Competitor Price",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1040,
+        128
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "apifyMcpOAuth2Api": {
+          "id": "4YJGoZ5aI8C6GJjX",
+          "name": "Apify account 2"
+        },
+        "httpQueryAuth": {
+          "id": "NBPWuHrq7fLlfHvT",
+          "name": "Apify account"
+        }
+      },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "method": "POST", "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": { "parameters": [
-          { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
-          { "name": "X-Title", "value": "NEXUS OS — Pricing Intelligence" }
-        ]},
-        "sendBody": true, "specifyBody": "json",
-        "jsonBody": "={{ {\n  \"model\": \"google/gemini-flash-1.5\",\n  \"max_tokens\": 800,\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{\n    \"role\": \"system\",\n    \"content\": \"You are an AI Pricing Intelligence Analyst for a UAE automotive dealership. Analyze competitor prices and our inventory to recommend pricing adjustments.\\n\\nFACTORS TO CONSIDER:\\n1. Competitor pricing for similar models\\n2. Days in stock (holding cost = AED 50/day)\\n3. Vehicle condition (new vs pre-owned)\\n4. Market demand patterns in UAE\\n5. Gross margin preservation (minimum 8% margin)\\n\\nRETURN JSON:\\n{\\n  \\\"market_summary\\\": \\\"<2-line market overview>\\\",\\n  \\\"recommendations\\\": [\\n    {\\n      \\\"vehicle_id\\\": \\\"<id>\\\",\\n      \\\"make_model\\\": \\\"<name>\\\",\\n      \\\"current_price\\\": <number>,\\n      \\\"recommended_price\\\": <number>,\\n      \\\"change_pct\\\": <number>,\\n      \\\"reason\\\": \\\"<why>\\\",\\n      \\\"urgency\\\": \\\"HIGH\\\" | \\\"MEDIUM\\\" | \\\"LOW\\\"\\n    }\\n  ],\\n  \\\"aging_alerts\\\": [\\\"vehicles aged 60+ days that need attention\\\"]\\n}\"\n  },{\n    \"role\": \"user\",\n    \"content\": \"COMPETITOR PRICES:\\n\" + JSON.stringify($node['Collect Competitor Data'].json.competitors) + \"\\n\\nOUR INVENTORY:\\n\" + JSON.stringify($input.first().json)\n  }]\n} }}",
-        "options": { "timeout": 20000 }
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'google/gemini-2.5-flash', max_tokens: 300, response_format: { type: 'json_object' }, messages: [ { role: 'system', content: 'You are a pricing data extraction assistant. Given scraped web content about a vehicle, extract the lowest advertised price in AED as a plain number. Respond with ONLY valid JSON: {\"price\": <number or null>, \"currency\": \"AED\", \"source\": \"<domain or site name>\"}. If no clear price is found, return null for price.' }, { role: 'user', content: 'Vehicle: ' + $('Build Apify Query').item.json.model + '\\n\\nScraped content:\\n' + (Array.isArray($json) ? ($json[0] && ($json[0].markdown || $json[0].text) || 'No content found') : ($json.markdown || $json.text || JSON.stringify($json))).substring(0, 6000) } ] }) }}",
+        "options": {
+          "timeout": 60000
+        }
       },
-      "id": "g7-004", "name": "AI Pricing Intelligence", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 300],
-      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } }
+      "id": "774f32ec-c606-4040-ae64-606ef0704556",
+      "name": "Extract Price with AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1264,
+        128
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "DSkhGhMjUxdWrTTR",
+          "name": "Header Auth account"
+        },
+        "openRouterApi": {
+          "id": "UUtKrBzkQOztAOzZ",
+          "name": "OpenRouter account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const aiResp = $input.first().json;\nlet analysis;\ntry {\n  const c = aiResp.choices[0].message.content;\n  analysis = JSON.parse(c.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim());\n} catch(e) {\n  analysis = { market_summary: 'AI analysis failed', recommendations: [], aging_alerts: [] };\n}\n\nreturn [{ json: { ...analysis, analyzed_at: new Date().toISOString() } }];"
+        "jsCode": "const response = $json;\nconst original = $('Build Apify Query').item.json;\n\nlet parsed = { price: null };\ntry {\n  parsed = JSON.parse(response.choices?.[0]?.message?.content || '{}');\n} catch (e) { /* keep default */ }\n\nconst competitorPrice = (typeof parsed.price === 'number' && parsed.price > 0) ? parsed.price : null;\nconst localPrice = original.localPrice;\n\nreturn [{ json: {\n  id: original.id,\n  model: original.model,\n  localPrice: localPrice,\n  competitorPrice: competitorPrice,\n  priceDiff: (competitorPrice !== null && localPrice !== null) ? (competitorPrice - localPrice) : null,\n  competitorSource: parsed.source || null,\n  currency: parsed.currency || 'AED',\n  daysInStock: original.daysInStock\n} }];"
       },
-      "id": "g7-005", "name": "Parse Pricing Analysis", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 300]
+      "id": "172a82ea-c373-49db-ac3b-51ffb95150ae",
+      "name": "Parse AI Price",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        128
+      ]
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "audit_log",
-        "dataMode": "defineBelow",
-        "valuesToSend": {
-          "values": [
-            { "name": "action", "value": "daily_pricing_intelligence" },
-            { "name": "table_name", "value": "vehicles" },
-            { "name": "new_values", "value": "={{ $json }}" }
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{$json.competitorPrice}}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists"
+              }
+            },
+            {
+              "id": "cond2",
+              "leftValue": "={{$json.competitorPrice}}",
+              "rightValue": "={{$json.localPrice}}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "c083aa22-d551-478e-a3d7-c38460e30848",
+      "name": "Should Update Price?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1712,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "model",
+              "value": "={{ $json.model }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "oldPrice",
+              "value": "={{ $json.localPrice }}",
+              "type": "number"
+            },
+            {
+              "id": "a4",
+              "name": "price",
+              "value": "={{ Math.max(0, Math.round($json.competitorPrice - 1)) }}",
+              "type": "number"
+            },
+            {
+              "id": "a5",
+              "name": "competitorSource",
+              "value": "={{ $json.competitorSource }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "competitorPrice",
+              "value": "={{ $json.competitorPrice }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3fd28eb1-a870-459a-9b64-5d9b96b1265a",
+      "name": "Build Update Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "inventory",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        560,
+        128
+      ],
+      "id": "8daa883b-cf45-4e2f-b329-9b12f71e4a68",
+      "name": "Fetch Local Inventory",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "inventory",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "price_aed",
+              "fieldValue": "={{ $json.price }}"
+            }
           ]
         }
       },
-      "id": "g7-006", "name": "Log Analysis → Supabase", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [1200, 300],
-      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        128
+      ],
+      "id": "266f7fd3-e685-44e6-9200-075128bb2a97",
+      "name": "Update Prices in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
       "onError": "continueRegularOutput"
     },
     {
+      "id": "882f5cb9-92fc-45d9-81d4-2454a8a454f9",
+      "name": "Log Competitor Intel",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        320
+      ],
       "parameters": {
-        "channel": "C0BJ5PLTPDJ",
-        "text": "=📊 *Daily Pricing Intelligence Report*\n\n{{ $node['Parse Pricing Analysis'].json.market_summary }}\n\n*Recommendations:* {{ ($node['Parse Pricing Analysis'].json.recommendations || []).length }} adjustments suggested\n*Aging Alerts:* {{ ($node['Parse Pricing Analysis'].json.aging_alerts || []).length }} vehicles flagged\n\n_Analysis completed at {{ $node['Parse Pricing Analysis'].json.analyzed_at }}_",
-        "otherOptions": {}
+        "tableId": "competitors",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "competitor",
+              "fieldValue": "={{ $json.competitorSource || 'unknown' }}"
+            },
+            {
+              "fieldId": "model",
+              "fieldValue": "={{ $json.model }}"
+            },
+            {
+              "fieldId": "price_aed",
+              "fieldValue": "={{ $json.competitorPrice }}"
+            },
+            {
+              "fieldId": "our_price_aed",
+              "fieldValue": "={{ $json.localPrice }}"
+            },
+            {
+              "fieldId": "price_diff_aed",
+              "fieldValue": "={{ $json.priceDiff }}"
+            },
+            {
+              "fieldId": "ai_recommendation",
+              "fieldValue": "={{ $json.competitorPrice === null ? 'No competitor price found' : ($json.priceDiff < 0 ? 'UNDERCUT: competitor is AED ' + Math.abs($json.priceDiff) + ' cheaper. Consider matching, especially at ' + $json.daysInStock + ' days in stock.' : 'HOLD: we are already AED ' + $json.priceDiff + ' cheaper than this competitor.') }}"
+            }
+          ]
+        }
       },
-      "id": "g7-007", "name": "Slack: Daily Report", "type": "n8n-nodes-base.slack", "typeVersion": 2.1, "position": [1200, 100],
-      "credentials": { "slackApi": { "id": "HPTEqLu6xjmhEXDN", "name": "Slack - Nexus Bot" } },
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
       "onError": "continueRegularOutput"
     }
   ],
   "connections": {
-    "Daily Schedule": { "main": [[ { "node": "Collect Competitor Data", "type": "main", "index": 0 } ]] },
-    "Collect Competitor Data": { "main": [[ { "node": "Fetch Our Inventory", "type": "main", "index": 0 } ]] },
-    "Fetch Our Inventory": { "main": [[ { "node": "AI Pricing Intelligence", "type": "main", "index": 0 } ]] },
-    "AI Pricing Intelligence": { "main": [[ { "node": "Parse Pricing Analysis", "type": "main", "index": 0 } ]] },
-    "Parse Pricing Analysis": { "main": [
-      [ { "node": "Log Analysis → Supabase", "type": "main", "index": 0 } ],
-      [ { "node": "Slack: Daily Report", "type": "main", "index": 0 } ]
-    ]}
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Local Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Apify Query": {
+      "main": [
+        [
+          {
+            "node": "Apify - Search Competitor Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify - Search Competitor Price": {
+      "main": [
+        [
+          {
+            "node": "Extract Price with AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Price with AI": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Price": {
+      "main": [
+        [
+          {
+            "node": "Should Update Price?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Competitor Intel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Update Price?": {
+      "main": [
+        [
+          {
+            "node": "Build Update Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Update Payload": {
+      "main": [
+        [
+          {
+            "node": "Update Prices in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Local Inventory": {
+      "main": [
+        [
+          {
+            "node": "Build Apify Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
-  "tags": [{ "name": "AI-Agent", "id": "tag-agent" }, { "name": "Pricing", "id": "tag-pricing" }]
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate",
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all"
+  }
 }

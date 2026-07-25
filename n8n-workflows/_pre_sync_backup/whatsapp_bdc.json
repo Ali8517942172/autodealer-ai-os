@@ -1,0 +1,240 @@
+{
+  "name": "WhatsApp BDC AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "waha-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "WAHA Webhook (POST)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json: {message: $input.all()[0].json.body.payload.body, sender: $input.all()[0].json.body.payload.from}}];"
+      },
+      "id": "2",
+      "name": "Extract Message & Sender",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}\n\nRETURN STRICT JSON OUTPUT ONLY.",
+        "options": {
+          "systemMessage": "You are NEXUS OS BDC Agent for a premium automotive dealership in UAE. You help customers find vehicles, answer questions about pricing & availability, and book test drives. Be bilingual (EN/AR)."
+        }
+      },
+      "id": "3",
+      "name": "AI BDC Sales Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-flash-1.5",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "4",
+      "name": "OpenRouter Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        450,
+        500
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2hBISF8xyersMO9B",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionId": "={{ $('Extract Message & Sender').item.json.sender }}",
+        "contextWindowLength": 10
+      },
+      "id": "5",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [
+        550,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "inventory",
+        "operation": "getAll",
+        "limit": 10,
+        "description": "Query Supabase vehicles table by make/model/budget"
+      },
+      "id": "6",
+      "name": "search_inventory",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        700,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chatId\": \"{{$('Extract Message & Sender').item.json.sender}}\",\n  \"text\": \"{{$json.output}}\",\n  \"session\": \"default\"\n}"
+      },
+      "id": "7",
+      "name": "Send Reply via WAHA HTTP API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "tableId": "communication_logs",
+        "operation": "insert",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "sender",
+              "fieldValue": "={{$('Extract Message & Sender').item.json.sender}}"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "={{$json.output}}"
+            }
+          ]
+        }
+      },
+      "id": "8",
+      "name": "Log Conversation",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "WxfEocKnaEZhpmoV",
+          "name": "Supabase - Nexus"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WAHA Webhook (POST)": {
+      "main": [
+        [
+          {
+            "node": "Extract Message & Sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message & Sender": {
+      "main": [
+        [
+          {
+            "node": "AI BDC Sales Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI BDC Sales Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Reply via WAHA HTTP API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI BDC Sales Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI BDC Sales Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI BDC Sales Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply via WAHA HTTP API": {
+      "main": [
+        [
+          {
+            "node": "Log Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

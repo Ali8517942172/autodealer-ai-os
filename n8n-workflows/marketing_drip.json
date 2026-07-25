@@ -1,140 +1,521 @@
 {
-  "name": "7-Day Drip Campaign — AI Content Agent",
+  "id": "G7FhvMY2ucW5Fg7X",
+  "name": "7-Day Warm Lead Drip Campaign",
   "nodes": [
     {
-      "parameters": { "httpMethod": "POST", "path": "lead-trigger", "options": {} },
-      "id": "i9-001", "name": "Webhook Trigger", "type": "n8n-nodes-base.webhook", "typeVersion": 1.1, "position": [0, 300]
-    },
-    {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst b = raw.body || raw;\nreturn [{ json: {\n  name: b.name || 'Customer',\n  email: b.email || '',\n  phone: b.phone || '',\n  vehicle_interest: b.vehicle_interest || 'our premium vehicles',\n  budget: b.budget_max ? `AED ${b.budget_min || 0} - ${b.budget_max}` : 'flexible',\n  lead_id: b.lead_id || b.id || null,\n  source: b.source || 'website',\n  enrolled_at: new Date().toISOString()\n}}];"
+        "httpMethod": "POST",
+        "path": "lead-trigger",
+        "options": {}
       },
-      "id": "i9-002", "name": "Prepare Lead Data", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 300]
-    },
-    {
-      "parameters": { "amount": 1, "unit": "days" },
-      "id": "i9-003", "name": "Wait Day 1", "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [480, 300]
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        256,
+        304
+      ],
+      "id": "a8215a60-42e6-4ecc-bba4-d95d1206c14c"
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "leads",
-        "limit": 1,
-        "filters": {
-          "conditions": [
+        "unit": "days"
+      },
+      "name": "Wait Day 1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        592,
+        304
+      ],
+      "id": "ce50a8c1-2340-4f5d-bff8-1e30858c4a4e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'NEXUS OS Sales <onboarding@resend.dev>', to: [$('Normalize Lead Input').first().json.email], subject: 'Welcome to NEXUS OS', html: `<h2>Hi ${$('Normalize Lead Input').first().json.name},</h2><p>Thank you for your interest in ${$('Normalize Lead Input').first().json.vehicle_interest} at NEXUS OS. We have an incredible selection of premium vehicles waiting for you.</p><p>Reply to this email or call us to schedule your personal showroom tour.</p><br><p>Best regards,<br>NEXUS OS Sales Team</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email: Welcome (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        736,
+        304
+      ],
+      "id": "df755176-d36f-4fbb-80e8-bb14162a6441",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "L4pRhS1d4Xhfyh5c",
+          "name": "Resend API (Header)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+1234567890",
+        "to": "={{ $('Normalize Lead Input').first().json.phone }}",
+        "message": "=Hi {{ $('Normalize Lead Input').first().json.name }}, thanks for contacting NEXUS OS! Check your email for exclusive offers. Reply STOP to opt out.",
+        "options": {}
+      },
+      "name": "SMS: Welcome",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        912,
+        304
+      ],
+      "id": "b49017d1-7986-4024-9e92-b03afa7daf92",
+      "credentials": {
+        "twilioApi": {
+          "id": "uSZczHzmgv3bHs5w",
+          "name": "Twilio SMS API"
+        }
+      },
+      "disabled": true,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait Day 3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        304
+      ],
+      "id": "31434088-8d13-435e-a8e9-5cc860e9c656"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'NEXUS OS Sales <onboarding@resend.dev>', to: [$('Normalize Lead Input').first().json.email], subject: 'Did you find your dream car?', html: `<h2>Hi ${$('Normalize Lead Input').first().json.name},</h2><p>Just checking in - have you had a chance to browse our inventory?</p><p>We have new arrivals this week including premium SUVs and sedans. Let us know if you need any help!</p><br><p>Best regards,<br>NEXUS OS Sales Team</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email: Follow Up (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1264,
+        304
+      ],
+      "id": "bba08a95-f2b6-42cf-a75c-2e9798f5f544",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "L4pRhS1d4Xhfyh5c",
+          "name": "Resend API (Header)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait Day 5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        304
+      ],
+      "id": "53a6defc-25c8-4314-a9b0-8152d638ebc1"
+    },
+    {
+      "parameters": {
+        "from": "+1234567890",
+        "to": "={{ $('Normalize Lead Input').first().json.phone }}",
+        "message": "=Hi {{ $('Normalize Lead Input').first().json.name }}, don't miss our weekend specials at NEXUS OS! Schedule your test drive today: https://nexuscorp.net/book",
+        "options": {}
+      },
+      "name": "SMS: Check-in",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        304
+      ],
+      "id": "0d00a28e-569f-4790-9029-a95e35d38f3d",
+      "credentials": {
+        "twilioApi": {
+          "id": "uSZczHzmgv3bHs5w",
+          "name": "Twilio SMS API"
+        }
+      },
+      "disabled": true,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "name": "Wait Day 7",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        304
+      ],
+      "id": "00b98382-39f9-4ff0-acb4-e8165bedb324"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'NEXUS OS Sales <onboarding@resend.dev>', to: [$('Normalize Lead Input').first().json.email], subject: 'Exclusive Offer - Just for You', html: `<h2>Hi ${$('Normalize Lead Input').first().json.name},</h2><p>As a special thank you for your interest, we are offering you an <strong>exclusive 5% discount</strong> on your first purchase at NEXUS OS.</p><p>This offer expires in 48 hours. Do not miss out!</p><p><a href=\"https://nexuscorp.net/book\">Book Your Test Drive Now</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>` }) }}",
+        "options": {}
+      },
+      "name": "Email: Final Offer (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2064,
+        304
+      ],
+      "id": "55a3a519-4389-4724-81c8-d4926b14f73a",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "L4pRhS1d4Xhfyh5c",
+          "name": "Resend API (Header)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// This workflow is invoked two ways:\n//  1) directly via its POST webhook  -> data sits under item.body\n//  2) as a sub-workflow from the Master Router -> data sits under item.lead\n// Normalise both into a flat { name, email, phone, vehicle_interest }.\nconst item = $input.first().json;\n\nlet lead;\nif (item.lead) {\n  lead = item.lead;                 // Master Router sub-workflow call\n} else if (item.body) {\n  lead = item.body;                 // raw webhook POST\n} else {\n  lead = item;                      // already flat\n}\n\nconst clean = (v) => (v === undefined || v === null || v === false || v === '') ? null : String(v).trim();\n\nconst email = clean(lead.email);\nif (!email) {\n  throw new Error('Drip campaign aborted: no email address on the incoming lead. Payload keys: ' + Object.keys(item).join(', '));\n}\n\nreturn [{\n  json: {\n    name: clean(lead.name) || 'there',\n    email: email,\n    phone: clean(lead.phone) || clean(lead.whatsapp),\n    vehicle_interest: clean(lead.vehicle_interest) || clean(lead.vehicleInterest) || clean(lead.message) || 'a vehicle'\n  }\n}];"
+      },
+      "id": "29196054-dff5-437c-b8ab-326387744fcf",
+      "name": "Normalize Lead Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "keyName": "id",
-              "condition": "eq",
-              "keyValue": "={{ $json.lead_id }}"
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "columns": "status,ai_priority"
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Normalize Lead Input').first().json.email, channel: 'email', direction: 'outbound', message: 'Drip Day 1 - Welcome to NEXUS OS' }) }}",
+        "options": {}
       },
-      "id": "i9-004", "name": "Check: Still Cold?", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [720, 300],
-      "credentials": { "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" } },
+      "id": "cd027d84-e2ef-4abb-b592-e558e81ad572",
+      "name": "Log Welcome Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        800,
+        656
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const leadData = $input.first().json;\nconst lead = Array.isArray(leadData) ? leadData[0] : leadData;\nconst originalLead = $node['Prepare Lead Data'].json;\n\n// Exit drip if lead has converted\nconst exitStatuses = ['won', 'qualified', 'negotiation'];\nif (lead && exitStatuses.includes(lead.status)) {\n  return [{ json: { ...originalLead, drip_exit: true, exit_reason: `Lead converted to ${lead.status}` } }];\n}\nif (lead && lead.ai_priority === 'HOT') {\n  return [{ json: { ...originalLead, drip_exit: true, exit_reason: 'Lead upgraded to HOT' } }];\n}\n\nreturn [{ json: { ...originalLead, drip_exit: false } }];"
-      },
-      "id": "i9-005", "name": "Conversion Gate", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 300]
-    },
-    {
-      "parameters": { "conditions": { "boolean": [{ "value1": "={{ $json.drip_exit }}", "value2": true }] } },
-      "id": "i9-006", "name": "Should Exit Drip?", "type": "n8n-nodes-base.if", "typeVersion": 2, "position": [1200, 300]
-    },
-    {
-      "parameters": {
-        "method": "POST", "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [
-          { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
-          { "name": "X-Title", "value": "NEXUS OS — Email Content Agent" }
-        ]},
-        "sendBody": true, "specifyBody": "json",
-        "jsonBody": "={{ { model: 'google/gemini-flash-1.5', max_tokens: 300, temperature: 0.8, messages: [ { role: 'system', content: 'You are a marketing copywriter for NEXUS OS premium automotive dealership in Dubai. Write a short, compelling welcome email (max 100 words). Include: personal greeting, mention their vehicle interest if known, one compelling reason to visit, and a clear CTA. Return ONLY the email body HTML (no subject line). Use professional but warm tone.' }, { role: 'user', content: 'Write a Day 1 welcome email for:\\nName: ' + $json.name + '\\nVehicle Interest: ' + $json.vehicle_interest + '\\nBudget: ' + $json.budget + '\\nSource: ' + $json.source } ] } }}",
-        "options": { "timeout": 10000 }
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Normalize Lead Input').first().json.email, channel: 'email', direction: 'outbound', message: 'Drip Day 3 - Did you find your dream car?' }) }}",
+        "options": {}
       },
-      "id": "i9-007", "name": "AI: Generate Welcome Email", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1440, 400],
-      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } },
+      "id": "72d16015-f0be-4cad-b1ca-8dee1e96e3aa",
+      "name": "Log Follow Up Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1344,
+        672
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const ai = $input.first().json;\nconst lead = $node['Conversion Gate'].json;\nlet emailHtml;\ntry { emailHtml = ai.choices[0].message.content.trim(); } catch(e) {\n  emailHtml = `<h2>Hi ${lead.name},</h2><p>Thank you for your interest in NEXUS OS! We have an incredible selection of premium vehicles waiting for you.</p><p>Reply to this email or call us to schedule your personal showroom tour.</p><br><p>Best regards,<br>NEXUS OS Sales Team</p>`;\n}\nreturn [{ json: { ...lead, emailHtml, stage: 'day1_welcome' } }];"
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Normalize Lead Input').first().json.email, channel: 'email', direction: 'outbound', message: 'Drip Day 7 - Exclusive 5% offer' }) }}",
+        "options": {}
       },
-      "id": "i9-008", "name": "Parse Email Content", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1680, 400]
-    },
-    {
-      "parameters": {
-        "resource": "email",
-        "operation": "send",
-        "fromEmail": "NEXUS OS Sales <sales@nexuscorp.net>",
-        "toEmail": "={{ $json.email }}",
-        "subject": "=Welcome to NEXUS OS, {{ $json.name }}! 🚗",
-        "html": "={{ $json.emailHtml }}"
+      "id": "8a32482a-6ed0-448a-a712-1680f472443a",
+      "name": "Log Final Offer Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2272,
+        304
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
       },
-      "id": "i9-009", "name": "Send Email (Resend)", "type": "n8n-nodes-base.resend", "typeVersion": 1, "position": [1920, 400],
-      "credentials": { "resendApi": { "id": "AUsufgmxQqmkeIPw", "name": "Resend Email API" } },
       "onError": "continueRegularOutput"
     },
     {
-      "parameters": { "amount": 2, "unit": "days" },
-      "id": "i9-010", "name": "Wait Day 3", "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [2160, 400]
-    },
-    {
+      "id": "4b706bbc-1f61-4e46-9999-a215967ad3d8",
+      "name": "Called by Master Router",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        448
+      ],
       "parameters": {
-        "resource": "email",
-        "operation": "send",
-        "fromEmail": "NEXUS OS Sales <sales@nexuscorp.net>",
-        "toEmail": "={{ $node['Prepare Lead Data'].json.email }}",
-        "subject": "=Did you find your dream car, {{ $node['Prepare Lead Data'].json.name }}? 🔑",
-        "html": "=<h2>Hi {{ $node['Prepare Lead Data'].json.name }},</h2><p>Just checking in — have you had a chance to browse our inventory?</p><p>We have new arrivals this week including premium SUVs and sedans in your range. Let us know if you need any help!</p><p><a href='https://nexuscorp.net/inventory'>Browse Inventory →</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>"
-      },
-      "id": "i9-011", "name": "Email: Day 3 Follow-up", "type": "n8n-nodes-base.resend", "typeVersion": 1, "position": [2400, 400],
-      "credentials": { "resendApi": { "id": "AUsufgmxQqmkeIPw", "name": "Resend Email API" } },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": { "amount": 4, "unit": "days" },
-      "id": "i9-012", "name": "Wait Day 7", "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [2640, 400]
-    },
-    {
-      "parameters": {
-        "resource": "email",
-        "operation": "send",
-        "fromEmail": "NEXUS OS Sales <sales@nexuscorp.net>",
-        "toEmail": "={{ $node['Prepare Lead Data'].json.email }}",
-        "subject": "=🎉 Exclusive Offer — Just for You, {{ $node['Prepare Lead Data'].json.name }}!",
-        "html": "=<h2>Hi {{ $node['Prepare Lead Data'].json.name }},</h2><p>As a special thank you for your interest, we're offering you an <strong>exclusive 5% discount</strong> on your first purchase at NEXUS OS.</p><p>This offer expires in 48 hours. Don't miss out!</p><p><a href='https://nexuscorp.net/book'>Book Your Test Drive Now →</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>"
-      },
-      "id": "i9-013", "name": "Email: Day 7 Final Offer", "type": "n8n-nodes-base.resend", "typeVersion": 1, "position": [2880, 400],
-      "credentials": { "resendApi": { "id": "AUsufgmxQqmkeIPw", "name": "Resend Email API" } },
-      "onError": "continueRegularOutput"
+        "inputSource": "passthrough"
+      }
     }
   ],
   "connections": {
-    "Webhook Trigger": { "main": [[ { "node": "Prepare Lead Data", "type": "main", "index": 0 } ]] },
-    "Prepare Lead Data": { "main": [[ { "node": "Wait Day 1", "type": "main", "index": 0 } ]] },
-    "Wait Day 1": { "main": [[ { "node": "Check: Still Cold?", "type": "main", "index": 0 } ]] },
-    "Check: Still Cold?": { "main": [[ { "node": "Conversion Gate", "type": "main", "index": 0 } ]] },
-    "Conversion Gate": { "main": [[ { "node": "Should Exit Drip?", "type": "main", "index": 0 } ]] },
-    "Should Exit Drip?": {
+    "Wait Day 1": {
       "main": [
-        [],
-        [{ "node": "AI: Generate Welcome Email", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Email: Welcome (Resend)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "AI: Generate Welcome Email": { "main": [[ { "node": "Parse Email Content", "type": "main", "index": 0 } ]] },
-    "Parse Email Content": { "main": [[ { "node": "Send Email (Resend)", "type": "main", "index": 0 } ]] },
-    "Send Email (Resend)": { "main": [[ { "node": "Wait Day 3", "type": "main", "index": 0 } ]] },
-    "Wait Day 3": { "main": [[ { "node": "Email: Day 3 Follow-up", "type": "main", "index": 0 } ]] },
-    "Email: Day 3 Follow-up": { "main": [[ { "node": "Wait Day 7", "type": "main", "index": 0 } ]] },
-    "Wait Day 7": { "main": [[ { "node": "Email: Day 7 Final Offer", "type": "main", "index": 0 } ]] }
+    "SMS: Welcome": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 3": {
+      "main": [
+        [
+          {
+            "node": "Email: Follow Up (Resend)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 5": {
+      "main": [
+        [
+          {
+            "node": "SMS: Check-in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS: Check-in": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Day 7": {
+      "main": [
+        [
+          {
+            "node": "Email: Final Offer (Resend)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead Input": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Welcome (Resend)": {
+      "main": [
+        [
+          {
+            "node": "Log Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "SMS: Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Follow Up (Resend)": {
+      "main": [
+        [
+          {
+            "node": "Log Follow Up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Follow Up Email": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Final Offer (Resend)": {
+      "main": [
+        [
+          {
+            "node": "Log Final Offer Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Called by Master Router": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
-  "tags": [{ "name": "AI-Agent", "id": "tag-agent" }, { "name": "Marketing", "id": "tag-marketing" }]
+  "settings": {
+    "availableInMCP": true,
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  }
 }

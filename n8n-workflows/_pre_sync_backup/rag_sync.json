@@ -1,0 +1,92 @@
+{
+  "name": "RAG Sync — Enhanced Embedding Pipeline",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "deals/closed-won", "responseMode": "lastNode", "options": {} },
+      "id": "h8-001", "name": "Webhook - New Deal", "type": "n8n-nodes-base.webhook", "typeVersion": 1.1, "position": [0, 300], "webhookId": "rag-sync-enhanced"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst body = raw.body || raw;\n\n// Build rich text for embedding with metadata\nconst chunks = [];\nconst dealText = [\n  `Deal: ${body.deal_name || 'Unnamed Deal'}`,\n  `Company: ${body.company || 'N/A'}`,\n  `Description: ${body.description || ''}`,\n  `Vehicle: ${body.vehicle || body.vehicle_model || 'N/A'}`,\n  `Value: AED ${body.value || body.amount || 'N/A'}`,\n  `Status: ${body.status || 'closed-won'}`,\n  `Salesperson: ${body.salesperson || 'N/A'}`,\n  `Date: ${body.date || new Date().toISOString()}`\n].join(' | ');\n\n// Chunk the text if too long (500 char chunks with 50 overlap)\nconst maxChunkSize = 500;\nconst overlap = 50;\nif (dealText.length <= maxChunkSize) {\n  chunks.push({ text: dealText, chunk_index: 0 });\n} else {\n  let i = 0, idx = 0;\n  while (i < dealText.length) {\n    const end = Math.min(i + maxChunkSize, dealText.length);\n    chunks.push({ text: dealText.substring(i, end), chunk_index: idx++ });\n    i += maxChunkSize - overlap;\n  }\n}\n\nreturn chunks.map(c => ({ json: {\n  document_id: body.id || `deal_${Date.now()}`,\n  title: body.deal_name || 'Deal Record',\n  department: 'sales',\n  content: c.text,\n  chunk_index: c.chunk_index,\n  metadata: {\n    type: 'deal',\n    vehicle: body.vehicle || null,\n    value_aed: body.value || null,\n    source: 'crm_webhook',\n    created_at: new Date().toISOString()\n  }\n}}));"
+      },
+      "id": "h8-002", "name": "Chunk & Enrich", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "HTTP-Referer", "value": "https://nexuscorp.net" },
+          { "name": "X-Title", "value": "NEXUS OS — RAG Embeddings" }
+        ]},
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"openai/text-embedding-ada-002\",\n  \"input\": {{ JSON.stringify($json.content) }}\n}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "h8-003", "name": "Generate Embedding", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [480, 300],
+      "credentials": { "httpHeaderAuth": { "id": "2hBISF8xyersMO9B", "name": "OpenRouter API" } },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  const response = item.json;\n  const docInfo = $('Chunk & Enrich').item(i).json;\n\n  let embedding;\n  if (response.data?.[0]?.embedding) {\n    embedding = response.data[0].embedding;\n  } else {\n    return { json: { skip: true, error: 'Embedding generation failed', document_id: docInfo.document_id } };\n  }\n\n  return { json: {\n    document_id: docInfo.document_id,\n    title: docInfo.title,\n    department: docInfo.department,\n    chunk_index: docInfo.chunk_index,\n    content: docInfo.content,\n    embedding: JSON.stringify(embedding),\n    metadata: docInfo.metadata\n  }};\n});"
+      },
+      "id": "h8-004", "name": "Parse Embedding", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "conditions": { "boolean": [{ "value1": "=$json.skip", "value2": true }] }
+      },
+      "id": "h8-005", "name": "Skip Failed?", "type": "n8n-nodes-base.if", "typeVersion": 2, "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": "document_embeddings",
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            { "name": "document_id", "value": "=$json.document_id" },
+            { "name": "title", "value": "=$json.title" },
+            { "name": "department", "value": "=$json.department" },
+            { "name": "chunk_index", "value": "=$json.chunk_index" },
+            { "name": "content", "value": "=$json.content" },
+            { "name": "embedding", "value": "=$json.embedding" },
+            { "name": "metadata", "value": "=$json.metadata" }
+          ]
+        }
+      },
+      "id": "h8-006", "name": "Upsert → Supabase pgvector", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [1200, 400],
+      "credentials": {
+        "supabaseApi": { "id": "WxfEocKnaEZhpmoV", "name": "Supabase - Nexus" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"status\": \"success\", \"document_id\": \"{{ $json.document_id }}\", \"chunks_stored\": 1 }",
+        "options": {}
+      },
+      "id": "h8-007", "name": "Respond", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [1440, 400]
+    }
+  ],
+  "connections": {
+    "Webhook - New Deal": { "main": [[ { "node": "Chunk & Enrich", "type": "main", "index": 0 } ]] },
+    "Chunk & Enrich": { "main": [[ { "node": "Generate Embedding", "type": "main", "index": 0 } ]] },
+    "Generate Embedding": { "main": [[ { "node": "Parse Embedding", "type": "main", "index": 0 } ]] },
+    "Parse Embedding": { "main": [[ { "node": "Skip Failed?", "type": "main", "index": 0 } ]] },
+    "Skip Failed?": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Upsert → Supabase pgvector", "type": "main", "index": 0 }]
+      ]
+    },
+    "Upsert → Supabase pgvector": { "main": [[ { "node": "Respond", "type": "main", "index": 0 } ]] }
+  },
+  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
+  "tags": [{ "name": "RAG", "id": "tag-rag" }, { "name": "AI-Agent", "id": "tag-agent" }]
+}
