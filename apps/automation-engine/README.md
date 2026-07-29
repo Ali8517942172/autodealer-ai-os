@@ -53,6 +53,6 @@ SLACK_WEBHOOK_URL=your_slack_webhook
 | Website Form | → | CRM | Webhook (real-time) |
 | WhatsApp | → | CRM | Webhook (real-time) |
 | Competitor Scraper | → | CRM + Slack | Cron (daily) |
-| CRM Deal Closed | → | Odoo ERP | Webhook (real-time) |
+| CRM Deal Closed | → | Bitrix24 CRM | Webhook (real-time) |
 | Service Ticket | → | RAG + Manager | Webhook (real-time) |
 | Inventory Aged 90+ days | → | Marketing OS | Cron (weekly) |

@@ -148,7 +148,7 @@ Claim Filed  → Event Bus → RAG + Service + Compliance + Customer Update
 | Database | Supabase (Postgres + Auth + pgvector) — single source of truth |
 | AI/LLM | OpenRouter, LangChain, LangGraph |
 | Automation | n8n, WAHA (WhatsApp Agent) |
-| ERP | Odoo (integration layer) |
+| CRM | Bitrix24 (free tier, inbound-webhook REST) |
 
 ---
 
@@ -203,7 +203,7 @@ nexus-os/
 | Node.js | Free |
 | Supabase (Free Tier) | Free |
 | n8n (Self-hosted) | Free |
-| Odoo Community Edition | Free |
+| Bitrix24 Free Plan | Free |
 | OpenRouter (Free Models) | Free |
 | GitHub | Free |
 | **Total** | **$0** |

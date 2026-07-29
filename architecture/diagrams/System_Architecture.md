@@ -66,15 +66,15 @@ graph TD
 
     %% External Systems
     subgraph "External Dealership Systems"
-        Odoo[Odoo ERP]
+        Bitrix[Bitrix24 CRM]
         Banks[Bank Loan APIs]
     end
 
-    N8N <--> Odoo
+    N8N <--> Bitrix
     CRM <--> Banks
 ```
 
 ## Architecture Principles
 1. **Event-Driven:** Every inbound lead or CRM change triggers an event in the n8n automation engine.
 2. **AI Segregation:** Specific agents handle specific domains (Sales Agent for Sales, Marketing Agent for Marketing, Knowledge Agent for Knowledge Retrieval).
-3. **Single Source of Truth:** Odoo is the master for inventory; Supabase is the master for customer state and access control.
+3. **Single Source of Truth:** Supabase is the master for inventory, customer state and access control. Bitrix24 is the sales team's working CRM and is kept in sync one-way from Supabase.
