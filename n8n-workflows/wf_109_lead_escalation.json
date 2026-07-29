@@ -22,12 +22,12 @@
       "parameters": {
         "promptType": "define",
         "text": "=Escalated lead: {{ JSON.stringify($json) }}\n\nEscalation reason: {{ $('Fetch Escalated Lead').first().json.escalation_reason || $json.reason || 'not specified' }}\n\nBrief the senior rep on this lead.",
+        "needsFallback": true,
         "options": {
           "systemMessage": "You are an AI Escalation Analyst for NEXUS OS, a premium UAE car dealership. You review leads that are stuck, silent or escalated and brief a human senior rep.\n\nUse get_lead_timeline to pull the customer's full communication history before judging, and find_available_rep to see which senior rep is online.\n\nProduce a short, professional briefing containing:\n1. What the customer wants (vehicle, budget, finance need).\n2. Where the conversation stalled and the likely reason.\n3. A concrete recommended next action for the rep, including a suggested opening line.\n\nIf the escalation reason mentions the customer has gone silent for N hours, treat re-engagement as the priority and suggest the best channel and timing. Never invent facts that are not in the timeline.",
           "maxIterations": 8,
           "enableStreaming": false
-        },
-        "needsFallback": true
+        }
       },
       "id": "3",
       "name": "AI Escalation Analyst",
@@ -36,7 +36,8 @@
       "position": [
         464,
         304
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -106,7 +107,7 @@
     },
     {
       "parameters": {
-        "model": "google/gemini-2.5-flash",
+        "model": "={{ $json.orModel }}",
         "options": {
           "maxTokens": 1024,
           "temperature": 0.2
@@ -263,14 +264,14 @@
     },
     {
       "parameters": {
-        "model": "llama-3.3-70b-versatile",
+        "model": "={{ $json.groqModel }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
       "position": [
-        560,
-        672
+        480,
+        656
       ],
       "id": "esc-groq-0001",
       "name": "Groq Chat Model",
@@ -280,6 +281,19 @@
           "name": "Groq account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n's Agent node accepts a maximum of 2 language models, so a deeper\n// fallback chain is built as a retry ladder. Each tier swaps the OpenRouter\n// slot, giving 5 distinct models across 2 providers over 4 attempts.\n// Model IDs verified against OpenRouter's live /models list (tool-capable, free).\nconst TIERS = [\n  { orModel: 'google/gemini-2.5-flash',                groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3-super-120b-a12b:free', groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'google/gemma-4-31b-it:free',             groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'inclusionai/ling-3.0-flash:free',        groqModel: 'llama-3.3-70b-versatile' }\n];\nconst prev = $input.first().json;\nconst attempt = Number(prev.__attempt ?? -1) + 1;\nif (attempt >= TIERS.length) {\n  throw new Error('All ' + TIERS.length + ' model tiers failed. Tried: ' + TIERS.map(t=>t.orModel).join(', '));\n}\nreturn [{ json: { ...prev, __attempt: attempt, orModel: TIERS[attempt].orModel, groqModel: TIERS[attempt].groqModel } }];"
+      },
+      "id": "ladder-KI6P1Q",
+      "name": "Model Ladder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        354,
+        344
+      ]
     }
   ],
   "connections": {
@@ -304,6 +318,13 @@
           },
           {
             "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Model Ladder",
             "type": "main",
             "index": 0
           }
@@ -374,7 +395,7 @@
       "main": [
         [
           {
-            "node": "AI Escalation Analyst",
+            "node": "Model Ladder",
             "type": "main",
             "index": 0
           }
@@ -388,6 +409,17 @@
             "node": "AI Escalation Analyst",
             "type": "ai_languageModel",
             "index": 1
+          }
+        ]
+      ]
+    },
+    "Model Ladder": {
+      "main": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "main",
+            "index": 0
           }
         ]
       ]

@@ -122,7 +122,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Bitrix has no upsert: crm.lead.add always creates a new record, so syncing\n// twice would duplicate every lead. Look the lead up by email first and decide\n// between update and add.\nconst found = (($json && $json.result) || [])[0] || null;\nconst mapped = $('Map Lead to Bitrix24 Lead').item.json;\n\nreturn { json: {\n  existing_id: found ? Number(found.ID) : null,\n  fields: mapped.fields,\n  params: mapped.params,\n  _lead_email: mapped._lead_email,\n  _lead_name: mapped._lead_name\n} };"
+        "jsCode": "// Bitrix has no upsert: crm.lead.add always creates a new record, so syncing\n// twice would duplicate every lead. Look the lead up by email first and decide\n// between update and add.\nconst found = (($json && $json.result) || [])[0] || null;\nconst mapped = $('Map Lead to Bitrix24 Lead').item.json;\nconst existingId = found ? Number(found.ID) : null;\n\n// crm.lead.update APPENDS to multi-value fields rather than replacing them, so\n// re-syncing an existing lead kept stacking duplicate phone/email entries.\n// Contact details are set once at creation; updates only refresh the sales data.\nconst fields = { ...mapped.fields };\nif (existingId) { delete fields.PHONE; delete fields.EMAIL; }\n\nreturn { json: {\n  existing_id: existingId,\n  fields: fields,\n  params: mapped.params,\n  _lead_email: mapped._lead_email,\n  _lead_name: mapped._lead_name\n} };"
       },
       "id": "wf108-decide-01",
       "name": "Decide Update or Create",

@@ -14,7 +14,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [
-        0,
+        -160,
         304
       ]
     },
@@ -27,7 +27,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        208,
+        96,
         304
       ]
     },
@@ -49,7 +49,8 @@
       "position": [
         464,
         304
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -66,7 +67,7 @@
     },
     {
       "parameters": {
-        "model": "google/gemini-2.5-flash",
+        "model": "={{ $json.orModel }}",
         "options": {
           "maxTokens": 1024,
           "temperature": 0.2
@@ -161,7 +162,7 @@
     },
     {
       "parameters": {
-        "model": "llama-3.3-70b-versatile",
+        "model": "={{ $json.groqModel }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
@@ -178,6 +179,19 @@
           "name": "Groq account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n's Agent node accepts a maximum of 2 language models, so a deeper\n// fallback chain is built as a retry ladder. Each tier swaps the OpenRouter\n// slot, giving 5 distinct models across 2 providers over 4 attempts.\n// Model IDs verified against OpenRouter's live /models list (tool-capable, free).\nconst TIERS = [\n  { orModel: 'google/gemini-2.5-flash',                groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3-super-120b-a12b:free', groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'google/gemma-4-31b-it:free',             groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'inclusionai/ling-3.0-flash:free',        groqModel: 'llama-3.3-70b-versatile' }\n];\nconst prev = $input.first().json;\nconst attempt = Number(prev.__attempt ?? -1) + 1;\nif (attempt >= TIERS.length) {\n  throw new Error('All ' + TIERS.length + ' model tiers failed. Tried: ' + TIERS.map(t=>t.orModel).join(', '));\n}\nreturn [{ json: { ...prev, __attempt: attempt, orModel: TIERS[attempt].orModel, groqModel: TIERS[attempt].groqModel } }];"
+      },
+      "id": "ladder-VmnIXo",
+      "name": "Model Ladder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        304
+      ]
     }
   ],
   "connections": {
@@ -196,7 +210,7 @@
       "main": [
         [
           {
-            "node": "AI CRM Agent",
+            "node": "Model Ladder",
             "type": "main",
             "index": 0
           }
@@ -208,6 +222,13 @@
         [
           {
             "node": "Format Slack Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Model Ladder",
             "type": "main",
             "index": 0
           }
@@ -257,6 +278,17 @@
           }
         ]
       ]
+    },
+    "Model Ladder": {
+      "main": [
+        [
+          {
+            "node": "AI CRM Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -267,6 +299,7 @@
     "binaryMode": "separate",
     "availableInMCP": true,
     "timezone": "Asia/Dubai",
-    "saveDataErrorExecution": "all"
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
   }
 }
