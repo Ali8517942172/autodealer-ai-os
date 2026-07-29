@@ -1,0 +1,20 @@
+# Normalise line endings so files stop showing as "modified" purely because
+# they were written on Windows (CRLF) and committed from a Linux tool (LF).
+# Without this, exporting workflows re-wrote whole files with no real change.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF or they break when run
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binary files: never touch
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.woff binary
+*.woff2 binary
