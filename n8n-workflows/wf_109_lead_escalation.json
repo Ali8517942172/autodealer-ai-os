@@ -356,13 +356,7 @@
     },
     "Send a message": {
       "main": [
-        [
-          {
-            "node": "Audit Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Called by Master Router": {

@@ -261,7 +261,7 @@
     },
     "Split In Batches": {
       "main": [
-        null,
+        [],
         [
           {
             "node": "Gmail - Get Emails",

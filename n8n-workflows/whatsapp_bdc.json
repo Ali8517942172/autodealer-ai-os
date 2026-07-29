@@ -124,7 +124,7 @@
     },
     {
       "parameters": {
-        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "model": "google/gemini-2.5-flash",
         "options": {
           "maxTokens": 1024,
           "temperature": 0.4

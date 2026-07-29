@@ -32,35 +32,6 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: 'NEXUS OS Sales <onboarding@resend.dev>', to: [$('Normalize Lead Input').first().json.email], subject: 'Welcome to NEXUS OS', html: `<h2>Hi ${$('Normalize Lead Input').first().json.name},</h2><p>Thank you for your interest in ${$('Normalize Lead Input').first().json.vehicle_interest} at NEXUS OS. We have an incredible selection of premium vehicles waiting for you.</p><p>Reply to this email or call us to schedule your personal showroom tour.</p><br><p>Best regards,<br>NEXUS OS Sales Team</p>` }) }}",
-        "options": {}
-      },
-      "name": "Email: Welcome (Resend)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        736,
-        304
-      ],
-      "id": "df755176-d36f-4fbb-80e8-bb14162a6441",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "L4pRhS1d4Xhfyh5c",
-          "name": "Resend API (Header)"
-        }
-      }
-    },
-    {
-      "parameters": {
         "amount": 2,
         "unit": "days"
       },
@@ -72,35 +43,6 @@
         304
       ],
       "id": "31434088-8d13-435e-a8e9-5cc860e9c656"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: 'NEXUS OS Sales <onboarding@resend.dev>', to: [$('Normalize Lead Input').first().json.email], subject: 'Did you find your dream car?', html: `<h2>Hi ${$('Normalize Lead Input').first().json.name},</h2><p>Just checking in - have you had a chance to browse our inventory?</p><p>We have new arrivals this week including premium SUVs and sedans. Let us know if you need any help!</p><br><p>Best regards,<br>NEXUS OS Sales Team</p>` }) }}",
-        "options": {}
-      },
-      "name": "Email: Follow Up (Resend)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        1264,
-        304
-      ],
-      "id": "bba08a95-f2b6-42cf-a75c-2e9798f5f544",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "L4pRhS1d4Xhfyh5c",
-          "name": "Resend API (Header)"
-        }
-      }
     },
     {
       "parameters": {
@@ -129,35 +71,6 @@
         304
       ],
       "id": "00b98382-39f9-4ff0-acb4-e8165bedb324"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: 'NEXUS OS Sales <onboarding@resend.dev>', to: [$('Normalize Lead Input').first().json.email], subject: 'Exclusive Offer - Just for You', html: `<h2>Hi ${$('Normalize Lead Input').first().json.name},</h2><p>As a special thank you for your interest, we are offering you an <strong>exclusive 5% discount</strong> on your first purchase at NEXUS OS.</p><p>This offer expires in 48 hours. Do not miss out!</p><p><a href=\"https://nexuscorp.net/book\">Book Your Test Drive Now</a></p><br><p>Best regards,<br>NEXUS OS Sales Team</p>` }) }}",
-        "options": {}
-      },
-      "name": "Email: Final Offer (Resend)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        2064,
-        304
-      ],
-      "id": "55a3a519-4389-4724-81c8-d4926b14f73a",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "L4pRhS1d4Xhfyh5c",
-          "name": "Resend API (Header)"
-        }
-      }
     },
     {
       "parameters": {
@@ -526,6 +439,87 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Normalize Lead Input').first().json.email }}",
+        "subject": "=Thanks for your interest in the {{ $('Normalize Lead Input').first().json.vehicle_interest }}",
+        "message": "=<p>Hi {{ $('Normalize Lead Input').first().json.name }},</p><p>Thanks for getting in touch with NEXUS OS about the <strong>{{ $('Normalize Lead Input').first().json.vehicle_interest }}</strong>.</p><p>I've made a note of what you're looking for. If you'd like, I can put together a few options in your budget and arrange a time for you to come see them.</p><p>Just reply to this email and let me know what suits you.</p><p>Best regards,<br>NEXUS OS Sales Team</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "drip-gm1",
+      "name": "Email: Welcome (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        736,
+        304
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1Cgivoyjt7psAirH",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Normalize Lead Input').first().json.email }}",
+        "subject": "=Still looking at the {{ $('Normalize Lead Input').first().json.vehicle_interest }}?",
+        "message": "=<p>Hi {{ $('Normalize Lead Input').first().json.name }},</p><p>Just checking in on the <strong>{{ $('Normalize Lead Input').first().json.vehicle_interest }}</strong> you were interested in.</p><p>We've had some new arrivals this week, so if your requirements have changed at all, let me know and I'll send over what fits.</p><p>Happy to answer any questions - finance, trade-in value, warranty, anything.</p><p>Best regards,<br>NEXUS OS Sales Team</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "drip-gm2",
+      "name": "Email: Follow Up (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1264,
+        304
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1Cgivoyjt7psAirH",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Normalize Lead Input').first().json.email }}",
+        "subject": "=A 5% offer on your {{ $('Normalize Lead Input').first().json.vehicle_interest }} - valid 48 hours",
+        "message": "=<p>Hi {{ $('Normalize Lead Input').first().json.name }},</p><p>I wanted to come back to you one last time about the <strong>{{ $('Normalize Lead Input').first().json.vehicle_interest }}</strong>.</p><p>As a thank you for your interest, we can offer you an <strong>exclusive 5% discount</strong> on your first purchase with us. This one is valid for the next 48 hours.</p><p>If the timing isn't right, that's completely fine - just reply and tell me, and I'll stop following up.</p><p>Best regards,<br>NEXUS OS Sales Team</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "drip-gm3",
+      "name": "Email: Final Offer (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2064,
+        304
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1Cgivoyjt7psAirH",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
     }
   ],
   "connections": {
@@ -533,7 +527,7 @@
       "main": [
         [
           {
-            "node": "Email: Welcome (Resend)",
+            "node": "Email: Welcome (Gmail)",
             "type": "main",
             "index": 0
           }
@@ -544,7 +538,7 @@
       "main": [
         [
           {
-            "node": "Email: Follow Up (Resend)",
+            "node": "Email: Follow Up (Gmail)",
             "type": "main",
             "index": 0
           }
@@ -566,7 +560,7 @@
       "main": [
         [
           {
-            "node": "Email: Final Offer (Resend)",
+            "node": "Email: Final Offer (Gmail)",
             "type": "main",
             "index": 0
           }
@@ -595,17 +589,6 @@
         ]
       ]
     },
-    "Email: Welcome (Resend)": {
-      "main": [
-        [
-          {
-            "node": "Log Welcome Email",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Log Welcome Email": {
       "main": [
         [
@@ -617,33 +600,11 @@
         ]
       ]
     },
-    "Email: Follow Up (Resend)": {
-      "main": [
-        [
-          {
-            "node": "Log Follow Up Email",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Log Follow Up Email": {
       "main": [
         [
           {
             "node": "Wait Day 5",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email: Final Offer (Resend)": {
-      "main": [
-        [
-          {
-            "node": "Log Final Offer Email",
             "type": "main",
             "index": 0
           }
@@ -735,6 +696,39 @@
         [
           {
             "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Welcome (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Log Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Follow Up (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Log Follow Up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Final Offer (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Log Final Offer Email",
             "type": "main",
             "index": 0
           }

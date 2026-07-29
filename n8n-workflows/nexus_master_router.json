@@ -6,8 +6,9 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "nexus-inbound-lead",
-        "responseMode": "lastNode",
-        "options": {}
+        "responseMode": "onReceived",
+        "options": {},
+        "responseData": "{\"status\":\"accepted\"}"
       },
       "id": "1",
       "name": "Webhook Catch-All",
@@ -172,7 +173,7 @@
     },
     {
       "parameters": {
-        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "model": "google/gemini-2.5-flash",
         "options": {
           "maxTokens": 1024,
           "temperature": 0.2
@@ -373,29 +374,6 @@
     },
     {
       "parameters": {
-        "model": "google/gemma-4-31b-it:free",
-        "options": {
-          "maxTokens": 1024,
-          "temperature": 0.2
-        }
-      },
-      "id": "5ed5b279-cedf-48cd-b723-bf3e90a195bb",
-      "name": "Fallback Model (Gemma 4)",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        448,
-        512
-      ],
-      "credentials": {
-        "openRouterApi": {
-          "id": "UUtKrBzkQOztAOzZ",
-          "name": "OpenRouter account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "promptType": "define",
         "text": "=Lead data: {{ JSON.stringify($json.lead) }}\n\nStep 1: Use the Supabase Lead Lookup tool to check whether this lead already exists in the CRM.\nStep 2: Use the check_purchase_history tool to see whether this person has bought a vehicle from us before (a returning/VIP customer).\nStep 3: Score the lead from 1-100 and classify intent as HOT, WARM or COLD.\n  - If check_purchase_history returns ANY prior purchase, this is a RETURNING VIP CUSTOMER: score 90-100 and intent HOT, regardless of how casual the new enquiry sounds.\n  - Otherwise: HOT = ready to buy now, specific vehicle, clear budget or urgent language; WARM = genuine interest but no urgency/budget; COLD = just browsing, no budget, no timeline.\nStep 4: Use the upsert_lead tool to save the lead with the score and status you decided.\nStep 5: Return your decision.\n\nReturn ONLY a raw JSON object and nothing else. No markdown, no code fences, no commentary.\nSchema: {\"score\": 95, \"intent\": \"HOT\", \"reason\": \"one short sentence\", \"vip\": true}",
         "needsFallback": true,
@@ -443,6 +421,54 @@
           "name": "Supabase account"
         }
       }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        448,
+        544
+      ],
+      "id": "mr-groq-01",
+      "name": "Groq Fallback",
+      "credentials": {
+        "groqApi": {
+          "id": "JgOg4w1ZMJc37lmL",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "BiyHk9ZXxJUVGbf6",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/BiyHk9ZXxJUVGbf6"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1408,
+        -64
+      ],
+      "id": "mr-wa-hot-01",
+      "name": "WhatsApp Outreach (HOT)",
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -475,6 +501,16 @@
             "node": "Slack Router (HOT)",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "ERP Sync (HOT)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WhatsApp Outreach (HOT)",
+            "type": "main",
+            "index": 0
           }
         ],
         [
@@ -502,29 +538,12 @@
     },
     "ERP Sync (HOT)": {
       "main": [
-        [
-          {
-            "node": "Audit Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Slack Router (HOT)": {
       "main": [
-        [
-          {
-            "node": "Audit Log",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "ERP Sync (HOT)",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "WhatsApp BDC (WARM)": {
@@ -582,17 +601,6 @@
         ]
       ]
     },
-    "Fallback Model (Gemma 4)": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Lead Scoring Agent",
-            "type": "ai_languageModel",
-            "index": 1
-          }
-        ]
-      ]
-    },
     "upsert_lead": {
       "ai_tool": [
         [
@@ -625,6 +633,28 @@
           }
         ]
       ]
+    },
+    "Groq Fallback": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "WhatsApp Outreach (HOT)": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -632,6 +662,7 @@
     "binaryMode": "separate",
     "availableInMCP": true,
     "timezone": "Asia/Dubai",
-    "saveDataErrorExecution": "all"
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
   }
 }

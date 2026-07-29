@@ -19,14 +19,12 @@
     },
     {
       "parameters": {
-        "mode": "raw",
-        "jsonOutput": "={{ JSON.stringify((() => { const b = $json.body || $json; if (!b.id) { throw new Error('Deal sync requires an \"id\" field on the payload.'); } const parts = [b.deal_name, b.company, b.description].filter(Boolean); if (!parts.length) { throw new Error('Deal ' + b.id + ' has no deal_name, company or description to embed.'); } return { dealId: String(b.id), dealText: parts.join(' - ') }; })()) }}",
-        "options": {}
+        "jsCode": "// Webhook payloads arrive under .body; a sub-workflow call arrives flat.\n// The old Set node read the fields off the top level, so dealText came out\n// undefined and the embedding API rejected the request with a 400.\nconst raw = $input.first().json;\nconst d = raw.body || raw.deal || raw;\n\nconst dealId = String(d.deal_id || d.dealId || d.id || '').trim();\nif (!dealId) throw new Error('Rejected: closed-won deal has no deal_id. Keys received: ' + Object.keys(d).join(', '));\n\nconst parts = [\n  d.customer_name ? 'Customer: ' + d.customer_name : null,\n  d.vehicle ? 'Vehicle: ' + d.vehicle : null,\n  (d.amount_aed !== undefined && d.amount_aed !== null) ? 'Deal value: AED ' + d.amount_aed : null,\n  d.notes ? 'Notes: ' + d.notes : null\n].filter(Boolean);\n\nconst dealText = parts.join('. ');\nif (!dealText) throw new Error('Rejected: deal ' + dealId + ' produced no text to embed.');\n\nreturn [{ json: { dealId, dealText } }];"
       },
       "id": "2",
       "name": "Format Deal Text",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         464,
         304
@@ -195,6 +193,7 @@
     "availableInMCP": true,
     "binaryMode": "separate",
     "timezone": "Asia/Dubai",
-    "saveDataErrorExecution": "all"
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
   }
 }
