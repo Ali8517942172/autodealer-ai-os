@@ -1,6 +1,6 @@
 {
   "id": "AZkGM5M4c1uzSH7S",
-  "name": "Customer 360 - Data Aggregation",
+  "name": "Customer 360 - Data Aggregation (Bitrix24)",
   "nodes": [
     {
       "parameters": {
@@ -21,35 +21,6 @@
         304
       ],
       "id": "aa815068-820c-4d66-95e3-b5a5a60a498a"
-    },
-    {
-      "parameters": {
-        "resource": "custom",
-        "customResource": "=res.partner",
-        "operation": "getAll",
-        "options": {
-          "fieldsList": [
-            "id",
-            "name",
-            "email",
-            "phone"
-          ]
-        }
-      },
-      "name": "Odoo - Get Customers",
-      "type": "n8n-nodes-base.odoo",
-      "typeVersion": 1,
-      "position": [
-        224,
-        304
-      ],
-      "id": "403fa8d6-7136-40d1-b7c0-e953af28c95f",
-      "credentials": {
-        "odooApi": {
-          "id": "3a0Bmxys3KlURmtx",
-          "name": "Odoo API"
-        }
-      }
     },
     {
       "parameters": {
@@ -83,6 +54,7 @@
         208
       ],
       "id": "de16255d-f002-4f8c-9d17-a5fbc2cc7bc9",
+      "alwaysOutputData": true,
       "credentials": {
         "gmailOAuth2": {
           "id": "1Cgivoyjt7psAirH",
@@ -90,8 +62,7 @@
         }
       },
       "continueOnFail": true,
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -108,20 +79,18 @@
         400
       ],
       "id": "2c43a24f-34a0-479e-86dd-dde6c024fa17",
+      "alwaysOutputData": true,
       "credentials": {
         "slackApi": {
-          "id": "HPTEqLu6xjmhEXDN",
-          "name": "Slack - NEXUS OS Bot"
+          "id": "oOf93CGdFiAxHkHF",
+          "name": "Slack account"
         }
       },
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "mode": "chooseBranch",
-        "useDataOfInput": 1,
-        "options": {}
+        "mode": "chooseBranch"
       },
       "name": "Merge Customer Data",
       "type": "n8n-nodes-base.merge",
@@ -134,7 +103,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Aggregate everything we know about the customer currently in the loop.\nconst customer = $('Split In Batches').first().json;\n\nlet emails = [];\ntry {\n  emails = $('Gmail - Get Emails').all().filter(i => i.json && i.json.id);\n} catch (e) { emails = []; }\n\nlet slackMessages = [];\ntry {\n  slackMessages = $('Slack - Search Mentions').all().filter(i => i.json && (i.json.ts || i.json.text));\n} catch (e) { slackMessages = []; }\n\n// Odoo returns boolean false for empty char fields - normalise to null.\nconst clean = (v) => (v === false || v === 'false' || v === '' || v === undefined) ? null : v;\n\nreturn [{\n  json: {\n    customer_id: String(customer.id),\n    name: clean(customer.name),\n    email: clean(customer.email),\n    phone: clean(customer.phone),\n    total_emails: emails.length,\n    total_slack_messages: slackMessages.length,\n    last_synced_at: new Date().toISOString()\n  }\n}];"
+        "jsCode": "// Aggregate everything we know about the customer currently in the loop.\nconst customer = $('Split In Batches').first().json;\n\nlet emails = [];\ntry {\n  emails = $('Gmail - Get Emails').all().filter(i => i.json && i.json.id);\n} catch (e) { emails = []; }\n\nlet slackMessages = [];\ntry {\n  slackMessages = $('Slack - Search Mentions').all().filter(i => i.json && (i.json.ts || i.json.text));\n} catch (e) { slackMessages = []; }\n\n// Bitrix24 returns false/empty for missing fields - normalise to null.\nconst clean = (v) => (v === false || v === 'false' || v === '' || v === undefined) ? null : v;\n\nreturn [{\n  json: {\n    customer_id: String(customer.id),\n    name: clean(customer.name),\n    email: clean(customer.email),\n    phone: clean(customer.phone),\n    total_emails: emails.length,\n    total_slack_messages: slackMessages.length,\n    last_synced_at: new Date().toISOString()\n  }\n}];"
       },
       "name": "Transform & Unify",
       "type": "n8n-nodes-base.code",
@@ -186,20 +155,52 @@
         304
       ],
       "id": "1a6c65bc-3c23-46ac-b3f1-9ca76f4bef1f",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
       "credentials": {
-        "httpCustomAuth": {
-          "id": "ewCXyGq2VCV76foT",
-          "name": "Custom Auth account"
-        },
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BITRIX24_WEBHOOK_URL }}crm.lead.list.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ select: ['ID','TITLE','NAME','LAST_NAME','EMAIL','PHONE'], order: { ID: 'DESC' }, start: 0 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "c360-bitrix-01",
+      "name": "Bitrix24 - Get Customers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        304
+      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Bitrix24 returns EMAIL/PHONE as arrays of {VALUE, VALUE_TYPE} objects and\n// omits them entirely when empty. Flatten to a simple customer record.\nconst res = ($json && $json.result) || [];\nconst first = (arr) => Array.isArray(arr) && arr.length ? (arr[0].VALUE || null) : null;\n\nreturn res.map(c => {\n  const name = [c.NAME, c.LAST_NAME].filter(Boolean).join(' ').trim() || c.TITLE || null;\n  return { json: {\n    id: String(c.ID),\n    name: name,\n    email: first(c.EMAIL),\n    phone: first(c.PHONE)\n  } };\n}).filter(i => i.json.email || i.json.phone);"
+      },
+      "id": "c360-norm-01",
+      "name": "Normalise Bitrix Customers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        576
+      ]
     }
   ],
   "connections": {
@@ -207,18 +208,7 @@
       "main": [
         [
           {
-            "node": "Odoo - Get Customers",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Odoo - Get Customers": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches",
+            "node": "Bitrix24 - Get Customers",
             "type": "main",
             "index": 0
           }
@@ -296,6 +286,28 @@
           }
         ]
       ]
+    },
+    "Bitrix24 - Get Customers": {
+      "main": [
+        [
+          {
+            "node": "Normalise Bitrix Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalise Bitrix Customers": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -304,6 +316,9 @@
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": true,
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Dubai"
   }
 }

@@ -61,30 +61,6 @@
     },
     {
       "parameters": {
-        "from": "+1234567890",
-        "to": "={{ $('Normalize Lead Input').first().json.phone }}",
-        "message": "=Hi {{ $('Normalize Lead Input').first().json.name }}, thanks for contacting NEXUS OS! Check your email for exclusive offers. Reply STOP to opt out.",
-        "options": {}
-      },
-      "name": "SMS: Welcome",
-      "type": "n8n-nodes-base.twilio",
-      "typeVersion": 1,
-      "position": [
-        912,
-        304
-      ],
-      "id": "b49017d1-7986-4024-9e92-b03afa7daf92",
-      "credentials": {
-        "twilioApi": {
-          "id": "uSZczHzmgv3bHs5w",
-          "name": "Twilio SMS API"
-        }
-      },
-      "disabled": true,
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
         "amount": 2,
         "unit": "days"
       },
@@ -139,30 +115,6 @@
         304
       ],
       "id": "53a6defc-25c8-4314-a9b0-8152d638ebc1"
-    },
-    {
-      "parameters": {
-        "from": "+1234567890",
-        "to": "={{ $('Normalize Lead Input').first().json.phone }}",
-        "message": "=Hi {{ $('Normalize Lead Input').first().json.name }}, don't miss our weekend specials at NEXUS OS! Schedule your test drive today: https://nexuscorp.net/book",
-        "options": {}
-      },
-      "name": "SMS: Check-in",
-      "type": "n8n-nodes-base.twilio",
-      "typeVersion": 1,
-      "position": [
-        1664,
-        304
-      ],
-      "id": "0d00a28e-569f-4790-9029-a95e35d38f3d",
-      "credentials": {
-        "twilioApi": {
-          "id": "uSZczHzmgv3bHs5w",
-          "name": "Twilio SMS API"
-        }
-      },
-      "disabled": true,
-      "continueOnFail": true
     },
     {
       "parameters": {
@@ -341,17 +293,239 @@
       "onError": "continueRegularOutput"
     },
     {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
       "id": "4b706bbc-1f61-4e46-9999-a215967ad3d8",
       "name": "Called by Master Router",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        176,
-        448
-      ],
+        240,
+        512
+      ]
+    },
+    {
       "parameters": {
-        "inputSource": "passthrough"
-      }
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "drip-g1-c",
+              "leftValue": "={{ !!$('Normalize Lead Input').first().json.phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        912,
+        304
+      ],
+      "id": "drip-g1",
+      "name": "Has WhatsApp? (Day 1)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.WAHA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chatId: String($('Normalize Lead Input').first().json.phone || '').replace(/[^0-9]/g,'') + '@c.us', text: 'Hi ' + ($('Normalize Lead Input').first().json.name || 'there') + ', thanks for contacting NEXUS OS! We have just emailed you details about the ' + $('Normalize Lead Input').first().json.vehicle_interest + '. Reply here any time and our team will help you directly.', session: 'default' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "drip-wa1",
+      "name": "WhatsApp: Welcome",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        32
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Normalize Lead Input').first().json.email, channel: 'whatsapp', direction: 'outbound', message: 'Drip Day 1 - WhatsApp welcome' }) }}",
+        "options": {}
+      },
+      "id": "drip-lg1",
+      "name": "Log WhatsApp Welcome",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        32
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "drip-g2-c",
+              "leftValue": "={{ !!$('Normalize Lead Input').first().json.phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1664,
+        304
+      ],
+      "id": "drip-g2",
+      "name": "Has WhatsApp? (Day 5)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.WAHA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chatId: String($('Normalize Lead Input').first().json.phone || '').replace(/[^0-9]/g,'') + '@c.us', text: 'Hi ' + ($('Normalize Lead Input').first().json.name || 'there') + ', our weekend specials are live at NEXUS OS. Want me to book you a test drive for the ' + $('Normalize Lead Input').first().json.vehicle_interest + '?', session: 'default' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "drip-wa2",
+      "name": "WhatsApp: Check-in",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1808,
+        80
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Normalize Lead Input').first().json.email, channel: 'whatsapp', direction: 'outbound', message: 'Drip Day 5 - WhatsApp check-in' }) }}",
+        "options": {}
+      },
+      "id": "drip-lg2",
+      "name": "Log WhatsApp Check-in",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2016,
+        80
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -360,17 +534,6 @@
         [
           {
             "node": "Email: Welcome (Resend)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SMS: Welcome": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 3",
             "type": "main",
             "index": 0
           }
@@ -392,18 +555,7 @@
       "main": [
         [
           {
-            "node": "SMS: Check-in",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SMS: Check-in": {
-      "main": [
-        [
-          {
-            "node": "Wait Day 7",
+            "node": "Has WhatsApp? (Day 5)",
             "type": "main",
             "index": 0
           }
@@ -458,7 +610,7 @@
       "main": [
         [
           {
-            "node": "SMS: Welcome",
+            "node": "Has WhatsApp? (Day 1)",
             "type": "main",
             "index": 0
           }
@@ -508,6 +660,86 @@
           }
         ]
       ]
+    },
+    "Has WhatsApp? (Day 1)": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp: Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp: Welcome": {
+      "main": [
+        [
+          {
+            "node": "Log WhatsApp Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log WhatsApp Welcome": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has WhatsApp? (Day 5)": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp: Check-in",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp: Check-in": {
+      "main": [
+        [
+          {
+            "node": "Log WhatsApp Check-in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log WhatsApp Check-in": {
+      "main": [
+        [
+          {
+            "node": "Wait Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -516,6 +748,7 @@
     "binaryMode": "separate",
     "timezone": "Asia/Dubai",
     "saveDataErrorExecution": "all",
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveDataSuccessExecution": "all"
   }
 }

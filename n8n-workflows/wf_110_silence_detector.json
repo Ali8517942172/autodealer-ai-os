@@ -1,0 +1,289 @@
+{
+  "id": "B3TcpfzOMWj8oWgF",
+  "name": "Phase 6 - 12-Hour Silence Detector",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "p6-cron-0001",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "p6-manual-0001",
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "neq",
+              "keyValue": "LOST"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "id": "p6-leads-0001",
+      "name": "Fetch Open Leads",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "communication_logs",
+        "returnAll": true,
+        "orderBy": "created_at.desc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ],
+      "id": "p6-comms-0001",
+      "name": "Fetch Recent Comms",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 6: find leads that have gone quiet.\n// A lead is \"silent\" when:\n//   - it is still open (not WON/LOST/ESCALATED)\n//   - we sent them something at least SILENCE_HOURS ago\n//   - they have not replied since (no inbound message newer than our last outbound)\n//   - we have not already escalated them for silence\nconst SILENCE_HOURS = 12;\nconst cutoff = Date.now() - SILENCE_HOURS * 60 * 60 * 1000;\n\nconst leads = $('Fetch Open Leads').all().map(i => i.json).filter(l => l && l.email);\nconst logs  = $('Fetch Recent Comms').all().map(i => i.json).filter(l => l && l.lead_email);\n\nconst byLead = {};\nfor (const row of logs) {\n  const key = String(row.lead_email);\n  (byLead[key] = byLead[key] || []).push(row);\n}\n\nconst out = [];\nfor (const lead of leads) {\n  const rows = byLead[String(lead.email)] || [];\n  if (!rows.length) continue;\n\n  const ts = (r) => new Date(r.created_at || 0).getTime();\n  const outbound = rows.filter(r => r.direction === 'outbound').sort((a,b) => ts(b) - ts(a));\n  const inbound  = rows.filter(r => r.direction === 'inbound').sort((a,b) => ts(b) - ts(a));\n  if (!outbound.length) continue;\n\n  const lastOut = ts(outbound[0]);\n  const lastIn  = inbound.length ? ts(inbound[0]) : 0;\n\n  // Customer already replied after our last message -> not silent.\n  if (lastIn >= lastOut) continue;\n  // Not silent long enough yet.\n  if (lastOut > cutoff) continue;\n  // Already chased for silence -> don't spam the team every hour.\n  if (rows.some(r => String(r.message || '').startsWith('[SILENCE-ESCALATED]'))) continue;\n\n  out.push({ json: {\n    email: lead.email,\n    name: lead.name || null,\n    phone: lead.phone || null,\n    ai_score: lead.ai_score ?? null,\n    status: lead.status || null,\n    vehicle_interest: lead.vehicle_interest || null,\n    hours_silent: Math.floor((Date.now() - lastOut) / 3600000),\n    last_outbound_at: outbound[0].created_at,\n    last_outbound_message: String(outbound[0].message || '').substring(0, 300)\n  } });\n}\n\n// Highest-value silent leads first.\nout.sort((a, b) => (b.json.ai_score || 0) - (a.json.ai_score || 0));\nreturn out;"
+      },
+      "id": "p6-detect-0001",
+      "name": "Find Silent Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "p6-loop-0001",
+      "name": "Loop Over Silent Leads",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "KI6P1Qcf3MIZakNa",
+          "cachedResultName": "Lead Escalation - AI Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $json.email }}",
+            "name": "={{ $json.name }}",
+            "reason": "={{ 'No reply for ' + $json.hours_silent + ' hours since our last message' }}"
+          }
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "p6-escalate-0001",
+      "name": "Trigger Lead Escalation",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        400
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Loop Over Silent Leads').first().json.email, channel: 'system', direction: 'outbound', message: '[SILENCE-ESCALATED] Silent for ' + $('Loop Over Silent Leads').first().json.hours_silent + 'h since ' + $('Loop Over Silent Leads').first().json.last_outbound_at }) }}",
+        "options": {}
+      },
+      "id": "p6-mark-0001",
+      "name": "Mark as Escalated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Fetch Open Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Fetch Open Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Open Leads": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Comms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Comms": {
+      "main": [
+        [
+          {
+            "node": "Find Silent Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Silent Leads": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Silent Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Silent Leads": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Trigger Lead Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Lead Escalation": {
+      "main": [
+        [
+          {
+            "node": "Mark as Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Escalated": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Silent Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true
+  }
+}

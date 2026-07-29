@@ -71,10 +71,6 @@
         304
       ],
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "DSkhGhMjUxdWrTTR",
-          "name": "Header Auth account"
-        },
         "openRouterApi": {
           "id": "UUtKrBzkQOztAOzZ",
           "name": "OpenRouter account"
@@ -141,10 +137,6 @@
         304
       ],
       "credentials": {
-        "httpCustomAuth": {
-          "id": "ewCXyGq2VCV76foT",
-          "name": "Custom Auth account"
-        },
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"

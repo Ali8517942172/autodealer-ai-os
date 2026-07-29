@@ -1,6 +1,6 @@
 {
   "id": "qTnh3nwWheFJbFkU",
-  "name": "KYC/AML Document Auditor",
+  "name": "KYC/AML Document Auditor + Re-upload Loop (Phase 5)",
   "nodes": [
     {
       "parameters": {
@@ -20,7 +20,20 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extract document content from webhook payload\nconst items = $input.all();\nconst item = items[0].json;\n\n// Try to get file data from binary or body\nlet documentContent = '';\nlet imageBase64 = null;\n\nif (item.body && item.body.document_base64) {\n  imageBase64 = item.body.document_base64;\n  documentContent = 'Image document provided as base64';\n} else if (item.body && item.body.document_text) {\n  documentContent = item.body.document_text;\n} else if (item.body && item.body.text) {\n  documentContent = item.body.text;\n} else {\n  documentContent = JSON.stringify(item.body || item);\n}\n\nreturn [{\n  json: {\n    documentContent,\n    imageBase64,\n    hasImage: !!imageBase64\n  }\n}];"
+        "inputSource": "passthrough"
+      },
+      "id": "kyc-exec-trigger-0001",
+      "name": "Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract document content AND the customer contact details we need to\n// close the Phase-5 loop (WhatsApp re-upload request).\nconst item = $input.first().json;\nconst body = item.body || item;\n\nlet documentContent = '';\nlet imageBase64 = null;\nif (body.document_base64) { imageBase64 = body.document_base64; documentContent = 'Image document provided as base64'; }\nelse if (body.document_text) { documentContent = body.document_text; }\nelse if (body.text) { documentContent = body.text; }\nelse { documentContent = JSON.stringify(body); }\n\n// Normalise the WhatsApp chat id the same way the BDC agent does.\nlet chatId = String(body.chat_id || body.phone || body.whatsapp || '').trim();\nif (chatId && !chatId.includes('@')) chatId = chatId.replace(/[^0-9]/g, '') + '@c.us';\n\nreturn [{ json: {\n  documentContent: documentContent,\n  imageBase64: imageBase64,\n  hasImage: !!imageBase64,\n  lead_email: body.lead_email || body.email || null,\n  lead_name: body.lead_name || body.name || null,\n  chat_id: chatId || null\n} }];"
       },
       "id": "prep-doc-node",
       "name": "Prepare Document",
@@ -69,10 +82,6 @@
       "maxTries": 3,
       "waitBetweenTries": 2000,
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "DSkhGhMjUxdWrTTR",
-          "name": "Header Auth account"
-        },
         "openRouterApi": {
           "id": "UUtKrBzkQOztAOzZ",
           "name": "OpenRouter account"
@@ -81,7 +90,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\n\nconst fail = (remarks) => {\n  const r = { fullName: 'PARSE_ERROR', isValid: false, tamperingDetected: false, confidenceScore: 0, remarks };\n  return [{ json: { auditResult: JSON.stringify(r), parsed: r } }];\n};\n\n// The vision call can fail or return an API-level error object.\nif (response.error) {\n  return fail('OpenRouter returned an error: ' + JSON.stringify(response.error).substring(0, 300));\n}\nif (!response.choices || !response.choices[0] || !response.choices[0].message) {\n  return fail('Unexpected OpenRouter response shape: ' + JSON.stringify(response).substring(0, 300));\n}\n\nconst content = response.choices[0].message.content || '';\n\nlet auditResult;\ntry {\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  auditResult = JSON.parse(cleaned);\n} catch (e) {\n  return fail('Failed to parse AI response as JSON: ' + content.substring(0, 200));\n}\n\n// Normalise the fields the IF node depends on so a missing key can never\n// silently approve a document.\nauditResult.isValid = auditResult.isValid === true;\nauditResult.tamperingDetected = auditResult.tamperingDetected === true;\nauditResult.confidenceScore = Number(auditResult.confidenceScore) || 0;\n\nreturn [{ json: { auditResult: JSON.stringify(auditResult), parsed: auditResult } }];"
+        "jsCode": "const response = $input.first().json;\n\nconst fail = (remarks) => {\n  const r = { fullName: 'PARSE_ERROR', isValid: false, tamperingDetected: false, confidenceScore: 0, remarks: remarks };\n  return [{ json: { auditResult: JSON.stringify(r), parsed: r } }];\n};\n\nif (response.error) {\n  return fail('OpenRouter returned an error: ' + JSON.stringify(response.error).substring(0, 300));\n}\nif (!response.choices || !response.choices[0] || !response.choices[0].message) {\n  return fail('Unexpected OpenRouter response shape: ' + JSON.stringify(response).substring(0, 300));\n}\n\nconst content = response.choices[0].message.content || '';\n\nlet auditResult;\ntry {\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  auditResult = JSON.parse(cleaned);\n} catch (e) {\n  return fail('Failed to parse AI response as JSON: ' + content.substring(0, 200));\n}\n\nauditResult.isValid = auditResult.isValid === true;\nauditResult.tamperingDetected = auditResult.tamperingDetected === true;\nauditResult.confidenceScore = Number(auditResult.confidenceScore) || 0;\n\nreturn [{ json: { auditResult: JSON.stringify(auditResult), parsed: auditResult } }];"
       },
       "id": "6eb678c1-155e-49cd-a24a-fb48721c4355",
       "name": "Parse JSON Output",
@@ -90,66 +99,6 @@
       "position": [
         448,
         0
-      ]
-    },
-    {
-      "parameters": {
-        "keepOnlySet": true,
-        "values": {
-          "string": [
-            {
-              "name": "status",
-              "value": "APPROVED"
-            },
-            {
-              "name": "message",
-              "value": "KYC Document is valid and verified."
-            },
-            {
-              "name": "details",
-              "value": "={{ $json.auditResult }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "18f45a0b-1798-4c31-96ec-ecad1a63e6e8",
-      "name": "Approved",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [
-        912,
-        -96
-      ]
-    },
-    {
-      "parameters": {
-        "keepOnlySet": true,
-        "values": {
-          "string": [
-            {
-              "name": "status",
-              "value": "REJECTED"
-            },
-            {
-              "name": "message",
-              "value": "KYC Document failed validation or tampering detected."
-            },
-            {
-              "name": "details",
-              "value": "={{ $json.auditResult }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "01c905ab-ee57-41a6-8968-3e4b7b3b3a0f",
-      "name": "Rejected",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [
-        912,
-        112
       ]
     },
     {
@@ -185,10 +134,347 @@
       ],
       "id": "aa9b2221-e90f-4680-affe-ef96f582486f",
       "name": "Validation Check"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Prepare Document').first().json;\nreturn [{ json: {\n  status: 'APPROVED',\n  message: 'KYC document is valid and verified.',\n  details: $json.auditResult,\n  parsed: $json.parsed,\n  lead_email: p.lead_email,\n  lead_name: p.lead_name,\n  chat_id: p.chat_id\n} }];"
+      },
+      "id": "18f45a0b-1798-4c31-96ec-ecad1a63e6e8",
+      "name": "Approved",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Prepare Document').first().json;\nreturn [{ json: {\n  status: 'REJECTED',\n  message: 'KYC document failed validation or tampering was detected.',\n  details: $json.auditResult,\n  parsed: $json.parsed,\n  lead_email: p.lead_email,\n  lead_name: p.lead_name,\n  chat_id: p.chat_id\n} }];"
+      },
+      "id": "01c905ab-ee57-41a6-8968-3e4b7b3b3a0f",
+      "name": "Rejected",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "communication_logs",
+        "limit": 50,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_email",
+              "condition": "eq",
+              "keyValue": "={{ $json.lead_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        176
+      ],
+      "id": "kyc-count-prev-0001",
+      "name": "Count Previous KYC Rejections",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 5: decide whether to ask the customer to re-upload, or give up and\n// escalate to a human. Attempts are counted from communication_logs so the loop\n// survives restarts and cannot run forever.\nconst MAX_ATTEMPTS = 3;\nconst rej = $('Rejected').first().json;\n\nconst rows = $input.all().map(i => i.json).filter(r => r && typeof r.message === 'string');\nconst attempts = rows.filter(r => r.message.startsWith('[KYC-REJECT]')).length;\nconst nextAttempt = attempts + 1;\n\nconst parsed = rej.parsed || {};\nconst problems = [];\nif (parsed.tamperingDetected === true) problems.push('the document looks edited or tampered with');\nif (parsed.isValid === false) problems.push('we could not verify it as a valid document');\nconst reason = parsed.remarks || problems.join(', ') || 'the document could not be verified';\n\nconst text = 'Hi ' + (rej.lead_name || 'there') + ', thanks for sending your document. '\n  + 'Unfortunately we could not accept it: ' + reason + '. '\n  + 'Could you please re-send a clear, well-lit photo showing the whole document with all four corners visible? '\n  + '(Attempt ' + nextAttempt + ' of ' + MAX_ATTEMPTS + ')';\n\nreturn [{ json: {\n  attempts: attempts,\n  nextAttempt: nextAttempt,\n  maxAttempts: MAX_ATTEMPTS,\n  withinLimit: nextAttempt <= MAX_ATTEMPTS,\n  reason: reason,\n  text: text,\n  lead_email: rej.lead_email,\n  lead_name: rej.lead_name,\n  chat_id: rej.chat_id,\n  parsed: parsed\n} }];"
+      },
+      "id": "kyc-decide-0001",
+      "name": "Decide: Re-ask or Escalate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "kyc-retry-cond",
+              "leftValue": "={{ $json.withinLimit === true && !!$json.chat_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        176
+      ],
+      "id": "kyc-retry-if-0001",
+      "name": "Within Retry Limit?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.WAHA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chatId: $json.chat_id, text: $json.text, session: 'default' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "kyc-wa-reask-0001",
+      "name": "WhatsApp: Request Re-upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1664,
+        64
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Decide: Re-ask or Escalate').first().json.lead_email || $('Decide: Re-ask or Escalate').first().json.chat_id, channel: 'whatsapp', direction: 'outbound', message: '[KYC-REJECT] ' + $('Decide: Re-ask or Escalate').first().json.text }) }}",
+        "options": {}
+      },
+      "id": "kyc-log-reask-0001",
+      "name": "Log KYC Re-ask",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1872,
+        64
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BKTLL1X54",
+          "mode": "id"
+        },
+        "text": "=:no_entry: *KYC blocked - human needed*\n\n*Customer:* {{ $json.lead_name || 'Unknown' }}\n*Email:* {{ $json.lead_email || 'n/a' }}\n*WhatsApp:* {{ $json.chat_id || 'not provided' }}\n*Failed attempts:* {{ $json.attempts }} of {{ $json.maxAttempts }}\n\n*Latest rejection reason:*\n{{ $json.reason }}\n\nThe automated re-upload loop has given up. Please contact this customer directly.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1664,
+        304
+      ],
+      "id": "kyc-slack-esc-0001",
+      "name": "Slack: KYC Escalation",
+      "credentials": {
+        "slackApi": {
+          "id": "oOf93CGdFiAxHkHF",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/audit_log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflow: 'KYC Auditor - Phase 5', status: 'ESCALATED', lead_name: $('Decide: Re-ask or Escalate').first().json.lead_name, lead_email: $('Decide: Re-ask or Escalate').first().json.lead_email, summary: 'KYC re-upload loop exhausted after ' + $('Decide: Re-ask or Escalate').first().json.attempts + ' attempts. Reason: ' + $('Decide: Re-ask or Escalate').first().json.reason, logged_at: $now.toISO() }) }}",
+        "options": {}
+      },
+      "id": "kyc-log-esc-0001",
+      "name": "Log KYC Escalation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1872,
+        304
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.WAHA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chatId: $json.chat_id, text: 'Hi ' + ($json.lead_name || 'there') + ', good news - your document has been verified successfully. We are moving your application to the next step.', session: 'default' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "kyc-wa-ok-0001",
+      "name": "WhatsApp: KYC Approved",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        -160
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/communication_logs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Approved').first().json.lead_email || $('Approved').first().json.chat_id, channel: 'whatsapp', direction: 'outbound', message: '[KYC-APPROVED] Document verified for ' + ($('Approved').first().json.lead_name || 'customer') }) }}",
+        "options": {}
+      },
+      "id": "kyc-log-ok-0001",
+      "name": "Log KYC Approved",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1248,
+        -160
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
     "Receive Document": {
+      "main": [
+        [
+          {
+            "node": "Prepare Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Called by Another Workflow": {
       "main": [
         [
           {
@@ -249,6 +535,101 @@
           }
         ]
       ]
+    },
+    "Approved": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp: KYC Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp: KYC Approved": {
+      "main": [
+        [
+          {
+            "node": "Log KYC Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rejected": {
+      "main": [
+        [
+          {
+            "node": "Count Previous KYC Rejections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count Previous KYC Rejections": {
+      "main": [
+        [
+          {
+            "node": "Decide: Re-ask or Escalate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide: Re-ask or Escalate": {
+      "main": [
+        [
+          {
+            "node": "Within Retry Limit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Within Retry Limit?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp: Request Re-upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack: KYC Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp: Request Re-upload": {
+      "main": [
+        [
+          {
+            "node": "Log KYC Re-ask",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: KYC Escalation": {
+      "main": [
+        [
+          {
+            "node": "Log KYC Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -256,6 +637,8 @@
     "availableInMCP": true,
     "binaryMode": "separate",
     "timezone": "Asia/Dubai",
-    "saveDataErrorExecution": "all"
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
   }
 }

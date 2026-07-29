@@ -30,10 +30,34 @@
         650,
         300
       ]
+    },
+    {
+      "id": "a3ebcf0c-a9fe-4d54-a16d-b1c73208fedd",
+      "name": "Called as Tool",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        460
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
     }
   ],
   "connections": {
     "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Equity & Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Called as Tool": {
       "main": [
         [
           {

@@ -60,10 +60,6 @@
       "maxTries": 2,
       "waitBetweenTries": 3000,
       "credentials": {
-        "apifyMcpOAuth2Api": {
-          "id": "4YJGoZ5aI8C6GJjX",
-          "name": "Apify account 2"
-        },
         "httpQueryAuth": {
           "id": "NBPWuHrq7fLlfHvT",
           "name": "Apify account"
@@ -93,10 +89,6 @@
         128
       ],
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "DSkhGhMjUxdWrTTR",
-          "name": "Header Auth account"
-        },
         "openRouterApi": {
           "id": "UUtKrBzkQOztAOzZ",
           "name": "OpenRouter account"

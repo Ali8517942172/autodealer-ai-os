@@ -33,7 +33,6 @@
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/rag_documents",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
@@ -70,14 +69,6 @@
       "maxTries": 3,
       "waitBetweenTries": 1500,
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "L4pRhS1d4Xhfyh5c",
-          "name": "Resend API (Header)"
-        },
-        "httpCustomAuth": {
-          "id": "ewCXyGq2VCV76foT",
-          "name": "Custom Auth account"
-        },
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
@@ -118,7 +109,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'google/gemini-2.5-flash', temperature: 0.3, max_tokens: 1000, messages: [ { role: 'system', content: 'You are the NEXUS OS AI Assistant for an automotive dealership. Answer questions accurately using ONLY the provided context. If the context does not contain enough information, say so clearly rather than guessing. Always cite which numbered source you used. Be concise and professional. Respond in the same language the user asked in.' }, { role: 'user', content: 'Context from knowledge base (' + $json.doc_count + ' documents found):\\n\\n' + $json.context + '\\n\\n---\\nQuestion: ' + $json.question } ] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: 'nvidia/nemotron-3-ultra-550b-a55b:free', models: ['nvidia/nemotron-3-ultra-550b-a55b:free','google/gemma-4-31b-it:free','qwen/qwen3-next-80b-a3b-instruct:free'], route: 'fallback', temperature: 0.3, max_tokens: 1000, messages: [ { role: 'system', content: 'You are the NEXUS OS AI Assistant for an automotive dealership. Answer questions accurately using ONLY the provided context. If the context does not contain enough information, say so clearly rather than guessing. Always cite which numbered source you used. Be concise and professional. Respond in the same language the user asked in.' }, { role: 'user', content: 'Context from knowledge base (' + $json.doc_count + ' documents found):\\n\\n' + $json.context + '\\n\\n---\\nQuestion: ' + $json.question } ] }) }}",
         "options": {
           "timeout": 60000
         }
@@ -135,19 +126,16 @@
       "maxTries": 2,
       "waitBetweenTries": 1500,
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "DSkhGhMjUxdWrTTR",
-          "name": "Header Auth account"
-        },
         "openRouterApi": {
           "id": "UUtKrBzkQOztAOzZ",
           "name": "OpenRouter account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "const aiResponse = $input.first().json;\nconst context = $('Build RAG Context').first().json;\n\nlet answer = 'Sorry, I could not generate an answer.';\nif (aiResponse.error) {\n  answer = 'The AI model call failed: ' + JSON.stringify(aiResponse.error).substring(0, 300);\n} else if (aiResponse.choices && aiResponse.choices[0] && aiResponse.choices[0].message) {\n  answer = aiResponse.choices[0].message.content;\n}\n\nreturn [{ json: {\n  question: context.question,\n  answer: answer,\n  sources: context.sources,\n  documents_consulted: context.doc_count,\n  model: 'google/gemini-2.5-flash',\n  timestamp: new Date().toISOString()\n} }];"
+        "jsCode": "const aiResponse = $input.first().json;\nconst context = $('Build RAG Context').first().json;\n\nlet answer = 'Sorry, I could not generate an answer.';\nif (aiResponse.error) {\n  answer = 'The AI model call failed: ' + JSON.stringify(aiResponse.error).substring(0, 300);\n} else if (aiResponse.choices && aiResponse.choices[0] && aiResponse.choices[0].message) {\n  answer = aiResponse.choices[0].message.content;\n}\n\nreturn [{ json: {\n  question: context.question,\n  answer: answer,\n  sources: context.sources,\n  documents_consulted: context.doc_count,\n  model: aiResponse.model || null,\n  timestamp: new Date().toISOString()\n} }];"
       },
       "id": "efeb38cb-0748-46b0-aee2-11ca8dad61c9",
       "name": "Format Response",
@@ -172,6 +160,47 @@
         1920,
         0
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "HTTP-Referer",
+              "value": "https://nexuscorp.net"
+            },
+            {
+              "name": "X-Title",
+              "value": "NEXUS OS - Ask AI Agent (backup tier)"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'openai/gpt-oss-120b:free', models: ['openai/gpt-oss-120b:free','meta-llama/llama-3.3-70b-instruct:free'], route: 'fallback', temperature: 0.3, max_tokens: 1000, messages: [ { role: 'system', content: 'You are the NEXUS OS AI Assistant for an automotive dealership. Answer questions accurately using ONLY the provided context. If the context does not contain enough information, say so clearly rather than guessing. Always cite which numbered source you used. Be concise and professional. Respond in the same language the user asked in.' }, { role: 'user', content: 'Context from knowledge base (' + $('Build RAG Context').first().json.doc_count + ' documents found):\\n\\n' + $('Build RAG Context').first().json.context + '\\n\\n---\\nQuestion: ' + $('Build RAG Context').first().json.question } ] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "b6c8b873-b383-44c2-a11f-5475c044d93c",
+      "name": "AI Answer - Backup Models",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        240
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "UUtKrBzkQOztAOzZ",
+          "name": "OpenRouter account"
+        }
+      }
     }
   ],
   "connections": {
@@ -205,6 +234,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "AI Answer - Backup Models",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -235,6 +271,17 @@
         [
           {
             "node": "Supabase Knowledge Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Answer - Backup Models": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
             "type": "main",
             "index": 0
           }

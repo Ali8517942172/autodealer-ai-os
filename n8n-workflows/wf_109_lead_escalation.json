@@ -21,15 +21,18 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Analyze this escalated lead: {{ JSON.stringify($json) }}. Summarize the situation, explain why it might have been escalated, and recommend next steps for the senior rep. Output a professional summary.",
+        "text": "=Escalated lead: {{ JSON.stringify($json) }}\n\nEscalation reason: {{ $('Fetch Escalated Lead').first().json.escalation_reason || $json.reason || 'not specified' }}\n\nBrief the senior rep on this lead.",
         "options": {
-          "systemMessage": "You are an AI Escalation Analyst for NEXUS OS. You review leads that are stuck or escalated, analyze their history, and provide concise, actionable recommendations for human managers."
-        }
+          "systemMessage": "You are an AI Escalation Analyst for NEXUS OS, a premium UAE car dealership. You review leads that are stuck, silent or escalated and brief a human senior rep.\n\nUse get_lead_timeline to pull the customer's full communication history before judging, and find_available_rep to see which senior rep is online.\n\nProduce a short, professional briefing containing:\n1. What the customer wants (vehicle, budget, finance need).\n2. Where the conversation stalled and the likely reason.\n3. A concrete recommended next action for the rep, including a suggested opening line.\n\nIf the escalation reason mentions the customer has gone silent for N hours, treat re-engagement as the priority and suggest the best channel and timing. Never invent facts that are not in the timeline.",
+          "maxIterations": 8,
+          "enableStreaming": false
+        },
+        "needsFallback": true
       },
       "id": "3",
       "name": "AI Escalation Analyst",
       "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.6,
+      "typeVersion": 3.1,
       "position": [
         464,
         304
@@ -94,10 +97,6 @@
         304
       ],
       "credentials": {
-        "httpCustomAuth": {
-          "id": "ewCXyGq2VCV76foT",
-          "name": "Custom Auth account"
-        },
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
@@ -116,8 +115,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
-        320,
-        512
+        400,
+        528
       ],
       "id": "9bec1d52-b6b2-42ba-a63f-1fbd81615588",
       "name": "OpenRouter Chat Model",
@@ -197,12 +196,10 @@
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "post",
         "select": "channel",
         "channelId": {
           "__rl": true,
-          "value": "C0BJ5PLTPDJ",
+          "value": "C0BKTLL1X54",
           "mode": "id"
         },
         "text": "=:rotating_light: *Escalated Lead Alert*\n\n*Lead:* {{ $('Fetch Escalated Lead').first().json.name || 'Unknown' }}\n*Email:* {{ $('Fetch Escalated Lead').first().json.email || 'n/a' }}\n*Score:* {{ $('Fetch Escalated Lead').first().json.ai_score ?? 'n/a' }}\n\n*AI Summary:*\n{{ $json.output }}",
@@ -231,7 +228,6 @@
           "conditions": [
             {
               "keyName": "email",
-              "condition": "eq",
               "keyValue": "={{ $json.lead?.email || $json.body?.email || $json.email }}"
             }
           ]
@@ -253,6 +249,9 @@
       }
     },
     {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
       "id": "6fb61383-fa81-499f-ba42-078d3033b9d6",
       "name": "Called by Master Router",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
@@ -260,9 +259,26 @@
       "position": [
         -32,
         448
-      ],
+      ]
+    },
+    {
       "parameters": {
-        "inputSource": "passthrough"
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        560,
+        672
+      ],
+      "id": "esc-groq-0001",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "JgOg4w1ZMJc37lmL",
+          "name": "Groq account"
+        }
       }
     }
   ],
@@ -370,6 +386,17 @@
           }
         ]
       ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Escalation Analyst",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -378,6 +405,7 @@
     "availableInMCP": true,
     "timezone": "Asia/Dubai",
     "saveDataErrorExecution": "all",
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveDataSuccessExecution": "all"
   }
 }

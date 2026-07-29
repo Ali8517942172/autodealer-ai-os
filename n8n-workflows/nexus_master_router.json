@@ -33,23 +33,6 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "=Lead data: {{ JSON.stringify($json.lead) }}\n\nStep 1: Use the Supabase Lead Lookup tool to check whether this lead already exists.\nStep 2: Score the lead from 1-100 and classify intent as HOT, WARM or COLD.\n  - HOT: ready to buy now, specific vehicle, clear budget, urgent language.\n  - WARM: genuine interest but no urgency or budget confirmed.\n  - COLD: browsing only, no budget, no timeline, or vague enquiry.\nStep 3: Use the upsert_lead tool to save the lead with the score and status you decided.\nStep 4: Return your decision.\n\nReturn ONLY a raw JSON object and nothing else. No markdown, no code fences, no commentary.\nSchema: {\"score\": 85, \"intent\": \"HOT\", \"reason\": \"one short sentence\"}",
-        "options": {
-          "systemMessage": "You are NEXUS AI, an expert lead scoring agent for a premium car dealership. You evaluate leads and route them accordingly."
-        }
-      },
-      "id": "3",
-      "name": "AI Lead Scoring Agent",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.6,
-      "position": [
-        464,
-        304
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "// The agent usually returns JSON, but often wrapped in ```json fences or with\n// a sentence around it. The old version silently fell back to COLD/0 on any\n// parse failure, which made every single lead look cold.\nconst lead = $('Validate & Enrich Input').first().json.lead;\nconst rawOut = $input.first().json;\nconst text = String(rawOut.output ?? rawOut.text ?? '').trim();\n\nfunction extractJson(s) {\n  if (!s) return null;\n  // 1. straight parse\n  try { return JSON.parse(s); } catch (e) {}\n  // 2. strip markdown code fences\n  const fenced = s.replace(/```(?:json)?/gi, '').trim();\n  try { return JSON.parse(fenced); } catch (e) {}\n  // 3. grab the outermost {...} block\n  const first = fenced.indexOf('{');\n  const last = fenced.lastIndexOf('}');\n  if (first !== -1 && last > first) {\n    try { return JSON.parse(fenced.slice(first, last + 1)); } catch (e) {}\n  }\n  return null;\n}\n\nlet parsed = extractJson(text);\nlet parseFailed = false;\n\nif (!parsed || typeof parsed !== 'object') {\n  parseFailed = true;\n  // Last resort: pull an intent word and a number out of the prose so a\n  // genuinely hot lead is not silently downgraded to COLD.\n  const intentMatch = text.match(/\\b(HOT|WARM|COLD)\\b/i);\n  const scoreMatch = text.match(/\\b(\\d{1,3})\\b/);\n  parsed = {\n    intent: intentMatch ? intentMatch[1].toUpperCase() : 'WARM',\n    score: scoreMatch ? Math.min(100, parseInt(scoreMatch[1], 10)) : 50,\n    reason: 'Agent did not return valid JSON. Raw output: ' + text.substring(0, 300)\n  };\n}\n\nconst intent = String(parsed.intent || '').toUpperCase();\nconst ai_decision = {\n  intent: ['HOT', 'WARM', 'COLD'].includes(intent) ? intent : 'WARM',\n  score: Number.isFinite(Number(parsed.score)) ? Number(parsed.score) : 50,\n  reason: parsed.reason || null,\n  parse_failed: parseFailed\n};\n\nreturn [{ json: { lead, ai_decision } }];"
       },
       "id": "6",
@@ -180,10 +163,6 @@
         304
       ],
       "credentials": {
-        "httpCustomAuth": {
-          "id": "ewCXyGq2VCV76foT",
-          "name": "Custom Auth account"
-        },
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
@@ -193,7 +172,7 @@
     },
     {
       "parameters": {
-        "model": "google/gemini-2.5-flash",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
         "options": {
           "maxTokens": 1024,
           "temperature": 0.2
@@ -202,7 +181,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
-        368,
+        288,
         512
       ],
       "id": "bff6b3f4-2118-4f5b-b55c-daae3051339d",
@@ -269,16 +248,12 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.4,
       "position": [
-        752,
+        880,
         560
       ],
       "id": "1598f41b-1c70-4c34-b06c-e7c3054a0c94",
       "name": "upsert_lead",
       "credentials": {
-        "httpCustomAuth": {
-          "id": "ewCXyGq2VCV76foT",
-          "name": "Custom Auth account"
-        },
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
@@ -305,8 +280,8 @@
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
       "position": [
-        560,
-        560
+        672,
+        544
       ],
       "credentials": {
         "supabaseApi": {
@@ -390,11 +365,84 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        1200,
-        512
+        1232,
+        528
       ],
       "id": "9f0912bc-d895-4281-aa26-de32622db821",
       "name": "Marketing Drip (COLD)"
+    },
+    {
+      "parameters": {
+        "model": "google/gemma-4-31b-it:free",
+        "options": {
+          "maxTokens": 1024,
+          "temperature": 0.2
+        }
+      },
+      "id": "5ed5b279-cedf-48cd-b723-bf3e90a195bb",
+      "name": "Fallback Model (Gemma 4)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        448,
+        512
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "UUtKrBzkQOztAOzZ",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Lead data: {{ JSON.stringify($json.lead) }}\n\nStep 1: Use the Supabase Lead Lookup tool to check whether this lead already exists in the CRM.\nStep 2: Use the check_purchase_history tool to see whether this person has bought a vehicle from us before (a returning/VIP customer).\nStep 3: Score the lead from 1-100 and classify intent as HOT, WARM or COLD.\n  - If check_purchase_history returns ANY prior purchase, this is a RETURNING VIP CUSTOMER: score 90-100 and intent HOT, regardless of how casual the new enquiry sounds.\n  - Otherwise: HOT = ready to buy now, specific vehicle, clear budget or urgent language; WARM = genuine interest but no urgency/budget; COLD = just browsing, no budget, no timeline.\nStep 4: Use the upsert_lead tool to save the lead with the score and status you decided.\nStep 5: Return your decision.\n\nReturn ONLY a raw JSON object and nothing else. No markdown, no code fences, no commentary.\nSchema: {\"score\": 95, \"intent\": \"HOT\", \"reason\": \"one short sentence\", \"vip\": true}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "You are NEXUS AI, an expert lead scoring agent for a premium car dealership in the UAE. You evaluate inbound leads, check whether they are returning customers, persist them to the CRM, and classify them so the router can dispatch them correctly. Returning customers are extremely valuable and must always be routed as HOT.",
+          "maxIterations": 8,
+          "enableStreaming": false
+        }
+      },
+      "id": "e2f0eb5f-65ab-4a0c-88ff-33463a77662f",
+      "name": "AI Lead Scoring Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        464,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "purchase_history",
+        "limit": 5,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions0_Field_Value', `The lead's email address, used to check whether this person is a returning customer who has bought a vehicle from us before`, 'string') }}"
+            }
+          ]
+        }
+      },
+      "id": "6c739b13-27ba-4d04-aa8b-2086cf1f9c43",
+      "name": "check_purchase_history",
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        528,
+        672
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      }
     }
   ],
   "connections": {
@@ -403,28 +451,6 @@
         [
           {
             "node": "Validate & Enrich Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Validate & Enrich Input": {
-      "main": [
-        [
-          {
-            "node": "AI Lead Scoring Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Lead Scoring Agent": {
-      "main": [
-        [
-          {
-            "node": "Parse AI Decision",
             "type": "main",
             "index": 0
           }
@@ -474,45 +500,12 @@
         ]
       ]
     },
-    "OpenRouter Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Lead Scoring Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "ERP Sync (HOT)": {
       "main": [
         [
           {
             "node": "Audit Log",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "upsert_lead": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Lead Scoring Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Supabase Lead Lookup": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Lead Scoring Agent",
-            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -551,6 +544,83 @@
           {
             "node": "Audit Log",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Enrich Input": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Scoring Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Model (Gemma 4)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "upsert_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Lead Lookup": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_purchase_history": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]
