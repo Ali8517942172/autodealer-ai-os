@@ -4,9 +4,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const N8N = import.meta.env.VITE_N8N_BASE_URL;
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Always trim. A trailing newline is trivially easy to paste into a Vercel
+// env var (PowerShell's Set-Clipboard appends one), and it does not fail
+// visibly: the newline lands in the `apikey` HTTP header, Chrome rejects the
+// header, and every request dies with the opaque
+// "Failed to execute 'fetch' on 'Window': Invalid value".
+const envStr = (v) => (typeof v === 'string' ? v.trim() : v);
+
+const N8N = envStr(import.meta.env.VITE_N8N_BASE_URL);
+const SUPABASE_URL = envStr(import.meta.env.VITE_SUPABASE_URL);
+const SUPABASE_ANON = envStr(import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 // ==========================================
 // AUTH GATE

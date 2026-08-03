@@ -1,5 +1,5 @@
 // n8n KYC/AML Document Auditor — Tailscale Funnel (permanent HTTPS)
-const WEBHOOK_URL = import.meta.env.VITE_N8N_BASE_URL + "/webhook/audit-kyc";
+const WEBHOOK_URL = String(import.meta.env.VITE_N8N_BASE_URL || "").trim() + "/webhook/audit-kyc";
 
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
