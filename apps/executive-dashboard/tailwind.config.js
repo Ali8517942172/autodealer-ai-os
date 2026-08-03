@@ -1,5 +1,22 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+            // Without `content`, Tailwind scans nothing and emits no utility
+            // classes at all — the build "succeeds" but ships a 7 kB stylesheet
+            // and the dashboard renders as unstyled HTML.
+            content: [
+                './index.html',
+                './contract-auditor.html',
+                './app.js',
+                './contract-auditor.js'
+            ],
+            // app.js builds these class names at runtime (`bg-status-${tone}-light`),
+            // so the scanner cannot see them in the source.
+            safelist: [
+                'bg-status-hot', 'bg-status-warm', 'bg-status-cold', 'bg-status-good',
+                'bg-status-hot-light', 'bg-status-warm-light', 'bg-status-cold-light', 'bg-status-good-light',
+                'text-status-hot', 'text-status-warm', 'text-status-cold', 'text-status-good',
+                'border-status-hot/30', 'border-status-warm/30'
+            ],
             darkMode: "class",
             theme: {
                 extend: {

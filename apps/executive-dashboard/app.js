@@ -2,9 +2,91 @@
 // Direct integrations: Supabase + n8n (Tailscale)
 // Architecture: Frontend → Supabase REST + n8n webhooks (Make.com REMOVED)
 
+import { createClient } from '@supabase/supabase-js';
+
 const N8N = import.meta.env.VITE_N8N_BASE_URL;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// ==========================================
+// AUTH GATE
+// ==========================================
+// The publishable key ships inside the browser bundle, so anyone with the URL
+// holds it. `leads`, `audit_log` and `competitors` deliberately have NO policy
+// for the `anon` role — they are readable only by `authenticated`. That means
+// this dashboard MUST sign a real user in; without it every panel silently
+// renders empty. Do not "fix" empty panels by adding an anon read policy on
+// `leads` — that table holds customer names, emails, phones and budgets.
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Every Supabase REST call must carry the signed-in user's access token, not the
+// bare publishable key, or RLS evaluates the request as `anon`.
+let SESSION = null;
+function authHeaders() {
+    const token = SESSION?.access_token || SUPABASE_ANON;
+    return { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` };
+}
+
+function renderLogin(message) {
+    const el = document.getElementById('authGate');
+    if (!el) return;
+    el.style.display = 'flex';
+    el.innerHTML = `
+      <div style="background:#fff;border:1px solid #c6c6cd;border-radius:12px;padding:32px;width:100%;max-width:380px;box-shadow:0 10px 30px rgba(0,0,0,.08)">
+        <h1 style="font:700 20px Inter,sans-serif;color:#1b1b1d;margin:0 0 4px">NEXUS OS</h1>
+        <p style="font:400 13px Inter,sans-serif;color:#45474c;margin:0 0 20px">Sign in to view live dealership data.</p>
+        <form id="loginForm">
+          <input id="authEmail" type="email" required placeholder="you@dealership.ae" autocomplete="username"
+                 style="width:100%;padding:10px 12px;border:1px solid #c6c6cd;border-radius:8px;font:400 14px Inter,sans-serif;margin-bottom:10px" />
+          <input id="authPassword" type="password" required placeholder="Password" autocomplete="current-password"
+                 style="width:100%;padding:10px 12px;border:1px solid #c6c6cd;border-radius:8px;font:400 14px Inter,sans-serif;margin-bottom:14px" />
+          <button type="submit" id="authSubmit"
+                 style="width:100%;padding:11px;border:0;border-radius:8px;background:#000;color:#fff;font:600 14px Inter,sans-serif;cursor:pointer">Sign in</button>
+        </form>
+        <p id="authMsg" style="font:400 12px Inter,sans-serif;color:#b3261e;margin:12px 0 0;min-height:16px">${message || ''}</p>
+      </div>`;
+    document.getElementById('loginForm').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const btn = document.getElementById('authSubmit');
+        const msg = document.getElementById('authMsg');
+        btn.disabled = true; btn.textContent = 'Signing in…'; msg.textContent = '';
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: document.getElementById('authEmail').value.trim(),
+            password: document.getElementById('authPassword').value
+        });
+        if (error) {
+            btn.disabled = false; btn.textContent = 'Sign in';
+            msg.textContent = error.message;
+            return;
+        }
+        SESSION = data.session;
+        el.style.display = 'none';
+        startDashboard();
+    });
+}
+
+async function signOut() {
+    await supabase.auth.signOut();
+    SESSION = null;
+    location.reload();
+}
+
+function startDashboard() {
+    loadDashboard();
+    loadEventLog();
+}
+
+async function initAuth() {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) {
+        SESSION = data.session;
+        const gate = document.getElementById('authGate');
+        if (gate) gate.style.display = 'none';
+        startDashboard();
+    } else {
+        renderLogin();
+    }
+}
 // n8n webhook endpoints (migrated from Make.com — scenarios 6524449 + 6524643 replaced)
 const N8N_ERP_SYNC = `${N8N}/webhook/erp-sync`;
 const N8N_ESCALATION = `${N8N}/webhook/lead-escalation`;
@@ -17,20 +99,40 @@ function showPage(page) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const pageEl = document.getElementById(`page-${page}`);
     const navEl = document.querySelector(`[data-page="${page}"]`);
-    if (pageEl) pageEl.classList.add('active');
     if (navEl) navEl.classList.add('active');
 
+    if (pageEl) {
+        pageEl.classList.add('active');
+    } else {
+        // The nav offers more destinations than the Stitch export actually ships.
+        // Say so plainly instead of leaving the operator on a blank screen.
+        let stub = document.getElementById('page-notbuilt');
+        if (!stub) {
+            stub = document.createElement('section');
+            stub.id = 'page-notbuilt';
+            stub.className = 'page';
+            const host = document.querySelector('#page-dashboard')?.parentElement;
+            if (host) host.appendChild(stub);
+        }
+        stub.innerHTML = `<div class="max-w-[1440px] mx-auto p-8">
+            <div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-8 text-center">
+              <span class="material-symbols-outlined text-on-surface-variant" style="font-size:40px">construction</span>
+              <h2 class="text-lg font-bold mt-3 mb-1">This screen isn't built yet</h2>
+              <p class="text-sm text-on-surface-variant">The <strong>${String(page).replace(/[^a-z]/gi,'')}</strong> screen is designed but not wired to live data. The Overview, Conversations and Inventory screens are live.</p>
+            </div></div>`;
+        stub.classList.add('active');
+    }
+
+    // The Stitch header has no #page-title node — guard rather than throw, which
+    // would abort the click handler and leave navigation dead.
     const titles = {
-        dashboard: 'Executive Dashboard',
-        leads: 'Leads & CRM',
-        inventory: 'Vehicle Inventory',
-        marketing: 'Marketing Intelligence',
-        finance: 'Finance & Accounting',
-        rag: 'AI Knowledge Assistant',
-        automation: 'Automations & Workflows',
-        auditor: 'Contract Auditor'
+        dashboard: 'Executive Dashboard', leads: 'Leads & CRM', inventory: 'Vehicle Inventory',
+        conversations: 'Conversations', competitors: 'Competitor Pricing',
+        rag: 'AI Knowledge Assistant', automation: 'Automations & Workflows', auditor: 'Contract Auditor'
     };
-    document.getElementById('page-title').textContent = titles[page] || 'Dashboard';
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.textContent = titles[page] || 'Dashboard';
+
     if (page === 'leads') loadLeadsPage();
     if (page === 'automation') loadEventLog();
 }
@@ -39,93 +141,120 @@ function showPage(page) {
 // LOAD DASHBOARD — direct from Supabase
 // ==========================================
 async function loadDashboard() {
-    const esc = s => String(s||'').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+    const esc = s => String(s ?? '').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+    // Write only if the element exists. The Stitch markup does not yet contain
+    // every panel the older dashboard had, and a missing node must not abort the
+    // whole render.
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    const setHTML = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v; };
+    const blank = () => ['kpiOpenLeads','kpiLeadBreakdown','kpiLeadsToday','kpiAvgResponse',
+                         'kpiInvAtRisk','kpiHoldingCost','pipelineValue','kpiPipelineSub']
+                        .forEach(id => setText(id, '—'));
+
+    const h = authHeaders();
+    const AED = n => 'AED ' + Number(n || 0).toLocaleString('en-US');
+    const band = (l) => {
+        const s = String(l.status || '').toUpperCase();
+        if (s === 'HOT' || s === 'WARM' || s === 'COLD') return s;
+        const n = Number(l.ai_score) || 0;
+        return n >= 80 ? 'HOT' : n >= 50 ? 'WARM' : 'COLD';
+    };
+    const ago = (ts) => {
+        if (!ts) return '—';
+        const mins = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 60000));
+        if (mins < 60) return `${mins} min ago`;
+        const hrs = Math.round(mins / 60);
+        return hrs < 24 ? `${hrs} h ago` : `${Math.round(hrs / 24)} d ago`;
+    };
+
     try {
-        const h = { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` };
-        const leadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=priority,score,status&limit=100`, { headers: h });
+        // ---- KPI row: every figure below is computed from live Supabase rows ----
+        const leadsRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/leads?select=status,ai_score,budget_aed,response_time_minutes,created_at&limit=1000`,
+            { headers: h });
         const leads = await leadsRes.json();
+        if (!Array.isArray(leads)) throw new Error('leads query failed: ' + JSON.stringify(leads).slice(0, 200));
 
-        if (!Array.isArray(leads)) {
-            console.error("Dashboard load error: Supabase API returned an error:", leads);
-            document.getElementById('hotLeads').textContent = "-";
-            document.getElementById('warmLeads').textContent = "-";
-            document.getElementById('coldLeads').textContent = "-";
-            document.getElementById('pipelineValue').textContent = "—";
-            document.getElementById('convRate').textContent = "—";
-            document.getElementById('avgDays').textContent = "—";
-            document.getElementById('aiInsights').innerHTML = `<div class="p-4 text-error text-sm">Failed to load data. Please check Supabase API Key.</div>`;
-            return;
-        }
+        const hot  = leads.filter(l => band(l) === 'HOT').length;
+        const warm = leads.filter(l => band(l) === 'WARM').length;
+        const cold = leads.filter(l => band(l) === 'COLD').length;
+        const today = new Date().toISOString().slice(0, 10);
+        const newToday = leads.filter(l => String(l.created_at || '').slice(0, 10) === today).length;
 
-        const hot = leads.filter(l => l.priority === 'HOT' || l.score >= 80).length;
-        const warm = leads.filter(l => l.priority === 'WARM' || (l.score >= 50 && l.score < 80)).length;
-        const cold = leads.length - hot - warm;
+        setText('kpiOpenLeads', leads.length);
+        setText('kpiLeadBreakdown', `${hot} HOT · ${warm} WARM · ${cold} COLD`);
+        setText('kpiLeadsToday', newToday ? `+${newToday} today` : 'none today');
 
-        document.getElementById('hotLeads').textContent = hot;
-        document.getElementById('warmLeads').textContent = warm;
-        document.getElementById('coldLeads').textContent = Math.max(0, cold);
+        const resp = leads.map(l => Number(l.response_time_minutes)).filter(Number.isFinite);
+        if (resp.length) {
+            const avg = resp.reduce((a, b) => a + b, 0) / resp.length;
+            setText('kpiAvgResponse', avg < 1 ? `${Math.round(avg * 60)}s` : `${avg.toFixed(1)} min`);
+        } else setText('kpiAvgResponse', '—');
 
-        // Revenue KPIs: no live finance/revenue feed is wired up yet (no confirmed
-        // Supabase table backs these), so we show an honest empty state instead of
-        // fabricating figures.
-        document.getElementById('pipelineValue').textContent = '—';
-        document.getElementById('convRate').textContent = '—';
-        document.getElementById('avgDays').textContent = '—';
-        document.getElementById('todayRevenue').textContent = '—';
-        document.getElementById('mtdRevenue').textContent = '—';
-        document.getElementById('netProfit').textContent = '—';
-        document.getElementById('grossMargin').textContent = 'No live data yet';
+        const pipeline = leads.reduce((sum, l) => sum + (Number(l.budget_aed) || 0), 0);
+        const withBudget = leads.filter(l => Number(l.budget_aed) > 0).length;
+        setText('pipelineValue', pipeline ? AED(pipeline) : '—');
+        setText('kpiPipelineSub', `across ${withBudget} leads with a stated budget`);
 
-        // AI Insights: only the HOT-lead count below is real (derived from the live
-        // Supabase `leads` query above). There is no AI-generation backend wired up
-        // for narrative insights yet, so we don't fabricate the rest.
-        document.getElementById('aiInsights').innerHTML = `
-          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 hover:border-error/30 transition-colors mb-3">
-            <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-sm text-error">priority_high</span><span class="text-xs font-bold text-error uppercase">High Priority</span></div>
-            <p class="text-sm text-on-surface-variant leading-relaxed"><strong class="text-on-surface">${hot} HOT leads</strong> need immediate follow-up (live count from Supabase).</p>
-          </div>
-          <div class="p-4 bg-outline-variant/10 rounded-lg border border-outline-variant/20 text-center">
-            <p class="text-sm text-on-surface-variant leading-relaxed italic">Competitor pricing &amp; channel ROI insights — coming soon (no live AI insights feed connected yet).</p>
-          </div>`;
-
-        // Inventory Alerts: computed for real from Supabase `inventory.days_in_stock`.
+        // ---- Inventory at risk ----
         try {
-            const invRes = await fetch(`${SUPABASE_URL}/rest/v1/inventory?select=id,model,days_in_stock&order=days_in_stock.desc&limit=5`, { headers: h });
-            const inventory = await invRes.json();
-            if (Array.isArray(inventory) && inventory.length) {
-                const aged = inventory.filter(v => (v.days_in_stock || 0) >= 90);
-                document.getElementById('inventoryAlerts').innerHTML = aged.length ? aged.map(v => {
-                    const critical = v.days_in_stock >= 120;
-                    return `<div class="flex items-center gap-4 p-3 bg-outline-variant/10 rounded-lg border ${critical ? 'border-error/20 hover:border-error/40' : 'border-tertiary/20 hover:border-tertiary/40'} mb-3 transition-colors">
+            const invRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/inventory?select=id,model,days_in_stock,holding_cost_accrued&order=days_in_stock.desc&limit=200`,
+                { headers: h });
+            const inv = await invRes.json();
+            if (Array.isArray(inv)) {
+                const aged = inv.filter(v => (Number(v.days_in_stock) || 0) >= 90);
+                const holding = aged.reduce((s, v) => s + (Number(v.holding_cost_accrued) || 0), 0);
+                setText('kpiInvAtRisk', aged.length);
+                setText('kpiHoldingCost', holding ? `${AED(holding)} holding cost accrued` : 'no holding cost recorded');
+
+                setHTML('inventoryAlerts', aged.length ? aged.slice(0, 5).map(v => {
+                    const critical = Number(v.days_in_stock) >= 120;
+                    return `<div class="flex items-center gap-4 p-3 rounded-lg border ${critical ? 'border-status-hot/30' : 'border-status-warm/30'} mb-3">
                       <div class="flex-1">
-                        <div class="flex justify-between items-center mb-1"><span class="text-sm font-bold text-on-surface">${esc(v.model)} (${esc(v.id)})</span><span class="text-[10px] ${critical ? 'text-error bg-error/10' : 'text-tertiary bg-tertiary/10'} font-bold px-2 py-0.5 rounded uppercase">${critical ? 'Critical' : 'Warning'}</span></div>
-                        <p class="text-xs text-on-surface-variant">In stock: <strong class="${critical ? 'text-error' : 'text-tertiary'}">${esc(v.days_in_stock)} days</strong> (live from Supabase).</p>
+                        <div class="flex justify-between items-center mb-1"><span class="text-sm font-bold">${esc(v.model)}</span><span class="text-[10px] ${critical ? 'bg-status-hot-light text-status-hot' : 'bg-status-warm-light text-status-warm'} font-bold px-2 py-0.5 rounded uppercase">${critical ? 'Critical' : 'Warning'}</span></div>
+                        <p class="text-xs text-on-surface-variant">In stock <strong>${esc(v.days_in_stock)} days</strong>${Number(v.holding_cost_accrued) ? ` · ${esc(AED(v.holding_cost_accrued))} accrued` : ''}</p>
                       </div>
                     </div>`;
-                }).join('') : `<div class="p-4 text-sm text-on-surface-variant">No aging inventory — all units under 90 days in stock.</div>`;
-            } else {
-                document.getElementById('inventoryAlerts').innerHTML = `<div class="p-4 text-sm text-on-surface-variant">No inventory data available yet.</div>`;
-            }
-        } catch (invErr) {
-            document.getElementById('inventoryAlerts').innerHTML = `<div class="p-4 text-sm text-on-surface-variant">No inventory data available yet.</div>`;
+                }).join('') : `<div class="p-4 text-sm text-on-surface-variant">No unit has been in stock 90+ days.</div>`);
+            } else { setText('kpiInvAtRisk', '—'); setText('kpiHoldingCost', '—'); }
+        } catch (e) {
+            console.error('inventory KPI failed:', e);
+            setText('kpiInvAtRisk', '—'); setText('kpiHoldingCost', '—');
         }
 
-        // Marketing ROI: no campaigns/attribution backend wired up yet — honest placeholder.
-        document.getElementById('marketingROI').innerHTML = `<div class="p-4 text-sm text-on-surface-variant italic">Coming soon — channel ROI attribution isn't wired up to a live data source yet.</div>`;
+        // ---- Live Lead Feed ----
+        try {
+            const feedRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/leads?select=name,vehicle_interest,status,ai_score,created_at&order=created_at.desc&limit=8`,
+                { headers: h });
+            const feed = await feedRes.json();
+            if (!Array.isArray(feed)) throw new Error('feed query failed');
+            setHTML('leadFeedBody', feed.length ? feed.map(l => {
+                const b = band(l);
+                const tone = b === 'HOT' ? 'hot' : b === 'WARM' ? 'warm' : 'cold';
+                const score = Number(l.ai_score) || 0;
+                return `<tr class="hover:bg-surface-container transition-colors">
+                  <td class="py-3 px-4"><span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-status-${tone}-light text-status-${tone} uppercase tracking-wider">${esc(b)}</span></td>
+                  <td class="py-3 px-4 font-medium">${esc(l.name || 'Unknown')}</td>
+                  <td class="py-3 px-4 text-on-surface-variant">${esc(l.vehicle_interest || '—')}</td>
+                  <td class="py-3 px-4 text-center"><span class="text-[12px] font-bold">${score || '—'}</span></td>
+                  <td class="py-3 px-4 text-right text-on-surface-variant text-[12px]">${esc(ago(l.created_at))}</td>
+                </tr>`;
+            }).join('') : `<tr><td class="py-3 px-4 text-on-surface-variant" colspan="5">No leads yet — fire a test lead at the n8n webhook.</td></tr>`);
+        } catch (e) {
+            console.error('lead feed failed:', e);
+            setHTML('leadFeedBody', `<tr><td class="py-3 px-4 text-status-hot" colspan="5">Could not load the live lead feed from Supabase.</td></tr>`);
+        }
 
-        // Top Performer: no deals/sales-rep leaderboard backend wired up yet — honest placeholder.
-        document.getElementById('topPerformer').innerHTML = `<div class="p-4 text-sm text-on-surface-variant italic">Coming soon — no live sales leaderboard data source connected yet.</div>`;
+        // Panels with no live data source yet. Say so rather than invent numbers.
+        setHTML('marketingROI', `<div class="p-4 text-sm text-on-surface-variant italic">Channel ROI attribution is not wired to a data source yet.</div>`);
+        setHTML('topPerformer', `<div class="p-4 text-sm text-on-surface-variant italic">No sales leaderboard data source connected yet.</div>`);
 
     } catch (err) {
         console.error('Dashboard load error:', err);
-        // Fallback: honest empty state, not fabricated figures.
-        document.getElementById('todayRevenue').textContent = '—';
-        document.getElementById('mtdRevenue').textContent = '—';
-        document.getElementById('pipelineValue').textContent = '—';
-        document.getElementById('netProfit').textContent = '—';
-        document.getElementById('hotLeads').textContent = '—';
-        document.getElementById('warmLeads').textContent = '—';
-        document.getElementById('coldLeads').textContent = '—';
+        blank();
+        setHTML('leadFeedBody', `<tr><td class="py-3 px-4 text-status-hot" colspan="5">Could not reach Supabase. Showing nothing rather than stale data.</td></tr>`);
     }
 }
 
@@ -134,7 +263,7 @@ async function loadDashboard() {
 // ==========================================
 async function loadLeadsPage() {
     try {
-        const h = { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` };
+        const h = authHeaders();
         const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=20`, { headers: h });
         const leads = await res.json();
         const esc = s => String(s||'').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
@@ -143,17 +272,19 @@ async function loadLeadsPage() {
           <td class="px-5 py-3 border-b border-outline-variant"><strong>${esc(l.name)}</strong></td>
           <td class="px-5 py-3 border-b border-outline-variant">${esc(l.vehicle_interest||l.email||'—')}</td>
           <td class="px-5 py-3 border-b border-outline-variant">${esc(l.source||'—')}</td>
-          <td class="px-5 py-3 border-b border-outline-variant"><strong>${esc(l.score||'—')}</strong></td>
-          <td class="px-5 py-3 border-b border-outline-variant"><span class="badge badge-${(l.priority||'cold').toLowerCase()}">${esc(l.priority||'COLD')}</span></td>
-          <td class="px-5 py-3 border-b border-outline-variant">${esc(l.status||'New')}</td>
+          <td class="px-5 py-3 border-b border-outline-variant"><strong>${esc(l.ai_score ?? '—')}</strong></td>
+          <td class="px-5 py-3 border-b border-outline-variant"><span class="badge badge-${String(l.status||'cold').toLowerCase()}">${esc(l.status||'—')}</span></td>
+          <td class="px-5 py-3 border-b border-outline-variant">${esc(l.assigned_to||'Unassigned')}</td>
         </tr>`).join('');
 
         document.getElementById('leadsTable').innerHTML = rows || '<tr><td colspan="6" class="px-5 py-3 text-center text-on-surface-variant">No leads yet — fire a test lead via the n8n webhook</td></tr>';
     } catch(err) {
-        document.getElementById('leadsTable').innerHTML = `
-          <tr><td class="px-5 py-3"><strong>Ahmed Al-Rashid</strong></td><td class="px-5 py-3">Toyota LC 300</td><td class="px-5 py-3">WhatsApp</td><td class="px-5 py-3"><strong>92</strong></td><td class="px-5 py-3"><span class="badge badge-hot">HOT</span></td><td class="px-5 py-3">Contacted</td></tr>
-          <tr><td class="px-5 py-3"><strong>Fatima Al-Mansouri</strong></td><td class="px-5 py-3">Lexus LX 600</td><td class="px-5 py-3">Website</td><td class="px-5 py-3"><strong>97</strong></td><td class="px-5 py-3"><span class="badge badge-hot">HOT</span></td><td class="px-5 py-3">Test Drive</td></tr>
-          <tr><td class="px-5 py-3"><strong>Mohammed Rashed</strong></td><td class="px-5 py-3">Nissan Patrol V8</td><td class="px-5 py-3">Walk-in</td><td class="px-5 py-3"><strong>78</strong></td><td class="px-5 py-3"><span class="badge badge-warm">WARM</span></td><td class="px-5 py-3">Negotiation</td></tr>`;
+        // Never fall back to invented leads. A dealership manager cannot tell a
+        // fabricated row from a real one, and acting on a fake HOT lead is worse
+        // than seeing nothing. Show the failure honestly instead.
+        console.error('loadLeadsPage failed:', err);
+        document.getElementById('leadsTable').innerHTML =
+          `<tr><td colspan="6" class="px-5 py-3 text-center text-error">Could not load leads from Supabase. Check the connection and reload — no data is being shown rather than stale or sample data.</td></tr>`;
     }
 }
 
@@ -260,7 +391,7 @@ function addLiveEvent(type, msg) {
 }
 
 async function triggerErpSync() {
-    addLiveEvent('ERP_SYNC_TRIGGER', 'Syncing HOT leads to Odoo ERP via n8n…');
+    addLiveEvent('ERP_SYNC_TRIGGER', 'Syncing HOT leads to Bitrix24 CRM via n8n…');
     try {
         const res = await fetch(N8N_ERP_SYNC, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ trigger: 'dashboard', timestamp: new Date().toISOString() }) });
         addLiveEvent('ERP_SYNC_SUCCESS', `ERP sync triggered — status ${res.status}`);
@@ -283,28 +414,59 @@ async function triggerN8NIntel() {
     } catch(e) { addLiveEvent('N8N_ERROR', e.message); }
 }
 
-function loadEventLog() {
-    const events = [
-        { time: '09:02:14', type: 'LEAD_SCORED', msg: 'Ahmed Al-Rashid → HOT (92/100) via n8n Master Router' },
-        { time: '09:02:17', type: 'WHATSAPP_SENT', msg: 'n8n wf_107: WhatsApp welcome sent to Ahmed' },
-        { time: '09:05:30', type: 'COMPETITOR_ALERT', msg: 'Al Futtaim dropped Prado by AED 5K — Intel scraper' },
-        { time: '09:10:00', type: 'KYC_AUDIT', msg: 'Contract Auditor: Emirates ID verified (LOW risk)' },
-        { time: '09:15:22', type: 'DEAL_CLOSED', msg: 'Fatima: Lexus LX 600 → AED 420K — Supabase synced' },
-        { time: '09:15:24', type: 'ERP_SYNC', msg: 'n8n: Odoo deal INV-2026-0147 created' },
-        { time: '09:30:00', type: 'RAG_QUERY', msg: 'Employee asked warranty coverage → Knowledge Agent cited Page 12' },
-        { time: '09:45:00', type: 'SLACK_ALERT', msg: '#sales-hot-leads: Fatima Al-Mansouri (97/100) escalated' }
-    ];
+// Reads the real `audit_log` table that every n8n workflow writes to. This used
+// to be a hard-coded array of invented events (including one referencing Odoo,
+// which was removed from this project entirely) — a demo panel that looked like
+// production telemetry.
+async function loadEventLog() {
     const log = document.getElementById('eventLog');
-    if (log) log.innerHTML = events.map(e => `<div class="event-entry"><span style="color:#777587;font-family:monospace">[${e.time}]</span> <span style="color:#3525cd;font-size:12px;padding:2px 6px;background:rgba(53,37,205,0.08);border-radius:4px;margin-right:8px">${e.type}</span><span style="color:#131b2e">${e.msg}</span></div>`).join('');
+    if (!log) return;
+    const esc = s => String(s ?? '').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+    try {
+        const h = authHeaders();
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/audit_log?select=workflow,status,lead_name,intent,lead_score,summary,logged_at&order=logged_at.desc&limit=15`,
+            { headers: h }
+        );
+        const rows = await res.json();
+        if (!Array.isArray(rows)) throw new Error('audit_log query failed: ' + JSON.stringify(rows).slice(0, 200));
+
+        if (!rows.length) {
+            log.innerHTML = `<div class="event-entry" style="color:#777587">No workflow activity logged yet.</div>`;
+            return;
+        }
+
+        log.innerHTML = rows.map(e => {
+            const t = e.logged_at ? new Date(e.logged_at).toLocaleTimeString([], { hour12: false }) : '--:--:--';
+            const type = String(e.workflow || 'WORKFLOW').toUpperCase().replace(/[^A-Z0-9]+/g, '_').slice(0, 24);
+            const bits = [e.lead_name, e.intent, e.lead_score != null ? `${e.lead_score}/100` : null]
+                .filter(Boolean).join(' · ');
+            const detail = bits || String(e.summary || '').split('\n')[0].slice(0, 120) || e.status || '';
+            return `<div class="event-entry"><span style="color:#777587;font-family:monospace">[${esc(t)}]</span> <span style="color:#3525cd;font-size:12px;padding:2px 6px;background:rgba(53,37,205,0.08);border-radius:4px;margin-right:8px">${esc(type)}</span><span style="color:#131b2e">${esc(detail)}</span></div>`;
+        }).join('');
+    } catch (err) {
+        console.error('loadEventLog failed:', err);
+        log.innerHTML = `<div class="event-entry" style="color:#b3261e">Could not load the activity log from Supabase.</div>`;
+    }
 }
 
 // ==========================================
 // INIT
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    loadDashboard();
-    loadEventLog();
-});
+document.addEventListener('DOMContentLoaded', initAuth);
 document.addEventListener('keypress', e => {
     if (e.key === 'Enter' && document.activeElement.id === 'ragInput') askRAG();
+});
+
+
+// ==========================================
+// EXPOSE HANDLERS TO INLINE onclick=""
+// app.js is a <script type="module">, so its declarations are module-scoped and
+// invisible to inline attributes. Without this, every nav click threw
+// "showPage is not defined" and no page ever switched.
+// ==========================================
+Object.assign(window, {
+    showPage, signOut, loadDashboard, loadLeadsPage, loadEventLog, askRAG,
+    calcCommission, runContractAudit, triggerErpSync, triggerEscalation,
+    triggerN8NIntel, addLiveEvent
 });

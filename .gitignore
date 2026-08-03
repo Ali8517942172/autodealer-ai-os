@@ -36,3 +36,7 @@ fetch_all_stitch_screens.py
 .vercel
 claude_desktop_config.json
 *.timestamp-*.mjs
+
+# DB dumps hold encrypted n8n credentials; local backups and build output
+n8n_backup*.sql
+*.bak

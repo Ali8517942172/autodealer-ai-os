@@ -24,6 +24,17 @@ services:
   n8n:
     image: docker.n8n.io/n8nio/n8n
     container_name: n8n
+    # WAHA no longer runs on this VM. The e2-micro's throttled shared-core CPU
+    # cannot boot WAHA's GOWS engine inside its hard-coded 10 s window
+    # ("GOWS did not start after 10000 ms"), and NOWEB has the stuck-on-STARTING
+    # bug. So WAHA stays on the local PC and is reached over Tailscale.
+    #
+    # Mapping the PC's Tailscale IP to the hostname `waha` means every workflow
+    # keeps calling http://waha:3000/api/sendText unchanged — no workflow edits.
+    # Tailscale IPs are stable per device, but if the PC is ever removed from
+    # the tailnet and re-added, update this line.
+    extra_hosts:
+      - "waha:100.76.236.42"      # desktop-l3an0ma (Windows) on the tailnet
     restart: always
     env_file: .env
     ports:

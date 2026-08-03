@@ -83,6 +83,8 @@
         .text-status-good { color: #3f4759; }
     </style></head>
 <body class="bg-surface-container-low text-on-surface font-body-md h-screen overflow-hidden flex">
+<div id="authGate" style="position:fixed;inset:0;z-index:9999;background:#f6f7f9;display:flex;align-items:center;justify-content:center;padding:24px"></div>
+
 <!-- Shared Component: SideNavBar -->
 <aside class="fixed left-0 top-0 h-full flex flex-col z-40 w-64 border-r border-outline-variant bg-surface-container-lowest dark:bg-primary-container hidden md:flex">
 <!-- Brand Logo -->
@@ -126,6 +128,9 @@
 <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors nav-item" data-page="automation" href="#" onclick="showPage('automation')">
 <span class="material-symbols-outlined text-[20px]">settings_suggest</span>
 <span class="font-body-md text-body-md">Automation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors mt-auto" href="#" onclick="signOut();return false;">
+<span class="material-symbols-outlined">logout</span><span class="text-sm">Sign out</span>
 </a>
 </nav>
 <!-- Footer Tab -->
@@ -176,11 +181,11 @@
 <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Open Leads</h3>
 <span class="material-symbols-outlined text-on-surface-variant opacity-50">person_search</span>
 </div>
-<div class="font-kpi-value text-kpi-value text-primary mb-1" id="todayRevenue">30</div>
-<div class="font-sub-label text-sub-label text-on-surface-variant mb-3">6 HOT · 4 WARM · 6 COLD</div>
+<div class="font-kpi-value text-kpi-value text-primary mb-1" id="kpiOpenLeads">—</div>
+<div class="font-sub-label text-sub-label text-on-surface-variant mb-3" id="kpiLeadBreakdown">—</div>
 <div class="mt-auto">
 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[12px] font-medium bg-status-good-light text-status-good">
-<span class="material-symbols-outlined text-[14px]">trending_up</span> +3 today
+<span class="material-symbols-outlined text-[14px]">trending_up</span> <span id="kpiLeadsToday">—</span>
                             </span>
 </div>
 </div>
@@ -190,7 +195,7 @@
 <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Avg Response Time</h3>
 <span class="material-symbols-outlined text-on-surface-variant opacity-50">timer</span>
 </div>
-<div class="font-kpi-value text-kpi-value text-primary mb-1">42s</div>
+<div class="font-kpi-value text-kpi-value text-primary mb-1" id="kpiAvgResponse">—</div>
 <div class="font-sub-label text-sub-label text-on-surface-variant mb-3">target under 5 min</div>
 <div class="mt-auto">
 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[12px] font-medium bg-status-good-light text-status-good">
@@ -204,8 +209,8 @@
 <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Inventory at Risk</h3>
 <span class="material-symbols-outlined text-on-surface-variant opacity-50">warning</span>
 </div>
-<div class="font-kpi-value text-kpi-value text-primary mb-1">4</div>
-<div class="font-sub-label text-sub-label text-on-surface-variant mb-3">AED 30,650 holding cost accrued</div>
+<div class="font-kpi-value text-kpi-value text-primary mb-1" id="kpiInvAtRisk">—</div>
+<div class="font-sub-label text-sub-label text-on-surface-variant mb-3" id="kpiHoldingCost">—</div>
 <div class="mt-auto">
 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[12px] font-medium bg-status-hot-light text-status-hot">
 <span class="material-symbols-outlined text-[14px]">error</span> Critical
@@ -218,8 +223,8 @@
 <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Pipeline Value</h3>
 <span class="material-symbols-outlined text-on-surface-variant opacity-50">account_balance_wallet</span>
 </div>
-<div class="font-kpi-value text-kpi-value text-primary mb-1" id="pipelineValue">AED 4.2M</div>
-<div class="font-sub-label text-sub-label text-on-surface-variant mb-3">across 16 open leads</div>
+<div class="font-kpi-value text-kpi-value text-primary mb-1" id="pipelineValue">—</div>
+<div class="font-sub-label text-sub-label text-on-surface-variant mb-3" id="kpiPipelineSub">—</div>
 <div class="mt-auto">
 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[12px] font-medium bg-status-good-light text-status-good">
 <span class="material-symbols-outlined text-[14px]">trending_up</span> +AED 505K
@@ -248,97 +253,8 @@
 <th class="font-table-header text-table-header text-on-surface-variant py-2 px-4 font-medium text-right">Time</th>
 </tr>
 </thead>
-<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant">
-<!-- Row 1: Hot, Animated -->
-<tr class="hover:bg-surface-container transition-colors animate-row-flash">
-<td class="py-3 px-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-status-hot-light text-status-hot uppercase tracking-wider">HOT</span>
-</td>
-<td class="py-3 px-4 font-medium">Vikram Malhotra</td>
-<td class="py-3 px-4 text-on-surface-variant">Family SUV</td>
-<td class="py-3 px-4 text-center">
-<div class="relative w-8 h-8 inline-flex items-center justify-center">
-<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
-<circle class="stroke-outline-variant opacity-20" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
-<circle class="stroke-status-hot" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="5" stroke-width="3"></circle>
-</svg>
-<span class="absolute text-[10px] font-bold">95</span>
-</div>
-</td>
-<td class="py-3 px-4 text-right text-on-surface-variant text-[12px]">2 min ago</td>
-</tr>
-<!-- Row 2: Hot -->
-<tr class="hover:bg-surface-container transition-colors">
-<td class="py-3 px-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-status-hot-light text-status-hot uppercase tracking-wider">HOT</span>
-</td>
-<td class="py-3 px-4 font-medium">Khalid Al Zaabi</td>
-<td class="py-3 px-4 text-on-surface-variant">Lexus LX 600 2024</td>
-<td class="py-3 px-4 text-center">
-<div class="relative w-8 h-8 inline-flex items-center justify-center">
-<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
-<circle class="stroke-outline-variant opacity-20" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
-<circle class="stroke-status-hot" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="5" stroke-width="3"></circle>
-</svg>
-<span class="absolute text-[10px] font-bold">95</span>
-</div>
-</td>
-<td class="py-3 px-4 text-right text-on-surface-variant text-[12px]">1 h ago</td>
-</tr>
-<!-- Row 3: Hot -->
-<tr class="hover:bg-surface-container transition-colors">
-<td class="py-3 px-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-status-hot-light text-status-hot uppercase tracking-wider">HOT</span>
-</td>
-<td class="py-3 px-4 font-medium">Mohammed Al Rashid</td>
-<td class="py-3 px-4 text-on-surface-variant">Toyota Land Cruiser 2024</td>
-<td class="py-3 px-4 text-center">
-<div class="relative w-8 h-8 inline-flex items-center justify-center">
-<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
-<circle class="stroke-outline-variant opacity-20" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
-<circle class="stroke-status-hot" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="8" stroke-width="3"></circle>
-</svg>
-<span class="absolute text-[10px] font-bold">92</span>
-</div>
-</td>
-<td class="py-3 px-4 text-right text-on-surface-variant text-[12px]">3 h ago</td>
-</tr>
-<!-- Row 4: Warm -->
-<tr class="hover:bg-surface-container transition-colors">
-<td class="py-3 px-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-status-warm-light text-status-warm uppercase tracking-wider">WARM</span>
-</td>
-<td class="py-3 px-4 font-medium">Fatima Hassan</td>
-<td class="py-3 px-4 text-on-surface-variant">Lexus LX 600 2024</td>
-<td class="py-3 px-4 text-center">
-<div class="relative w-8 h-8 inline-flex items-center justify-center">
-<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
-<circle class="stroke-outline-variant opacity-20" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
-<circle class="stroke-status-warm" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="26" stroke-width="3"></circle>
-</svg>
-<span class="absolute text-[10px] font-bold">74</span>
-</div>
-</td>
-<td class="py-3 px-4 text-right text-on-surface-variant text-[12px]">1 d ago</td>
-</tr>
-<!-- Row 5: Cold -->
-<tr class="hover:bg-surface-container transition-colors">
-<td class="py-3 px-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-status-cold-light text-status-cold uppercase tracking-wider">COLD</span>
-</td>
-<td class="py-3 px-4 font-medium">Ali Hassan</td>
-<td class="py-3 px-4 text-on-surface-variant">Nissan Patrol 2024</td>
-<td class="py-3 px-4 text-center">
-<div class="relative w-8 h-8 inline-flex items-center justify-center">
-<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
-<circle class="stroke-outline-variant opacity-20" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
-<circle class="stroke-status-cold" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="62" stroke-width="3"></circle>
-</svg>
-<span class="absolute text-[10px] font-bold">38</span>
-</div>
-</td>
-<td class="py-3 px-4 text-right text-on-surface-variant text-[12px]">2 d ago</td>
-</tr>
+<tbody id="leadFeedBody" class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant">
+<tr><td class="py-3 px-4 text-on-surface-variant" colspan="5">Loading live leads…</td></tr>
 </tbody>
 </table>
 </div>
@@ -443,7 +359,7 @@
 <!-- Spacer for bottom scroll -->
 <div class="h-8 w-full"></div>
 </div>
-</section><section class="page" id="page-conversations" style="display:none;">
+</section><section class="page" id="page-conversations">
 <!-- LEFT PANE: Inbox List -->
 <aside class="w-[360px] flex-shrink-0 bg-surface-container-lowest border-r border-outline-variant flex flex-col z-10">
 <!-- Inbox Header & Search -->
@@ -650,7 +566,7 @@
 </div>
 </div>
 </section>
-</section><section class="page" id="page-inventory" style="display:none;">
+</section><section class="page" id="page-inventory">
 <!-- Header Summary Section -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 <!-- Card 1 -->
