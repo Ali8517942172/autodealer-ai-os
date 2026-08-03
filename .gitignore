@@ -24,6 +24,13 @@ docker-compose.override.yml
 # Secrets
 *.pem
 *.key
+n8n_backup.sql
+
+# Throwaway integration scripts
+integrate_ui.py
+integrate_ui_v2.py
+inject_css.py
+fetch_all_stitch_screens.py
 
 .github/workflows/
 .vercel

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXUS OS - Leads Pipeline</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Public+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#dbd8e5",
+                    "inverse-primary": "#c3c0ff",
+                    "on-tertiary-fixed-variant": "#7b2f00",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#303039",
+                    "primary": "#3525cd",
+                    "primary-fixed": "#e2dfff",
+                    "on-tertiary-container": "#ffd2be",
+                    "on-surface": "#1b1b24",
+                    "on-primary": "#ffffff",
+                    "on-background": "#1b1b24",
+                    "inverse-on-surface": "#f2effc",
+                    "on-tertiary-fixed": "#351000",
+                    "on-primary-fixed": "#0f0069",
+                    "outline-variant": "#c7c4d8",
+                    "surface-container-low": "#f5f2ff",
+                    "surface-container-highest": "#e3e1ed",
+                    "tertiary": "#7e3000",
+                    "surface-bright": "#fbf8ff",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e9e7f3",
+                    "secondary-fixed-dim": "#c2c1ff",
+                    "surface-variant": "#e3e1ed",
+                    "tertiary-fixed": "#ffdbcc",
+                    "tertiary-container": "#a44100",
+                    "on-secondary-fixed-variant": "#403f81",
+                    "on-secondary-fixed": "#130f54",
+                    "on-secondary-container": "#444386",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#464555",
+                    "error": "#ba1a1a",
+                    "secondary": "#58579b",
+                    "surface-tint": "#4d44e3",
+                    "secondary-container": "#b6b4ff",
+                    "on-primary-fixed-variant": "#3322cc",
+                    "primary-container": "#4f46e5",
+                    "on-primary-container": "#dad7ff",
+                    "tertiary-fixed-dim": "#ffb695",
+                    "background": "#fbf8ff",
+                    "outline": "#777587",
+                    "surface": "#fbf8ff",
+                    "secondary-fixed": "#e2dfff",
+                    "surface-container": "#efecf9",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {},
+            "fontFamily": {
+                    "headline": [
+                            "Inter"
+                    ],
+                    "display": [
+                            "Inter"
+                    ],
+                    "body": [
+                            "Inter"
+                    ],
+                    "label": [
+                            "Public Sans"
+                    ]
+            },
+            "fontSize": {}
+    },
+        },
+      }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #c7c4d8;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full w-[240px] z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-4 px-3">
+<!-- Brand Header -->
+<div class="flex items-center gap-3 px-3 mb-8">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0 text-on-primary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">dataset</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[14px] font-semibold tracking-tight text-on-surface">NEXUS OS</span>
+<span class="text-[11px] text-on-surface-variant font-label uppercase tracking-[0.05em]">Automotive ERP</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-1 flex-1 font-body text-[13px] leading-tight tracking-normal label:text-[11px] label:uppercase label:tracking-[0.05em]">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]">grid_view</span>
+                Overview
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-primary font-medium bg-surface-container-high transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">group</span>
+                Leads
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]">message</span>
+                Conversations
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]">directions_car</span>
+                Inventory
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                Ask AI
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]">insert_chart</span>
+                Competitors
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]">workflow</span>
+                Automation
+            </a>
+</div>
+<!-- Footer Links -->
+<div class="flex flex-col gap-1 mt-auto font-body text-[13px] leading-tight tracking-normal border-t border-outline-variant pt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+                Settings
+            </a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="ml-[240px] flex-1 flex flex-col h-full bg-surface-container-low w-[calc(100%-240px)]">
+<!-- TopNavBar -->
+<header class="sticky top-0 right-0 h-[56px] z-40 bg-surface border-b border-outline-variant flex items-center justify-between w-full px-6 flex-shrink-0">
+<!-- Left Side: Product Name & Search -->
+<div class="flex items-center gap-6">
+<span class="font-headline text-[20px] font-semibold tracking-tight text-primary">Leads</span>
+<div class="relative hidden lg:flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px]">search</span>
+<input class="pl-9 pr-4 py-1.5 w-64 bg-surface-container rounded-md border-transparent text-[13px] text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Search across OS..." type="text"/>
+</div>
+</div>
+<!-- Right Side: Actions & Profile -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-[20px]">sensors</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+</div>
+<div class="w-px h-6 bg-outline-variant"></div>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden cursor-pointer active:opacity-80 hover:ring-2 hover:ring-primary-container transition-all">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMNriUSSpEtvFchNn_5UZA-4ypfwNmgXCU63rUQtAQU767vgyepkWenscNIDY3jJr_MpFw0osktQByaLeWiZYJWgV3-S5AV6lNukAIlGz_vxrJlRvCQf6CaOjW3k2gA9Yc8DGi4cIzVOL-aNfvfwCnd5VlV6vwRV_MHnJkTw8RacCaGMlSMt5WBRO3gC3FRZdEVkD_rJeiFdHLJtonJeqy5LnCKotlsIiacLmDJxU-jHAwNamO2s3iUdQWajrkEuN05TJQvQUuRYwp"/>
+</button>
+</div>
+</header>
+<!-- Canvas Area -->
+<main class="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar p-6">
+<div class="max-w-[1400px] mx-auto flex flex-col gap-4">
+<!-- Filter Bar -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 flex flex-wrap items-center justify-between gap-4">
+<!-- Segmented Control -->
+<div class="flex items-center bg-[#F2F4F7] p-1 rounded-md">
+<button class="px-3 py-1.5 text-[12px] font-medium rounded-md bg-white text-on-surface shadow-sm ring-1 ring-black/5 whitespace-nowrap">All (16)</button>
+<button class="px-3 py-1.5 text-[12px] font-medium rounded-md text-on-surface-variant hover:text-on-surface whitespace-nowrap">HOT (6)</button>
+<button class="px-3 py-1.5 text-[12px] font-medium rounded-md text-on-surface-variant hover:text-on-surface whitespace-nowrap">WARM (4)</button>
+<button class="px-3 py-1.5 text-[12px] font-medium rounded-md text-on-surface-variant hover:text-on-surface whitespace-nowrap">COLD (6)</button>
+</div>
+<!-- Dropdowns & Actions -->
+<div class="flex items-center gap-3 flex-1 justify-end">
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-1.5 text-[12px] font-medium text-on-surface border border-outline-variant rounded-md hover:bg-surface-container transition-colors bg-white">
+<span>Source: All</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-1.5 text-[12px] font-medium text-on-surface border border-outline-variant rounded-md hover:bg-surface-container transition-colors bg-white">
+<span>Assigned: All</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-1.5 text-[12px] font-medium text-on-surface border border-outline-variant rounded-md hover:bg-surface-container transition-colors bg-white">
+<span>Date: Today</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+</div>
+<div class="w-px h-5 bg-outline-variant mx-1"></div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-[16px] text-outline">search</span>
+<input class="pl-8 pr-3 py-1.5 text-[12px] border border-outline-variant rounded-md w-48 focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Search leads..." type="text"/>
+</div>
+<button class="px-3 py-1.5 text-[12px] font-medium text-on-primary bg-primary rounded-md hover:bg-primary-container transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                            Sync to CRM
+                        </button>
+<button class="p-1.5 text-on-surface-variant border border-outline-variant rounded-md hover:bg-surface-container transition-colors bg-white">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#FAFBFC] border-b border-[#E4E7EC] text-on-surface-variant font-label text-[11px] uppercase tracking-[0.05em]">
+<th class="py-3 px-4 font-semibold w-10 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap">Status</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap text-center">Score</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap">Name</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap">Vehicle Interest</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap text-right">Budget</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap">Source</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap">Assigned</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap">Response</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap">Created</th>
+<th class="py-3 px-4 font-semibold w-10"></th>
+</tr>
+</thead>
+<tbody class="text-[13px] text-on-surface font-body divide-y divide-[#E4E7EC]">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container/50 transition-colors group cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity" type="checkbox"/>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase" style="background-color: #FEF3F2; color: #D92D20;">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            HOT
+                                        </span>
+</td>
+<td class="py-3 px-4">
+<div class="w-7 h-7 rounded-full border-2 flex items-center justify-center mx-auto text-[11px] font-bold" style="border-color: #FEF3F2; color: #101828;">
+                                            95
+                                        </div>
+</td>
+<td class="py-3 px-4 font-medium">Vikram Malhotra</td>
+<td class="py-3 px-4 text-on-surface-variant">Family SUV</td>
+<td class="py-3 px-4 text-right tabular-nums text-outline">—</td>
+<td class="py-3 px-4 text-on-surface-variant">Website Form</td>
+<td class="py-3 px-4">Ali Asgher</td>
+<td class="py-3 px-4 font-semibold" style="color: #027A48;">42s</td>
+<td class="py-3 px-4 text-outline text-[12px]">2 min ago</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container/50 transition-colors group cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity" type="checkbox"/>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase" style="background-color: #FEF3F2; color: #D92D20;">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            HOT
+                                        </span>
+</td>
+<td class="py-3 px-4">
+<div class="w-7 h-7 rounded-full border-2 flex items-center justify-center mx-auto text-[11px] font-bold" style="border-color: #FEF3F2; color: #101828;">
+                                            95
+                                        </div>
+</td>
+<td class="py-3 px-4 font-medium">Khalid Al Zaabi</td>
+<td class="py-3 px-4 text-on-surface-variant">Lexus LX 600 2024</td>
+<td class="py-3 px-4 text-right tabular-nums">AED 505,000</td>
+<td class="py-3 px-4 text-on-surface-variant">Referral</td>
+<td class="py-3 px-4 text-outline italic">Unassigned</td>
+<td class="py-3 px-4 font-semibold text-outline">—</td>
+<td class="py-3 px-4 text-outline text-[12px]">1 h ago</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container/50 transition-colors group cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity" type="checkbox"/>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase" style="background-color: #FEF3F2; color: #D92D20;">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            HOT
+                                        </span>
+</td>
+<td class="py-3 px-4">
+<div class="w-7 h-7 rounded-full border-2 flex items-center justify-center mx-auto text-[11px] font-bold" style="border-color: #FEF3F2; color: #101828;">
+                                            92
+                                        </div>
+</td>
+<td class="py-3 px-4 font-medium">Mohammed Al Rashid</td>
+<td class="py-3 px-4 text-on-surface-variant">Toyota Land Cruiser 2024</td>
+<td class="py-3 px-4 text-right tabular-nums">AED 290,000</td>
+<td class="py-3 px-4 text-on-surface-variant">Website Form</td>
+<td class="py-3 px-4 text-outline italic">Unassigned</td>
+<td class="py-3 px-4 font-semibold" style="color: #027A48;">4 min</td>
+<td class="py-3 px-4 text-outline text-[12px]">3 h ago</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container/50 transition-colors group cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity" type="checkbox"/>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase" style="background-color: #FEF3F2; color: #D92D20;">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            HOT
+                                        </span>
+</td>
+<td class="py-3 px-4">
+<div class="w-7 h-7 rounded-full border-2 flex items-center justify-center mx-auto text-[11px] font-bold" style="border-color: #FEF3F2; color: #101828;">
+                                            91
+                                        </div>
+</td>
+<td class="py-3 px-4 font-medium">Hamdan Al Suwaidi</td>
+<td class="py-3 px-4 text-on-surface-variant">Range Rover Sport 2024</td>
+<td class="py-3 px-4 text-right tabular-nums">AED 415,000</td>
+<td class="py-3 px-4 text-on-surface-variant">Walk-in</td>
+<td class="py-3 px-4 text-outline italic">Unassigned</td>
+<td class="py-3 px-4 font-semibold text-outline">—</td>
+<td class="py-3 px-4 text-outline text-[12px]">5 h ago</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container/50 transition-colors group cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity" type="checkbox"/>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase" style="background-color: #FFFAEB; color: #B54708;">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            WARM
+                                        </span>
+</td>
+<td class="py-3 px-4">
+<div class="w-7 h-7 rounded-full border-2 flex items-center justify-center mx-auto text-[11px] font-bold" style="border-color: #FFFAEB; color: #101828;">
+                                            74
+                                        </div>
+</td>
+<td class="py-3 px-4 font-medium">Fatima Hassan</td>
+<td class="py-3 px-4 text-on-surface-variant">Lexus LX 600 2024</td>
+<td class="py-3 px-4 text-right tabular-nums">AED 495,000</td>
+<td class="py-3 px-4 text-on-surface-variant">Instagram Ad</td>
+<td class="py-3 px-4 text-outline italic">Unassigned</td>
+<td class="py-3 px-4 font-semibold text-outline">—</td>
+<td class="py-3 px-4 text-outline text-[12px]">1 d ago</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-container/50 transition-colors group cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity" type="checkbox"/>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase" style="background-color: #F2F4F7; color: #475467;">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            COLD
+                                        </span>
+</td>
+<td class="py-3 px-4">
+<div class="w-7 h-7 rounded-full border-2 flex items-center justify-center mx-auto text-[11px] font-bold" style="border-color: #F2F4F7; color: #101828;">
+                                            38
+                                        </div>
+</td>
+<td class="py-3 px-4 font-medium">Ali Hassan</td>
+<td class="py-3 px-4 text-on-surface-variant">Nissan Patrol 2024</td>
+<td class="py-3 px-4 text-right tabular-nums">AED 200,000</td>
+<td class="py-3 px-4 text-on-surface-variant">Facebook Lead Ad</td>
+<td class="py-3 px-4 text-outline italic">Unassigned</td>
+<td class="py-3 px-4 font-semibold text-outline">—</td>
+<td class="py-3 px-4 text-outline text-[12px]">2 d ago</td>
+<td class="py-3 px-4 text-right">
+<button class="text-outline hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination placeholder -->
+<div class="border-t border-[#E4E7EC] bg-white p-3 flex items-center justify-between text-[12px] text-on-surface-variant">
+<span>Showing 1 to 6 of 16 entries</span>
+<div class="flex gap-1">
+<button class="px-2 py-1 rounded border border-outline-variant hover:bg-surface-container disabled:opacity-50" disabled="">Prev</button>
+<button class="px-2 py-1 rounded border border-outline-variant hover:bg-surface-container">Next</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Bulk Action Bar (Floating, hidden by default but shown here for demonstration) -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 ml-[120px] bg-surface-container-lowest rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-outline-variant px-2 py-2 flex items-center gap-3 z-50">
+<span class="pl-3 pr-2 py-1 text-[13px] font-medium text-on-surface border-r border-outline-variant">
+            3 selected
+        </span>
+<button class="px-3 py-1.5 text-[12px] font-medium text-on-surface hover:bg-surface-container rounded-full transition-colors">
+            Assign to...
+        </button>
+<button class="px-3 py-1.5 text-[12px] font-medium text-on-surface hover:bg-surface-container rounded-full transition-colors">
+            Sync to Bitrix24
+        </button>
+<button class="px-3 py-1.5 text-[12px] font-medium text-on-surface hover:bg-surface-container rounded-full transition-colors">
+            Start drip campaign
+        </button>
+<button class="w-7 h-7 rounded-full hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors mr-1">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</body></html>

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXUS OS - Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Public+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#502400",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface-tint": "#adc6ff",
+                        "outline-variant": "#424754",
+                        "on-primary-fixed-variant": "#004395",
+                        "surface-bright": "#363941",
+                        "on-secondary": "#182f59",
+                        "on-primary-container": "#00285d",
+                        "secondary-fixed-dim": "#b1c6f9",
+                        "surface-container-highest": "#32353c",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary": "#b1c6f9",
+                        "on-primary-fixed": "#001a42",
+                        "on-error": "#690005",
+                        "primary-container": "#4d8eff",
+                        "on-secondary-fixed-variant": "#304671",
+                        "tertiary": "#ffb786",
+                        "outline": "#8c909f",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#304671",
+                        "tertiary-container": "#df7412",
+                        "on-primary": "#002e6a",
+                        "inverse-surface": "#e1e2ec",
+                        "inverse-on-surface": "#2e3038",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-background": "#e1e2ec",
+                        "background": "#10131a",
+                        "on-tertiary-fixed": "#311400",
+                        "on-surface-variant": "#c2c6d6",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-container": "#461f00",
+                        "inverse-primary": "#005ac2",
+                        "surface-variant": "#32353c",
+                        "surface-dim": "#10131a",
+                        "on-secondary-container": "#9fb5e7",
+                        "secondary-fixed": "#d8e2ff",
+                        "surface-container-low": "#191b23",
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface": "#10131a",
+                        "on-secondary-fixed": "#001a42",
+                        "primary": "#adc6ff",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "surface-container-high": "#272a31",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-surface": "#e1e2ec",
+                        "surface-container": "#1d2027",
+                        "nexus-bg": "#0B0D10",
+                        "nexus-surface": "#14171C",
+                        "nexus-raised": "#1B1F26",
+                        "nexus-border": "#262B33",
+                        "nexus-text-primary": "#E8EAED",
+                        "nexus-text-secondary": "#9AA1AC",
+                        "nexus-text-muted": "#6B7280",
+                        "nexus-accent": "#3B82F6",
+                        "nexus-hot": "#EF4444",
+                        "nexus-warm": "#F59E0B",
+                        "nexus-cold": "#6B7280",
+                        "nexus-success": "#10B981",
+                        "nexus-ai": "#8B5CF6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Public Sans", "sans-serif"]
+                    },
+                    "animation": {
+                        'flash-row': 'flash 1.5s ease-out forwards',
+                    },
+                    "keyframes": {
+                        flash: {
+                            '0%': { backgroundColor: 'rgba(59, 130, 246, 0.2)' },
+                            '100%': { backgroundColor: 'transparent' },
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #0B0D10; color: #E8EAED; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="font-body text-[14px] antialiased overflow-hidden flex h-screen w-full">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full w-[240px] z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-4 px-3 flex-shrink-0 transition-all duration-300" id="sidebar">
+<!-- Brand -->
+<div class="flex items-center gap-3 px-3 mb-8">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0">
+<span class="text-on-primary font-bold text-lg leading-none">N</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[14px] font-semibold tracking-tight text-on-surface leading-tight">NEXUS OS</span>
+<span class="text-[11px] text-on-surface-variant leading-none mt-0.5">Automotive ERP</span>
+</div>
+</div>
+<!-- Main Tabs -->
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-hide">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-primary font-medium bg-surface-container-high transition-colors duration-150 ease-in-out group" href="#">
+<span class="material-symbols-outlined text-[20px] shrink-0" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+<span class="font-body text-[13px] leading-tight tracking-normal">Overview</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] shrink-0">group</span>
+<span class="font-body text-[13px] leading-tight tracking-normal">Leads</span>
+</div>
+<span class="bg-nexus-hot text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">6</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] shrink-0">message</span>
+<span class="font-body text-[13px] leading-tight tracking-normal">Conversations</span>
+</div>
+<span class="bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">4</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] shrink-0">directions_car</span>
+<span class="font-body text-[13px] leading-tight tracking-normal">Inventory</span>
+</div>
+<span class="bg-nexus-hot text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">4</span>
+</a>
+<div class="my-2 border-t border-outline-variant opacity-50 mx-2"></div>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out group relative overflow-hidden" href="#">
+<div class="absolute inset-0 bg-gradient-to-r from-nexus-ai/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="material-symbols-outlined text-[20px] shrink-0 text-nexus-ai">auto_awesome</span>
+<span class="font-body text-[13px] leading-tight tracking-normal relative z-10">Ask AI</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out group" href="#">
+<span class="material-symbols-outlined text-[20px] shrink-0">insert_chart</span>
+<span class="font-body text-[13px] leading-tight tracking-normal">Competitors</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] shrink-0">workflow</span>
+<span class="font-body text-[13px] leading-tight tracking-normal">Automation</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-nexus-hot"></span>
+</a>
+</div>
+<!-- Footer Tab -->
+<div class="mt-auto pt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out group" href="#">
+<span class="material-symbols-outlined text-[20px] shrink-0">settings</span>
+<span class="font-body text-[13px] leading-tight tracking-normal">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col ml-[240px] w-[calc(100%-240px)] h-full overflow-hidden">
+<!-- TopNavBar -->
+<header class="sticky top-0 right-0 h-[56px] z-40 bg-surface flex items-center justify-between w-full px-6 flex-shrink-0 border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<h1 class="font-headline text-[20px] font-semibold tracking-tight text-on-surface">Overview</h1>
+</div>
+<!-- Search -->
+<div class="flex-1 max-w-md mx-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full bg-nexus-raised border border-nexus-border rounded-lg py-1.5 pl-10 pr-4 text-[13px] text-nexus-text-primary placeholder-nexus-text-muted focus:outline-none focus:border-nexus-accent focus:ring-1 focus:ring-nexus-accent transition-colors" placeholder="Search leads, inventory, or VIN..." type="text"/>
+<div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+<kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] text-nexus-text-muted bg-nexus-surface rounded border border-nexus-border font-sans">⌘</kbd>
+<kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] text-nexus-text-muted bg-nexus-surface rounded border border-nexus-border font-sans">K</kbd>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 mr-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-nexus-success opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-nexus-success"></span>
+</span>
+<span class="text-[11px] text-nexus-text-muted uppercase tracking-wider">Live</span>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors relative cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-[20px]">sensors</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors relative cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute -top-1 -right-1 w-4 h-4 bg-nexus-hot text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-surface">3</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors relative cursor-pointer active:opacity-80 ml-2">
+<div class="w-7 h-7 rounded-full bg-nexus-raised border border-nexus-border overflow-hidden">
+<span class="material-symbols-outlined text-[20px] mt-1 ml-1 text-nexus-text-secondary">account_circle</span>
+</div>
+</button>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto bg-nexus-bg p-6">
+<div class="max-w-[1400px] mx-auto flex flex-col gap-6">
+<!-- ROW 1: KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest border border-nexus-border rounded-xl p-5 flex flex-col hover:border-outline-variant transition-colors group cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-[11px] uppercase tracking-[0.05em] text-nexus-text-muted font-semibold">OPEN LEADS</span>
+<div class="bg-nexus-success/10 text-nexus-success text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+                                +3 today
+                            </div>
+</div>
+<div class="font-headline text-[28px] font-semibold text-nexus-text-primary tabular-nums tracking-tight mb-1">16</div>
+<div class="text-[12px] text-nexus-text-secondary mt-auto pt-2 border-t border-nexus-border/50 flex items-center gap-2">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-nexus-hot"></span>6 HOT</span>
+<span class="text-nexus-border">•</span>
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-nexus-warm"></span>4 WARM</span>
+<span class="text-nexus-border">•</span>
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-nexus-cold"></span>6 COLD</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest border border-nexus-border rounded-xl p-5 flex flex-col hover:border-outline-variant transition-colors group cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-[11px] uppercase tracking-[0.05em] text-nexus-text-muted font-semibold">AVG RESPONSE TIME</span>
+<div class="bg-nexus-success/10 text-nexus-success text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_down</span>
+                                -18s vs last week
+                            </div>
+</div>
+<div class="flex items-baseline gap-1 mb-1">
+<span class="font-headline text-[28px] font-semibold text-nexus-text-primary tabular-nums tracking-tight">42</span>
+<span class="text-[14px] text-nexus-text-secondary font-medium">s</span>
+</div>
+<div class="text-[12px] text-nexus-text-secondary mt-auto pt-2 border-t border-nexus-border/50">
+                            Target under 5 min
+                        </div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest border border-nexus-border rounded-xl p-5 flex flex-col hover:border-outline-variant transition-colors group cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-nexus-hot/5 rounded-bl-full -mr-8 -mt-8"></div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<span class="font-label text-[11px] uppercase tracking-[0.05em] text-nexus-text-muted font-semibold">INVENTORY AT RISK</span>
+<div class="bg-nexus-hot/10 text-nexus-hot text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                                Critical
+                            </div>
+</div>
+<div class="font-headline text-[28px] font-semibold text-nexus-hot tabular-nums tracking-tight mb-1 relative z-10">4</div>
+<div class="text-[12px] text-nexus-text-secondary mt-auto pt-2 border-t border-nexus-border/50 relative z-10">
+<span class="text-nexus-text-primary font-medium tabular-nums">AED 30,650</span> holding cost accrued
+                        </div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest border border-nexus-border rounded-xl p-5 flex flex-col hover:border-outline-variant transition-colors group cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-[11px] uppercase tracking-[0.05em] text-nexus-text-muted font-semibold">PIPELINE VALUE</span>
+<div class="bg-nexus-success/10 text-nexus-success text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+                                +12% vs last month
+                            </div>
+</div>
+<div class="font-headline text-[28px] font-semibold text-nexus-text-primary tabular-nums tracking-tight mb-1">AED 4.2M</div>
+<div class="text-[12px] text-nexus-text-secondary mt-auto pt-2 border-t border-nexus-border/50">
+                            Across 16 open leads
+                        </div>
+</div>
+</div>
+<!-- ROW 2: Split Content -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[400px]">
+<!-- LEFT: Live Lead Feed (60%) -->
+<div class="lg:col-span-7 bg-surface-container-lowest border border-nexus-border rounded-xl flex flex-col overflow-hidden relative">
+<!-- Header -->
+<div class="px-5 py-4 border-b border-nexus-border flex justify-between items-center bg-nexus-raised/30">
+<div class="flex items-center gap-2">
+<h2 class="text-[14px] font-semibold text-nexus-text-primary">Live Lead Feed</h2>
+<span class="relative flex h-2 w-2 ml-1">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-nexus-success opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-nexus-success"></span>
+</span>
+</div>
+<div class="flex gap-2">
+<button class="text-[12px] text-nexus-text-secondary hover:text-nexus-text-primary transition-colors flex items-center gap-1 px-2 py-1 rounded bg-nexus-surface border border-nexus-border">
+<span class="material-symbols-outlined text-[14px]">filter_list</span> Filter
+                                </button>
+</div>
+</div>
+<!-- List Area -->
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<tbody class="text-[13px]">
+<!-- Row 1 -->
+<tr class="border-b border-nexus-border/50 hover:bg-nexus-surface cursor-pointer transition-colors group animate-flash-row">
+<td class="pl-5 py-3 w-4">
+<div class="flex items-center gap-1.5 bg-nexus-hot/10 text-nexus-hot px-1.5 py-0.5 rounded-full w-max">
+<div class="w-1.5 h-1.5 rounded-full bg-nexus-hot"></div>
+<span class="text-[10px] font-bold uppercase tracking-wider leading-none">HOT</span>
+</div>
+</td>
+<td class="px-3 py-3">
+<div class="font-medium text-[14px] text-nexus-text-primary group-hover:text-nexus-accent transition-colors">Vikram Malhotra</div>
+</td>
+<td class="px-3 py-3 text-nexus-text-secondary">family SUV</td>
+<td class="px-3 py-3 text-center w-16">
+<div class="w-7 h-7 rounded-full border-2 border-nexus-success text-nexus-success flex items-center justify-center text-[10px] font-bold mx-auto bg-nexus-success/10 relative" title="AI Conversion Score">
+                                                95
+                                            </div>
+</td>
+<td class="pr-5 py-3 text-right text-nexus-text-muted text-[12px] tabular-nums whitespace-nowrap">2 min ago</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-nexus-border/50 hover:bg-nexus-surface cursor-pointer transition-colors group">
+<td class="pl-5 py-3 w-4">
+<div class="flex items-center gap-1.5 bg-nexus-hot/10 text-nexus-hot px-1.5 py-0.5 rounded-full w-max">
+<div class="w-1.5 h-1.5 rounded-full bg-nexus-hot"></div>
+<span class="text-[10px] font-bold uppercase tracking-wider leading-none">HOT</span>
+</div>
+</td>
+<td class="px-3 py-3">
+<div class="font-medium text-[14px] text-nexus-text-primary group-hover:text-nexus-accent transition-colors">Khalid Al Zaabi</div>
+</td>
+<td class="px-3 py-3 text-nexus-text-secondary">Lexus LX 600 2024</td>
+<td class="px-3 py-3 text-center w-16">
+<div class="w-7 h-7 rounded-full border-2 border-nexus-success text-nexus-success flex items-center justify-center text-[10px] font-bold mx-auto bg-nexus-success/10" title="AI Conversion Score">
+                                                95
+                                            </div>
+</td>
+<td class="pr-5 py-3 text-right text-nexus-text-muted text-[12px] tabular-nums whitespace-nowrap">1 h ago</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-nexus-border/50 hover:bg-nexus-surface cursor-pointer transition-colors group">
+<td class="pl-5 py-3 w-4">
+<div class="flex items-center gap-1.5 bg-nexus-hot/10 text-nexus-hot px-1.5 py-0.5 rounded-full w-max">
+<div class="w-1.5 h-1.5 rounded-full bg-nexus-hot"></div>
+<span class="text-[10px] font-bold uppercase tracking-wider leading-none">HOT</span>
+</div>
+</td>
+<td class="px-3 py-3">
+<div class="font-medium text-[14px] text-nexus-text-primary group-hover:text-nexus-accent transition-colors">Mohammed Al Rashid</div>
+</td>
+<td class="px-3 py-3 text-nexus-text-secondary">Toyota Land Cruiser 2024</td>
+<td class="px-3 py-3 text-center w-16">
+<div class="w-7 h-7 rounded-full border-2 border-nexus-success text-nexus-success flex items-center justify-center text-[10px] font-bold mx-auto bg-nexus-success/10" title="AI Conversion Score">
+                                                92
+                                            </div>
+</td>
+<td class="pr-5 py-3 text-right text-nexus-text-muted text-[12px] tabular-nums whitespace-nowrap">3 h ago</td>
+</tr>
+<!-- Row 4 -->
+<tr class="border-b border-nexus-border/50 hover:bg-nexus-surface cursor-pointer transition-colors group">
+<td class="pl-5 py-3 w-4">
+<div class="flex items-center gap-1.5 bg-nexus-warm/10 text-nexus-warm px-1.5 py-0.5 rounded-full w-max">
+<div class="w-1.5 h-1.5 rounded-full bg-nexus-warm"></div>
+<span class="text-[10px] font-bold uppercase tracking-wider leading-none">WARM</span>
+</div>
+</td>
+<td class="px-3 py-3">
+<div class="font-medium text-[14px] text-nexus-text-primary group-hover:text-nexus-accent transition-colors">Fatima Hassan</div>
+</td>
+<td class="px-3 py-3 text-nexus-text-secondary">Lexus LX 600 2024</td>
+<td class="px-3 py-3 text-center w-16">
+<div class="w-7 h-7 rounded-full border-2 border-nexus-warm text-nexus-warm flex items-center justify-center text-[10px] font-bold mx-auto bg-nexus-warm/10" title="AI Conversion Score">
+                                                74
+                                            </div>
+</td>
+<td class="pr-5 py-3 text-right text-nexus-text-muted text-[12px] tabular-nums whitespace-nowrap">1 d ago</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-nexus-surface cursor-pointer transition-colors group">
+<td class="pl-5 py-3 w-4">
+<div class="flex items-center gap-1.5 bg-nexus-cold/20 text-nexus-text-secondary px-1.5 py-0.5 rounded-full w-max">
+<div class="w-1.5 h-1.5 rounded-full bg-nexus-cold"></div>
+<span class="text-[10px] font-bold uppercase tracking-wider leading-none">COLD</span>
+</div>
+</td>
+<td class="px-3 py-3">
+<div class="font-medium text-[14px] text-nexus-text-primary group-hover:text-nexus-accent transition-colors">Ali Hassan</div>
+</td>
+<td class="px-3 py-3 text-nexus-text-secondary">Nissan Patrol 2024</td>
+<td class="px-3 py-3 text-center w-16">
+<div class="w-7 h-7 rounded-full border-2 border-nexus-cold text-nexus-text-secondary flex items-center justify-center text-[10px] font-bold mx-auto bg-nexus-cold/10" title="AI Conversion Score">
+                                                38
+                                            </div>
+</td>
+<td class="pr-5 py-3 text-right text-nexus-text-muted text-[12px] tabular-nums whitespace-nowrap">2 d ago</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer -->
+<div class="p-3 border-t border-nexus-border bg-nexus-raised/20 text-center">
+<a class="text-[13px] font-medium text-nexus-accent hover:text-primary transition-colors flex items-center justify-center gap-1" href="#">
+                                View all leads <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- RIGHT: Needs Attention (40%) -->
+<div class="lg:col-span-5 bg-surface-container-lowest border border-nexus-border rounded-xl flex flex-col overflow-hidden">
+<div class="px-5 py-4 border-b border-nexus-border bg-nexus-raised/30 flex justify-between items-center">
+<h2 class="text-[14px] font-semibold text-nexus-text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-nexus-warm">notification_important</span>
+                                Needs Attention
+                            </h2>
+<span class="bg-nexus-raised text-nexus-text-secondary text-[11px] font-medium px-2 py-0.5 rounded border border-nexus-border">Queue: 4</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+<!-- Action Card 1 -->
+<div class="bg-nexus-surface border border-nexus-border rounded-lg p-3 hover:border-nexus-warm/50 transition-colors cursor-pointer group flex flex-col gap-2 relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-nexus-warm rounded-l-lg opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex gap-3 items-start ml-2">
+<div class="w-8 h-8 rounded bg-nexus-warm/10 flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-nexus-warm text-[18px]">warning</span>
+</div>
+<div class="flex-1">
+<p class="text-[13px] text-nexus-text-primary leading-snug">
+<span class="font-medium">Khalid Al Zaabi</span> has not replied in 20 hours.
+                                        </p>
+</div>
+</div>
+<div class="flex justify-end mt-1">
+<button class="text-[12px] font-medium text-nexus-text-primary bg-nexus-raised border border-nexus-border px-3 py-1.5 rounded hover:bg-nexus-border transition-colors">
+                                        Open conversation
+                                    </button>
+</div>
+</div>
+<!-- Action Card 2 -->
+<div class="bg-nexus-surface border border-nexus-border rounded-lg p-3 hover:border-nexus-hot/50 transition-colors cursor-pointer group flex flex-col gap-2 relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-nexus-hot rounded-l-lg opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex gap-3 items-start ml-2">
+<div class="w-8 h-8 rounded bg-nexus-hot/10 flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-nexus-hot text-[18px]">error</span>
+</div>
+<div class="flex-1">
+<p class="text-[13px] text-nexus-text-primary leading-snug">
+                                            KYC blocked for <span class="font-medium">Vikram Malhotra</span> after 3 attempts.
+                                        </p>
+</div>
+</div>
+<div class="flex justify-end mt-1">
+<button class="text-[12px] font-medium text-nexus-text-primary bg-nexus-raised border border-nexus-border px-3 py-1.5 rounded hover:bg-nexus-border transition-colors">
+                                        Review documents
+                                    </button>
+</div>
+</div>
+<!-- Action Card 3 -->
+<div class="bg-[#1B1F26] border border-nexus-border rounded-lg p-3 hover:border-nexus-ai/50 transition-colors cursor-pointer group flex flex-col gap-2 relative">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-nexus-ai rounded-l-lg"></div>
+<div class="absolute top-2 right-2 bg-nexus-ai/10 border border-nexus-ai/30 text-nexus-ai text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]">auto_awesome</span> AI
+                                </div>
+<div class="flex gap-3 items-start ml-2">
+<div class="w-8 h-8 rounded bg-nexus-raised flex items-center justify-center shrink-0 mt-0.5 border border-nexus-border">
+<span class="material-symbols-outlined text-nexus-text-secondary text-[18px]">directions_car</span>
+</div>
+<div class="flex-1 pr-12">
+<p class="text-[13px] text-nexus-text-primary leading-snug">
+<span class="font-medium">Nissan Patrol Nismo</span> at 189 days in stock. Pricing analysis ready.
+                                        </p>
+</div>
+</div>
+<div class="flex justify-end mt-1">
+<button class="text-[12px] font-medium text-nexus-text-primary bg-nexus-raised border border-nexus-border px-3 py-1.5 rounded hover:bg-nexus-border transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-nexus-ai">auto_awesome</span> See recommendation
+                                    </button>
+</div>
+</div>
+<!-- Action Card 4 -->
+<div class="bg-nexus-surface border border-nexus-border rounded-lg p-3 hover:border-nexus-success/50 transition-colors cursor-pointer group flex flex-col gap-2 relative opacity-75 hover:opacity-100">
+<div class="flex gap-3 items-start">
+<div class="w-8 h-8 rounded bg-nexus-success/10 flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-nexus-success text-[18px]">check_circle</span>
+</div>
+<div class="flex-1">
+<p class="text-[13px] text-nexus-text-primary leading-snug">
+                                            8 leads synced to <span class="font-medium">Bitrix24 CRM</span>.
+                                        </p>
+</div>
+</div>
+<div class="flex justify-end mt-1">
+<button class="text-[12px] font-medium text-nexus-text-secondary hover:text-nexus-text-primary transition-colors">
+                                        View log
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ROW 3: Inventory Aging -->
+<div class="bg-surface-container-lowest border border-nexus-border rounded-xl p-6">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h2 class="text-[16px] font-semibold text-nexus-text-primary">Inventory Aging</h2>
+<p class="text-[13px] text-nexus-text-secondary mt-1">Total 12 vehicles in stock</p>
+</div>
+<button class="text-[13px] font-medium text-nexus-text-secondary hover:text-nexus-text-primary border border-nexus-border bg-nexus-surface px-3 py-1.5 rounded transition-colors flex items-center gap-2">
+                            View Inventory <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<!-- Stacked Bar Chart -->
+<div class="w-full">
+<div class="flex w-full h-8 rounded-lg overflow-hidden border border-nexus-border shadow-sm bg-nexus-surface mb-2">
+<!-- 0-30 -->
+<div class="bg-nexus-success h-full relative group cursor-pointer border-r border-black/20 hover:brightness-110 transition-all" style="width: 41.6%;">
+<div class="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-white tabular-nums drop-shadow-md">5</div>
+</div>
+<!-- 31-60 -->
+<div class="bg-[#84cc16] h-full relative group cursor-pointer border-r border-black/20 hover:brightness-110 transition-all" style="width: 25%;">
+<div class="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-white tabular-nums drop-shadow-md">3</div>
+</div>
+<!-- 61-90 -->
+<div class="bg-nexus-warm h-full relative group cursor-pointer border-r border-black/20 hover:brightness-110 transition-all" style="width: 16.6%;">
+<div class="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-white tabular-nums drop-shadow-md">2</div>
+</div>
+<!-- 91-120 -->
+<div class="bg-[#f97316] h-full relative group cursor-pointer border-r border-black/20 hover:brightness-110 transition-all" style="width: 8.3%;">
+<div class="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-white tabular-nums drop-shadow-md">1</div>
+</div>
+<!-- 120+ -->
+<div class="bg-nexus-hot h-full relative group cursor-pointer hover:brightness-110 transition-all" style="width: 8.3%;">
+<div class="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-white tabular-nums drop-shadow-md">1</div>
+</div>
+</div>
+<!-- Legend -->
+<div class="flex justify-between text-[11px] font-medium uppercase tracking-wider text-nexus-text-secondary mt-3 px-1">
+<div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-nexus-success"></div>0-30 Days</div>
+<div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#84cc16]"></div>31-60</div>
+<div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-nexus-warm"></div>61-90</div>
+<div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-[#f97316]"></div>91-120</div>
+<div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-sm bg-nexus-hot"></div>120+ Critical</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<div class="fixed inset-0 z-[100] flex justify-end">
+<!-- Overlay -->
+<div class="absolute inset-0 bg-[#101828]/20 transition-opacity"></div>
+<!-- Modal Container -->
+<div class="relative w-[560px] h-full bg-white shadow-[-8px_0_24px_rgba(0,0,0,0.1)] flex flex-col animate-in slide-in-from-right duration-300">
+<!-- STICKY HEADER -->
+<header class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white border-b border-[#E4E7EC]">
+<div class="flex items-center gap-3">
+<h2 class="text-[20px] font-semibold text-[#101828]">Vikram Malhotra</h2>
+<div class="flex items-center gap-1.5 bg-nexus-hot/10 text-nexus-hot px-2 py-0.5 rounded-full">
+<div class="w-1.5 h-1.5 rounded-full bg-nexus-hot"></div>
+<span class="text-[10px] font-bold uppercase tracking-wider">HOT</span>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-nexus-success text-nexus-success flex items-center justify-center text-[11px] font-bold bg-nexus-success/5">
+          95
+        </div>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-[13px] font-medium hover:brightness-110 transition-all">Message on WhatsApp</button>
+<button class="p-2 text-[#667085] hover:bg-gray-50 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+<button class="p-2 text-[#667085] hover:bg-gray-50 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</header>
+<!-- SCROLLABLE BODY -->
+<div class="flex-1 overflow-y-auto">
+<!-- 1. AI ASSESSMENT -->
+<section class="p-5 bg-[#F4F3FF] border-y border-[#D9D6FE] border-l-[3px] border-l-[#6941C6]">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[11px] font-bold text-[#6941C6] uppercase tracking-wider">AI Assessment</span>
+<span class="bg-[#6941C6]/10 text-[#6941C6] text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]">auto_awesome</span> AI
+          </span>
+</div>
+<div class="text-[14px] text-[#101828] mb-2">
+<span class="font-bold">Score 95 · HOT</span>. Returning customer who previously bought a BMW 3 Series in 2023, making them a VIP lead.
+        </div>
+<div class="text-[11px] text-[#98A2B3]">Scored by google/gemini-2.5-flash · 2 min ago</div>
+</section>
+<!-- 2. CONTACT -->
+<section class="p-5 border-b border-[#E4E7EC]">
+<div class="grid grid-cols-2 gap-y-4">
+<div>
+<label class="text-[11px] font-bold text-[#98A2B3] uppercase block mb-1">Email</label>
+<div class="flex items-center gap-2 text-[13px] text-[#101828]">
+              vikram.malhotra.nexustest@gmail.com
+              <span class="material-symbols-outlined text-[16px] text-[#98A2B3] cursor-pointer">content_copy</span>
+</div>
+</div>
+<div>
+<label class="text-[11px] font-bold text-[#98A2B3] uppercase block mb-1">Phone</label>
+<div class="flex items-center gap-2 text-[13px] text-[#101828]">
+              +918517942172
+              <span class="material-symbols-outlined text-[16px] text-[#98A2B3] cursor-pointer">content_copy</span>
+<span class="material-symbols-outlined text-[16px] text-nexus-success cursor-pointer">chat</span>
+</div>
+</div>
+<div>
+<label class="text-[11px] font-bold text-[#98A2B3] uppercase block mb-1">Source</label>
+<div class="text-[13px] text-[#101828]">Website Form</div>
+</div>
+<div>
+<label class="text-[11px] font-bold text-[#98A2B3] uppercase block mb-1">Assigned</label>
+<div class="flex items-center gap-1 text-[13px] text-[#101828] cursor-pointer hover:text-primary">
+              Ali Asgher <span class="material-symbols-outlined text-[16px]">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. PURCHASE HISTORY -->
+<section class="p-5 border-b border-[#E4E7EC]">
+<div class="bg-[#FFFAEB] border border-[#FEDF89] rounded-lg p-3">
+<div class="flex items-center gap-1 text-[12px] font-semibold text-[#B54708] mb-1">
+<span class="material-symbols-outlined text-[14px] fill-1">star</span> Returning customer
+          </div>
+<div class="text-[13px] text-[#101828]">
+            BMW 3 Series 2021 · purchased 15 Mar 2023 · <span class="font-semibold">AED 185,000</span>
+</div>
+</div>
+</section>
+<!-- 4. TIMELINE -->
+<section class="p-5 border-b border-[#E4E7EC]">
+<h3 class="text-[11px] font-bold text-[#98A2B3] uppercase mb-4">Timeline</h3>
+<div class="relative pl-8 flex flex-col gap-6">
+<div class="absolute left-[11px] top-2 bottom-2 w-[2px] bg-[#E4E7EC]"></div>
+<!-- Entry 1 -->
+<div class="relative">
+<div class="absolute -left-8 top-0 w-6 h-6 rounded-full bg-[#25D366] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[14px]">north_east</span>
+</div>
+<div class="flex justify-between items-center mb-2">
+<span class="text-[13px] font-medium text-[#101828]">WhatsApp · 2 min ago</span>
+</div>
+<div class="bg-[#F4F3FF] border border-[#D9D6FE] rounded-lg p-3 relative">
+<span class="absolute top-2 right-2 bg-[#6941C6]/10 text-[#6941C6] text-[8px] font-bold px-1 py-0.5 rounded">AI</span>
+<p class="text-[13px] text-[#344054] leading-relaxed">
+                Hi Vikram! Great to hear from you again! A family SUV sounds like a fantastic idea…
+              </p>
+</div>
+</div>
+<!-- Entry 2 -->
+<div class="relative">
+<div class="absolute -left-8 top-0 w-6 h-6 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#667085]">
+<span class="material-symbols-outlined text-[14px]">north_east</span>
+</div>
+<div class="text-[13px] text-[#101828]">
+              System · 3 min ago. <span class="text-[#667085]">Synced to Bitrix24 CRM (lead ID 7)</span>
+</div>
+</div>
+<!-- Entry 3 -->
+<div class="relative">
+<div class="absolute -left-8 top-0 w-6 h-6 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#667085]">
+<span class="material-symbols-outlined text-[14px]">north_east</span>
+</div>
+<div class="text-[13px] text-[#101828]">
+              System · 3 min ago. <span class="text-[#667085]">Escalated to senior rep — briefing emailed</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. AUTOMATION LOG -->
+<section class="p-5">
+<div class="flex items-center justify-between cursor-pointer group">
+<h3 class="text-[11px] font-bold text-[#98A2B3] uppercase">Automation Log</h3>
+<span class="material-symbols-outlined text-[18px] text-[#98A2B3] group-hover:text-[#101828]">expand_more</span>
+</div>
+<div class="mt-3 flex flex-col gap-2">
+<div class="flex items-center justify-between text-[12px] py-1">
+<span class="text-[#344054]">Master Router</span>
+<div class="flex items-center gap-2">
+<span class="text-nexus-success font-medium">Success</span>
+<span class="text-[#98A2B3]">95</span>
+<span class="text-[#98A2B3]">2 min ago</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-[12px] py-1">
+<span class="text-[#344054]">wf_108 ERP Sync</span>
+<div class="flex items-center gap-2">
+<span class="text-nexus-success font-medium">Success</span>
+<span class="text-[#98A2B3]">3 min ago</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-[12px] py-1">
+<span class="text-[#344054]">Lead Escalation</span>
+<div class="flex items-center gap-2">
+<span class="text-nexus-success font-medium">Success</span>
+<span class="text-[#98A2B3]">3 min ago</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- STICKY FOOTER -->
+<footer class="sticky bottom-0 bg-white border-t border-[#E4E7EC] p-4 flex flex-wrap gap-2">
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-[13px] font-medium flex-1">Message on WhatsApp</button>
+<button class="bg-white border border-[#D0D5DD] text-[#344054] px-4 py-2 rounded-lg text-[13px] font-medium hover:bg-gray-50">Assign</button>
+<button class="bg-white border border-[#D0D5DD] text-[#344054] px-4 py-2 rounded-lg text-[13px] font-medium hover:bg-gray-50">Mark as Won</button>
+<button class="bg-white border border-[#D0D5DD] text-[#344054] px-4 py-2 rounded-lg text-[13px] font-medium hover:bg-gray-50">Mark as Lost</button>
+</footer>
+</div>
+</div></body></html>

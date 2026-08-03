@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXUS OS - Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "primary": "#3525cd",
+                        "surface-variant": "#e3e1ed",
+                        "surface-container": "#efecf9",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-primary-fixed-variant": "#3322cc",
+                        "surface-dim": "#dbd8e5",
+                        "surface-bright": "#fbf8ff",
+                        "tertiary-container": "#a44100",
+                        "primary-fixed": "#e2dfff",
+                        "background": "#fbf8ff",
+                        "secondary-container": "#b6b4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e3e1ed",
+                        "on-tertiary-fixed": "#351000",
+                        "inverse-primary": "#c3c0ff",
+                        "surface-container-high": "#e9e7f3",
+                        "surface": "#fbf8ff",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#303039",
+                        "on-secondary-fixed": "#130f54",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "surface-tint": "#4d44e3",
+                        "on-primary-fixed": "#0f0069",
+                        "on-primary-container": "#dad7ff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#444386",
+                        "secondary": "#58579b",
+                        "on-surface-variant": "#464555",
+                        "on-background": "#1b1b24",
+                        "on-surface": "#1b1b24",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f5f2ff",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f2effc",
+                        "primary-container": "#4f46e5",
+                        "outline-variant": "#c7c4d8",
+                        "error": "#ba1a1a",
+                        "tertiary": "#7e3000",
+                        "secondary-fixed-dim": "#c2c1ff",
+                        "secondary-fixed": "#e2dfff",
+                        "on-secondary-fixed-variant": "#403f81",
+                        "tertiary-fixed": "#ffdbcc",
+                        "outline": "#777587"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {},
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Public Sans", "sans-serif"]
+                    },
+                    "fontSize": {}
+                },
+            },
+        }
+    </script>
+<style>
+        .font-kpi-value { font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 700; line-height: 2rem; tracking: -0.025em; }
+        .font-body-md { font-family: 'Inter', sans-serif; font-size: 0.875rem; font-weight: 400; line-height: 1.25rem; }
+        .font-label-caps { font-family: 'Public Sans', sans-serif; font-size: 0.6875rem; font-weight: 600; line-height: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        /* Custom non-theme colors requested in prompt */
+        .text-semantic-error { color: #D92D20; }
+        .bg-semantic-error { background-color: #D92D20; }
+        .text-semantic-success { color: #067647; }
+        .bg-semantic-success { background-color: #067647; }
+        .bg-ai-surface { background-color: #F4F3FF; }
+        .border-ai-border { border-color: #D9D6FE; }
+        .border-ai-accent { border-color: #6941C6; }
+        
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen antialiased flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="w-64 h-screen border-r border-outline-variant bg-surface-container-lowest dark:bg-primary-container fixed left-0 top-0 h-full flex flex-col z-40">
+<!-- Header -->
+<div class="p-6 flex items-center space-x-3 border-b border-outline-variant/30">
+<div class="w-8 h-8 bg-primary rounded-DEFAULT flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+</div>
+<div>
+<h1 class="font-kpi-value font-black text-primary dark:text-primary-fixed text-lg leading-none">NEXUS OS</h1>
+<p class="font-label-caps text-on-surface-variant text-[10px] mt-1">Fleet Management</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">dashboard</span>
+<span class="font-body-md font-medium">Overview</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">person_search</span>
+<span class="font-body-md font-medium">Leads</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">chat_bubble</span>
+<span class="font-body-md font-medium">Conversations</span>
+</a>
+<!-- Active State: Inventory -->
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-primary dark:text-primary-fixed-dim font-bold bg-surface-container-low border-r-4 border-primary dark:border-primary-fixed-dim transition-transform scale-[0.99] opacity-100" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+<span class="font-body-md">Inventory</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors group mt-4" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">auto_awesome</span>
+<span class="font-body-md font-medium">Ask AI</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">query_stats</span>
+<span class="font-body-md font-medium">Competitors</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">settings_suggest</span>
+<span class="font-body-md font-medium">Automation</span>
+</a>
+</div>
+<!-- Footer Settings -->
+<div class="p-4 border-t border-outline-variant/30">
+<a class="flex items-center space-x-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">settings</span>
+<span class="font-body-md font-medium">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-64 flex flex-col h-screen relative bg-surface">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant bg-surface dark:bg-surface-dim z-30 sticky top-0 shrink-0">
+<div class="flex items-center space-x-6">
+<h2 class="font-kpi-value font-bold text-primary dark:text-primary-fixed">Inventory</h2>
+<!-- Search Bar (on_left) -->
+<div class="relative w-64 hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full pl-9 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-DEFAULT text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-on-surface transition-colors placeholder:text-outline" placeholder="Search Model/VIN..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim cursor-pointer transition-colors p-1.5 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim cursor-pointer transition-colors p-1.5 rounded-full hover:bg-surface-container relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden ml-2 cursor-pointer">
+<img alt="Account Profile" class="w-full h-full object-cover" data-alt="Professional corporate headshot of a fleet manager, high clarity, light mode aesthetic, crisp lighting, neutral background, looking confidently at camera." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYPHsPE1o2S3RXWY3zxW48c7adK9TFQEnkKhzUoFUvCgY3k2KofvfMPnPvp6NUhwgTkQBsbLjYyRlJRj_cvhQ19bPFX5yt4ahSbSc6iqBe0pabs5dctTbWG8tHoxZSOi_sJzKc2YTvLZlKpk9rIV-jrBjFADb_xcqe-uBXzgSrxyft9ocAqM7NhOldTru897JCU2I-2Hvu31-wzIMWzQW9-MbTugRivj4FdQ0weIySHeJ1cAbOjgcgjqruUcIGwH-bsX_3yWPTQwcq"/>
+</div>
+</div>
+</header>
+<!-- Scrollable Content Canvas -->
+<div class="flex-1 overflow-y-auto p-6 max-w-[1400px] w-full mx-auto">
+<!-- Header Summary Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm">
+<h3 class="font-label-caps text-on-surface-variant mb-1">Total Stock Value</h3>
+<div class="flex items-end space-x-2">
+<span class="font-kpi-value text-on-surface">AED 3.1M</span>
+</div>
+<p class="font-body-md text-outline mt-1 text-xs">12 vehicles</p>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm">
+<h3 class="font-label-caps text-on-surface-variant mb-1">Holding Cost Accrued</h3>
+<div class="flex items-end space-x-2">
+<span class="font-kpi-value text-semantic-error">AED 30,650</span>
+</div>
+<p class="font-body-md text-outline mt-1 text-xs">this quarter</p>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm border-l-4 border-l-[#D92D20]">
+<h3 class="font-label-caps text-on-surface-variant mb-1">Critical Aging</h3>
+<div class="flex items-end space-x-2">
+<span class="font-kpi-value text-semantic-error">4 vehicles</span>
+</div>
+<p class="font-body-md text-outline mt-1 text-xs">over 120 days</p>
+</div>
+</div>
+<!-- Filter Bar -->
+<div class="flex flex-col md:flex-row justify-between items-center bg-surface-container-lowest p-3 rounded-lg border border-outline-variant mb-6 shadow-sm gap-4">
+<!-- Segmented Control -->
+<div class="flex bg-surface-container-low p-1 rounded-DEFAULT border border-outline-variant w-full md:w-auto">
+<button class="px-4 py-1.5 text-sm font-medium rounded-sm bg-surface-container-lowest text-primary shadow-sm flex-1 md:flex-none text-center">All</button>
+<button class="px-4 py-1.5 text-sm font-medium rounded-sm text-on-surface-variant hover:text-on-surface transition-colors flex-1 md:flex-none text-center">Healthy</button>
+<button class="px-4 py-1.5 text-sm font-medium rounded-sm text-on-surface-variant hover:text-on-surface transition-colors flex-1 md:flex-none text-center">Warning</button>
+<button class="px-4 py-1.5 text-sm font-medium rounded-sm text-on-surface-variant hover:text-on-surface transition-colors flex-1 md:flex-none text-center flex items-center justify-center space-x-1">
+<span>Critical</span>
+<span class="w-1.5 h-1.5 rounded-full bg-semantic-error"></span>
+</button>
+</div>
+<div class="flex items-center space-x-3 w-full md:w-auto">
+<!-- Sort Dropdown -->
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest border border-outline-variant rounded-DEFAULT py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-on-surface font-medium cursor-pointer">
+<option>Days in stock</option>
+<option>Net margin</option>
+<option>Price</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-sm">expand_more</span>
+</div>
+<button class="p-1.5 border border-outline-variant rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Card Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+<!-- Vehicle Card 1: Critical -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden relative flex flex-col card-hover transition-all">
+<!-- Top Accent Strip -->
+<div class="h-1 w-full bg-semantic-error absolute top-0 left-0"></div>
+<div class="p-5 flex-1 flex flex-col">
+<!-- Header -->
+<div class="flex justify-between items-start mb-4 mt-1">
+<div>
+<h4 class="font-semibold text-on-surface text-[16px] leading-tight">Nissan Patrol Nismo 2023</h4>
+<p class="font-mono text-[11px] text-outline mt-1 uppercase tracking-wider">VIN: JN1TDSY61U098XXXX</p>
+</div>
+<div class="bg-error-container text-error px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase shrink-0 border border-error/20 flex items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>
+                                189 DAYS
+                            </div>
+</div>
+<!-- KPI area -->
+<div class="flex items-baseline space-x-2 mb-4">
+<span class="text-4xl font-black text-semantic-error font-headline tracking-tighter">189</span>
+<span class="text-xs font-label-caps text-outline">days in stock</span>
+</div>
+<!-- Mini Table -->
+<div class="border border-outline-variant rounded-DEFAULT bg-surface-container-low mb-4">
+<div class="flex justify-between p-2 border-b border-outline-variant/50">
+<span class="text-xs text-on-surface-variant">Retail Price</span>
+<span class="text-xs font-semibold text-on-surface">340,000</span>
+</div>
+<div class="flex justify-between p-2 border-b border-outline-variant/50">
+<span class="text-xs text-on-surface-variant">Cost Base</span>
+<span class="text-xs font-medium text-on-surface-variant">275,000</span>
+</div>
+<div class="flex justify-between p-2 bg-surface-container-lowest">
+<span class="text-xs font-medium text-on-surface">Net Margin</span>
+<span class="text-xs font-bold text-semantic-success">+55,550</span>
+</div>
+</div>
+<!-- Margin Erosion Bar -->
+<div class="mb-5">
+<div class="flex justify-between text-[10px] mb-1 font-medium">
+<span class="text-on-surface-variant">Gross Margin Projection</span>
+<span class="text-semantic-error">-12% accrued</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="h-full bg-semantic-success" style="width: 88%;"></div>
+<div class="h-full bg-semantic-error" style="width: 12%;"></div>
+</div>
+</div>
+<!-- AI Recommendation -->
+<div class="bg-ai-surface border border-ai-border border-l-[3px] border-l-ai-accent rounded-DEFAULT p-3 mb-4 mt-auto">
+<div class="flex items-center space-x-1.5 mb-1.5">
+<span class="bg-ai-accent text-primary px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary-fixed">AI</span>
+<span class="text-xs font-semibold text-on-surface">Recommendation</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Over 180 days — recommend auction or wholesale to clear holding costs.</p>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-4 border-t border-outline-variant bg-surface-container-lowest flex flex-col space-y-2 mt-auto">
+<button class="w-full bg-primary hover:bg-primary/90 text-on-primary font-medium text-sm py-2 rounded-DEFAULT transition-colors" onclick="document.getElementById('adjust-modal').classList.remove('hidden')">Adjust price</button>
+<div class="flex space-x-2">
+<button class="flex-1 bg-transparent border border-outline-variant hover:bg-surface-container text-on-surface text-xs py-1.5 rounded-DEFAULT transition-colors font-medium">Launch campaign</button>
+<button class="flex-1 bg-transparent border border-outline-variant hover:bg-surface-container text-on-surface text-xs py-1.5 rounded-DEFAULT transition-colors font-medium">View competitors</button>
+</div>
+</div>
+</div>
+<!-- Vehicle Card 2: Critical -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden relative flex flex-col card-hover transition-all">
+<!-- Top Accent Strip -->
+<div class="h-1 w-full bg-semantic-error absolute top-0 left-0"></div>
+<div class="p-5 flex-1 flex flex-col">
+<div class="flex justify-between items-start mb-4 mt-1">
+<div>
+<h4 class="font-semibold text-on-surface text-[16px] leading-tight">Nissan Patrol V8 2024</h4>
+<p class="font-mono text-[11px] text-outline mt-1 uppercase tracking-wider">VIN: JN1TDSY61U099XXXX</p>
+</div>
+<div class="bg-error-container text-error px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase shrink-0 border border-error/20 flex items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>
+                                156 DAYS
+                            </div>
+</div>
+<div class="flex items-baseline space-x-2 mb-4">
+<span class="text-4xl font-black text-semantic-error font-headline tracking-tighter">156</span>
+<span class="text-xs font-label-caps text-outline">days in stock</span>
+</div>
+<div class="border border-outline-variant rounded-DEFAULT bg-surface-container-low mb-4">
+<div class="flex justify-between p-2 border-b border-outline-variant/50">
+<span class="text-xs text-on-surface-variant">Retail Price</span>
+<span class="text-xs font-semibold text-on-surface">300,000</span>
+</div>
+<div class="flex justify-between p-2 border-b border-outline-variant/50">
+<span class="text-xs text-on-surface-variant">Cost Base</span>
+<span class="text-xs font-medium text-on-surface-variant">245,000</span>
+</div>
+<div class="flex justify-between p-2 bg-surface-container-lowest">
+<span class="text-xs font-medium text-on-surface">Net Margin</span>
+<span class="text-xs font-bold text-semantic-success">+47,200</span>
+</div>
+</div>
+<div class="mb-5">
+<div class="flex justify-between text-[10px] mb-1 font-medium">
+<span class="text-on-surface-variant">Gross Margin Projection</span>
+<span class="text-semantic-error">-9% accrued</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="h-full bg-semantic-success" style="width: 91%;"></div>
+<div class="h-full bg-semantic-error" style="width: 9%;"></div>
+</div>
+</div>
+<div class="bg-ai-surface border border-ai-border border-l-[3px] border-l-ai-accent rounded-DEFAULT p-3 mb-4 mt-auto">
+<div class="flex items-center space-x-1.5 mb-1.5">
+<span class="bg-ai-accent text-primary px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary-fixed">AI</span>
+<span class="text-xs font-semibold text-on-surface">Recommendation</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Dead stock risk. Bundle with finance offer or auction to trade.</p>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface-container-lowest flex flex-col space-y-2 mt-auto">
+<button class="w-full bg-primary hover:bg-primary/90 text-on-primary font-medium text-sm py-2 rounded-DEFAULT transition-colors">Adjust price</button>
+<div class="flex space-x-2">
+<button class="flex-1 bg-transparent border border-outline-variant hover:bg-surface-container text-on-surface text-xs py-1.5 rounded-DEFAULT transition-colors font-medium">Launch campaign</button>
+<button class="flex-1 bg-transparent border border-outline-variant hover:bg-surface-container text-on-surface text-xs py-1.5 rounded-DEFAULT transition-colors font-medium">View competitors</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Modal Overlay (Hidden by default) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" id="adjust-modal">
+<div class="absolute inset-0 bg-inverse-surface/40 backdrop-blur-sm" onclick="document.getElementById('adjust-modal').classList.add('hidden')"></div>
+<div class="bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant w-full max-w-md relative z-10 flex flex-col overflow-hidden">
+<div class="flex justify-between items-center p-5 border-b border-outline-variant bg-surface">
+<h3 class="font-kpi-value text-lg text-on-surface">Adjust Price</h3>
+<button class="text-outline hover:text-on-surface transition-colors" onclick="document.getElementById('adjust-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-5 space-y-5">
+<div>
+<h4 class="text-sm font-semibold text-on-surface mb-1">Nissan Patrol Nismo 2023</h4>
+<p class="text-xs text-on-surface-variant">VIN: JN1TDSY61U098XXXX</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-xs font-medium text-on-surface-variant mb-1">Current Retail (AED)</label>
+<input class="w-full bg-surface-container border border-outline-variant rounded-DEFAULT px-3 py-2 text-sm text-on-surface-variant cursor-not-allowed" readonly="" type="text" value="340,000"/>
+</div>
+<div>
+<label class="block text-xs font-medium text-on-surface-variant mb-1">Cost Base (AED)</label>
+<input class="w-full bg-surface-container border border-outline-variant rounded-DEFAULT px-3 py-2 text-sm text-on-surface-variant cursor-not-allowed" readonly="" type="text" value="275,000"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-on-surface mb-1">New Retail Price (AED)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm font-medium">AED</span>
+<input class="w-full pl-12 pr-4 py-2 border-2 border-primary rounded-DEFAULT text-on-surface font-semibold focus:outline-none focus:ring-0" type="number" value="323000"/>
+</div>
+<p class="text-xs text-semantic-error mt-2 flex items-center hidden" id="price-warning">
+<span class="material-symbols-outlined text-[14px] mr-1">warning</span>
+                        Warning: New price is below cost base.
+                    </p>
+</div>
+<div class="bg-surface-container p-4 rounded-lg border border-outline-variant">
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm text-on-surface-variant">Projected Gross Margin</span>
+<span class="text-sm font-semibold text-on-surface">48,000</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-on-surface-variant font-medium">Projected Net Margin</span>
+<span class="text-sm font-bold text-semantic-success">+14.1%</span>
+</div>
+</div>
+<div class="bg-ai-surface border border-ai-border border-l-[3px] border-l-ai-accent rounded-DEFAULT p-3">
+<div class="flex items-center space-x-1.5 mb-1">
+<span class="bg-ai-accent text-primary px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary-fixed">AI</span>
+<span class="text-xs font-semibold text-on-surface">Insight</span>
+</div>
+<p class="text-xs text-on-surface-variant">A 5% reduction (AED 17k) aligns with market velocity sweet spot for 180+ days aging stock.</p>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface flex justify-end space-x-3">
+<button class="px-4 py-2 text-sm font-medium text-on-surface border border-outline-variant rounded-DEFAULT hover:bg-surface-container transition-colors" onclick="document.getElementById('adjust-modal').classList.add('hidden')">Cancel</button>
+<button class="px-4 py-2 text-sm font-medium text-on-primary bg-primary rounded-DEFAULT hover:bg-primary/90 transition-colors shadow-sm">Confirm Price Update</button>
+</div>
+</div>
+</div>
+</body></html>

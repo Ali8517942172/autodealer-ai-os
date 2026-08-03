@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoERP AI - Ask AI</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#4f46e5",
+                        "inverse-surface": "#303039",
+                        "on-primary-fixed-variant": "#3322cc",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fbf8ff",
+                        "tertiary": "#7e3000",
+                        "secondary-container": "#b6b4ff",
+                        "outline-variant": "#c7c4d8",
+                        "surface-tint": "#4d44e3",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#dad7ff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "background": "#fbf8ff",
+                        "secondary-fixed": "#e2dfff",
+                        "inverse-on-surface": "#f2effc",
+                        "surface-dim": "#dbd8e5",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary-fixed": "#0f0069",
+                        "tertiary-container": "#a44100",
+                        "on-secondary-fixed-variant": "#403f81",
+                        "on-surface": "#1b1b24",
+                        "on-background": "#1b1b24",
+                        "inverse-primary": "#c3c0ff",
+                        "surface-container-high": "#e9e7f3",
+                        "on-error-container": "#93000a",
+                        "secondary": "#58579b",
+                        "surface-container-low": "#f5f2ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#3525cd",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#efecf9",
+                        "surface-variant": "#e3e1ed",
+                        "surface-container-highest": "#e3e1ed",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-surface-variant": "#464555",
+                        "on-secondary-fixed": "#130f54",
+                        "secondary-fixed-dim": "#c2c1ff",
+                        "on-secondary-container": "#444386",
+                        "outline": "#777587",
+                        "surface": "#fbf8ff",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Public Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .fill-icon { font-variation-settings: 'FILL' 1; }
+        
+        /* Custom scrollbar for data-dense look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #777587; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body overflow-hidden flex h-screen selection:bg-primary-container selection:text-on-primary">
+<!-- SideNavBar Component -->
+<nav class="fixed left-0 top-0 h-screen w-[240px] bg-surface-container-low dark:bg-surface-dim border-r border-outline-variant dark:border-outline flex flex-col h-full py-4 z-50">
+<!-- Header -->
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary shrink-0">
+<span class="material-symbols-outlined fill-icon text-xl">psychology</span>
+</div>
+<div>
+<h1 class="text-xl font-headline font-black text-primary dark:text-primary-fixed tracking-tight">AutoERP AI</h1>
+<p class="text-[10px] uppercase font-label font-bold text-on-surface-variant tracking-wider">Enterprise Assistant</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-4 mb-6">
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-on-primary py-2.5 px-4 rounded-lg font-label text-sm font-semibold hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Inquiry
+            </button>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex-1 overflow-y-auto px-3 space-y-1">
+<!-- Dashboard (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-body text-label-md font-medium text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<!-- Ask AI (Active State) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-primary dark:text-primary-fixed-dim font-bold border-r-2 border-primary dark:border-primary-fixed-dim bg-secondary-container/20 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px] fill-icon">auto_awesome</span>
+                Ask AI
+            </a>
+<!-- Policy Vault (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-body text-label-md font-medium text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">policy</span>
+                Policy Vault
+            </a>
+<!-- Supply Chain (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-body text-label-md font-medium text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+                Supply Chain
+            </a>
+<!-- Inventory (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-body text-label-md font-medium text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                Inventory
+            </a>
+</div>
+<!-- Footer Tabs -->
+<div class="mt-auto px-3 pt-4 border-t border-outline-variant/30 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-body text-label-md font-medium text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-body text-label-md font-medium text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+                Support
+            </a>
+</div>
+</nav>
+<!-- Main Workspace Area -->
+<div class="flex-1 ml-[240px] flex flex-col h-screen min-w-0">
+<!-- TopNavBar Component -->
+<header class="sticky top-0 z-40 w-full h-[56px] bg-surface-bright/90 backdrop-blur-md border-b border-outline-variant dark:border-outline flex justify-between items-center px-6">
+<div class="flex items-center gap-4 flex-1">
+<div class="text-lg font-headline font-bold text-on-surface dark:text-surface-bright flex items-center gap-2">
+                    Knowledge Assistant
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-label font-bold bg-secondary-container/30 text-primary border border-secondary-container">BETA</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Search bar on left implicitly requested by JSON structure -->
+<div class="relative mr-4 hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-container w-64 text-on-surface placeholder:text-outline transition-all" placeholder="Quick search..." type="text"/>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high transition-colors ml-2">
+<img alt="User Profile" class="w-7 h-7 rounded-full object-cover ring-2 ring-transparent hover:ring-primary transition-all" data-alt="A small, circular avatar image of a professional woman with dark hair in a well-lit corporate setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9JS3pZGeXoglG22_AqA7qL-tTjcJtxwN6spnsMlMBdMFApIJnuS9k_Cvv2lpp-VlpM4WozcTm3Nz-83texbI05zrEPenPHgNnL2lXqeD0U4MEsUthG7S7ud9oeAiC3yuVidSZRliRzzixWLalqZUG9-PRuIIRbNwMNa3OLOo2EvmXAVVZYsTmngrLch3ivmmjtAbNPaBxUug87CWQuNkM0PdBDhszzFwLqSy6ritYFu0Av4fyB0_ZxjyljdmXtTTWg4MSrhglaKHJ"/>
+</button>
+</div>
+</header>
+<!-- Content & Right Rail Layout -->
+<main class="flex-1 flex overflow-hidden bg-background">
+<!-- Left Canvas (Main Content) -->
+<div class="flex-1 overflow-y-auto px-8 py-10 relative">
+<div class="max-w-3xl mx-auto pb-20">
+<!-- User Question -->
+<div class="flex gap-4 mb-8">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center shrink-0 border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">person</span>
+</div>
+<div class="pt-1">
+<h2 class="text-on-surface-variant font-headline font-semibold text-[16px] tracking-tight">Does our warranty cover flood damage?</h2>
+</div>
+</div>
+<!-- AI Answer Card -->
+<div class="bg-surface-container-low border border-outline-variant border-l-[3px] border-l-primary rounded-lg p-6 mb-6 shadow-sm">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-sm fill-icon">auto_awesome</span>
+<span class="text-xs font-label font-bold text-primary tracking-widest uppercase">AutoERP AI Response</span>
+</div>
+<p class="text-on-surface font-body text-[15px] leading-8">
+                            Based on the provided warranty policy documents, there is <strong>no mention of flood damage coverage</strong><sup class="inline-flex items-center justify-center bg-surface-container-lowest border border-outline-variant text-primary text-[10px] font-bold h-4 px-1 rounded-[3px] mx-0.5 cursor-pointer hover:bg-secondary-container/30 transition-colors shadow-sm select-none" title="View Source 1">[1]</sup><sup class="inline-flex items-center justify-center bg-surface-container-lowest border border-outline-variant text-primary text-[10px] font-bold h-4 px-1 rounded-[3px] mx-0.5 cursor-pointer hover:bg-secondary-container/30 transition-colors shadow-sm select-none" title="View Source 2">[2]</sup>. The warranty covers manufacturing defects in specific systems (engine, transmission, electrical) and has separate powertrain and hybrid battery coverage, but does not list environmental damage such as flooding as a covered item<sup class="inline-flex items-center justify-center bg-surface-container-lowest border border-outline-variant text-primary text-[10px] font-bold h-4 px-1 rounded-[3px] mx-0.5 cursor-pointer hover:bg-secondary-container/30 transition-colors shadow-sm select-none" title="View Source 3">[3]</sup>.
+                        </p>
+</div>
+<!-- Actions & Feedback Row -->
+<div class="flex items-start gap-4 mb-12">
+<div class="flex items-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-outline-variant bg-surface-container-lowest text-xs font-label font-semibold text-on-surface-variant hover:text-primary hover:border-primary/50 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+                                Copy answer
+                            </button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-outline-variant bg-surface-container-lowest text-xs font-label font-semibold text-on-surface-variant hover:text-primary hover:border-primary/50 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">send</span>
+                                Send to WhatsApp
+                            </button>
+</div>
+<div class="h-8 w-px bg-outline-variant/50 mx-1"></div>
+<div class="flex-1 max-w-sm flex items-center gap-2 group">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-outline-variant bg-surface-container-lowest text-xs font-label font-semibold text-error hover:bg-error-container/20 transition-colors shadow-sm shrink-0 peer focus:bg-error-container/20">
+<span class="material-symbols-outlined text-[16px]">thumb_down</span>
+                                Not helpful
+                            </button>
+<!-- Hidden by default in UI logic, shown here to fulfill requirements -->
+<div class="flex-1 opacity-0 pointer-events-none peer-focus:opacity-100 peer-focus:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-opacity duration-200">
+<input class="w-full h-8 text-xs bg-surface border border-outline-variant rounded-md px-3 focus:outline-none focus:border-error focus:ring-1 focus:ring-error text-on-surface placeholder:text-outline-variant" placeholder="Tell us what went wrong..." type="text"/>
+</div>
+</div>
+</div>
+<!-- Sources Section -->
+<div class="pt-8 border-t border-outline-variant/40">
+<h3 class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">library_books</span>
+                            Sources (5)
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+<!-- Source Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-md p-3 flex flex-col gap-1.5 hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2 truncate">
+<span class="inline-flex items-center justify-center bg-surface-container-low text-primary border border-secondary-container/50 text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-sm shrink-0">1</span>
+<span class="text-sm font-headline font-semibold text-on-surface truncate">Warranty Policy — Standard Coverage</span>
+</div>
+</div>
+<div class="text-[11px] font-label text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">description</span>
+                                    warranty_policy_v4.2.pdf · page 12
+                                </div>
+<p class="text-xs text-on-surface-variant/80 line-clamp-2 mt-1 leading-relaxed">...coverage applies only to defects in materials and workmanship under normal use. Environmental damage is excluded...</p>
+<div class="mt-2 text-[11px] font-label font-semibold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Open document <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</div>
+</div>
+<!-- Source Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-md p-3 flex flex-col gap-1.5 hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2 truncate">
+<span class="inline-flex items-center justify-center bg-surface-container-low text-primary border border-secondary-container/50 text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-sm shrink-0">2</span>
+<span class="text-sm font-headline font-semibold text-on-surface truncate">Exclusions and Limitations Addendum</span>
+</div>
+</div>
+<div class="text-[11px] font-label text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">description</span>
+                                    exclusions_list_2023.pdf · page 3
+                                </div>
+<p class="text-xs text-on-surface-variant/80 line-clamp-2 mt-1 leading-relaxed">...specifically excluding acts of God, including but not limited to floods, earthquakes, and severe weather events...</p>
+<div class="mt-2 text-[11px] font-label font-semibold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Open document <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</div>
+</div>
+<!-- Source Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-md p-3 flex flex-col gap-1.5 hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2 truncate">
+<span class="inline-flex items-center justify-center bg-surface-container-low text-primary border border-secondary-container/50 text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-sm shrink-0">3</span>
+<span class="text-sm font-headline font-semibold text-on-surface truncate">Powertrain Specifics (Hybrid Models)</span>
+</div>
+</div>
+<div class="text-[11px] font-label text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">link</span>
+                                    internal_kb_article_8842
+                                </div>
+<p class="text-xs text-on-surface-variant/80 line-clamp-2 mt-1 leading-relaxed">...water ingress into the hybrid battery casing resulting from wading or flooding voids the specialized powertrain warranty entirely.</p>
+<div class="mt-2 text-[11px] font-label font-semibold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Open document <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</div>
+</div>
+<!-- Source Card 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-md p-3 flex flex-col gap-1.5 hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2 truncate">
+<span class="inline-flex items-center justify-center bg-surface-container-low text-primary border border-secondary-container/50 text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-sm shrink-0">4</span>
+<span class="text-sm font-headline font-semibold text-on-surface truncate">Claims Process Guidelines</span>
+</div>
+</div>
+<div class="text-[11px] font-label text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">description</span>
+                                    claims_process_v2.pdf · page 7
+                                </div>
+<p class="text-xs text-on-surface-variant/80 line-clamp-2 mt-1 leading-relaxed">...inspectors must document the high-water mark. If evident, the claim must be routed to comprehensive auto insurance, not warranty.</p>
+<div class="mt-2 text-[11px] font-label font-semibold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Open document <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</div>
+</div>
+<!-- Source Card 5 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-md p-3 flex flex-col gap-1.5 hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2 truncate">
+<span class="inline-flex items-center justify-center bg-surface-container-low text-primary border border-secondary-container/50 text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-sm shrink-0">5</span>
+<span class="text-sm font-headline font-semibold text-on-surface truncate">Dealer Communication Bulletin #45</span>
+</div>
+</div>
+<div class="text-[11px] font-label text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">campaign</span>
+                                    dealer_portal_memo_aug
+                                </div>
+<p class="text-xs text-on-surface-variant/80 line-clamp-2 mt-1 leading-relaxed">...remind customers post-storm season that comprehensive insurance policies are required for water damage, not standard manufacturer warranties.</p>
+<div class="mt-2 text-[11px] font-label font-semibold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Open document <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Rail (Recent Questions) -->
+<aside class="w-[260px] bg-surface border-l border-outline-variant/50 hidden xl:flex flex-col h-full z-10 shadow-[-4px_0_12px_rgba(0,0,0,0.02)]">
+<div class="p-6 pb-2 border-b border-outline-variant/30 flex items-center justify-between">
+<h3 class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-[0.1em]">Recent Questions</h3>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">more_horiz</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-1">
+<a class="block px-3 py-2.5 rounded-md text-sm font-body text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors line-clamp-2 leading-tight" href="#">
+                        What is the lead time for ECU components from Taiwan?
+                    </a>
+<a class="block px-3 py-2.5 rounded-md text-sm font-body text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors line-clamp-2 leading-tight" href="#">
+                        Generate a compliance report for Q3 emissions.
+                    </a>
+<a class="block px-3 py-2.5 rounded-md text-sm font-body text-on-surface-variant bg-surface-container-high/50 font-medium line-clamp-2 leading-tight" href="#">
+                        Does our warranty cover flood damage?
+                    </a>
+<a class="block px-3 py-2.5 rounded-md text-sm font-body text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors line-clamp-2 leading-tight" href="#">
+                        Compare vendor pricing for lithium batteries.
+                    </a>
+<a class="block px-3 py-2.5 rounded-md text-sm font-body text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors line-clamp-2 leading-tight" href="#">
+                        How many units are currently in transit to Berlin?
+                    </a>
+<a class="block px-3 py-2.5 rounded-md text-sm font-body text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors line-clamp-2 leading-tight" href="#">
+                        Summarize the new safety regulations for 2024.
+                    </a>
+</div>
+<div class="p-4 border-t border-outline-variant/30">
+<button class="w-full py-1.5 flex items-center justify-center gap-1 text-xs font-label font-semibold text-outline hover:text-primary transition-colors">
+                        View all history <span class="material-symbols-outlined text-[14px]">arrow_right_alt</span>
+</button>
+</div>
+</aside>
+</main>
+</div>
+</body></html>

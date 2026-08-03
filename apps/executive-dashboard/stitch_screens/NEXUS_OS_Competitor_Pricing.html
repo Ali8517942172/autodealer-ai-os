@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Competitor Pricing - AutoPrice ERP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=Public+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary": "#3525cd",
+                      "on-primary-fixed-variant": "#3322cc",
+                      "surface-variant": "#e3e1ed",
+                      "on-surface": "#1b1b24",
+                      "on-tertiary-container": "#ffd2be",
+                      "on-background": "#1b1b24",
+                      "primary-container": "#4f46e5",
+                      "error-container": "#ffdad6",
+                      "surface-tint": "#4d44e3",
+                      "outline": "#777587",
+                      "on-secondary-fixed-variant": "#403f81",
+                      "surface": "#fbf8ff",
+                      "secondary-fixed-dim": "#c2c1ff",
+                      "inverse-primary": "#c3c0ff",
+                      "surface-container-highest": "#e3e1ed",
+                      "inverse-on-surface": "#f2effc",
+                      "secondary": "#58579b",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "surface-container-high": "#e9e7f3",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#a44100",
+                      "outline-variant": "#c7c4d8",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-low": "#f5f2ff",
+                      "on-tertiary-fixed": "#351000",
+                      "surface-dim": "#dbd8e5",
+                      "error": "#ba1a1a",
+                      "on-primary-fixed": "#0f0069",
+                      "surface-bright": "#fbf8ff",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed": "#e2dfff",
+                      "on-surface-variant": "#464555",
+                      "on-secondary": "#ffffff",
+                      "inverse-surface": "#303039",
+                      "on-secondary-fixed": "#130f54",
+                      "tertiary-fixed-dim": "#ffb695",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-container": "#dad7ff",
+                      "primary-fixed": "#e2dfff",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed": "#ffdbcc",
+                      "background": "#fbf8ff",
+                      "surface-container": "#efecf9",
+                      "on-tertiary-fixed-variant": "#7b2f00",
+                      "on-secondary-container": "#444386",
+                      "secondary-container": "#b6b4ff",
+                      "tertiary": "#7e3000"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Inter", "sans-serif"],
+                      "body": ["Inter", "sans-serif"],
+                      "label": ["Public Sans", "sans-serif"]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased flex selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar (Shared Component) -->
+<nav class="w-60 h-screen fixed left-0 top-0 border-r border-outline-variant bg-surface-container-low flex flex-col py-4 px-3 gap-2 z-50">
+<!-- Brand -->
+<div class="px-3 pb-6 flex items-center gap-3 border-b border-outline-variant/50 mb-2">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary font-bold shadow-sm">
+                G
+            </div>
+<div>
+<h1 class="text-lg font-headline font-bold text-primary leading-tight">Global Motors</h1>
+<p class="text-xs text-on-surface-variant font-label uppercase tracking-wide">Enterprise ERP</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary-container text-on-primary-container font-semibold text-sm transition-all shadow-sm" href="#">
+<span class="material-symbols-outlined text-[20px] icon-fill">analytics</span>
+                Competitors
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+                Price Strategy
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">directions_car</span>
+                Inventory
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+                Scraping Logs
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+                Reports
+            </a>
+</div>
+<!-- Footer Navigation -->
+<div class="mt-auto flex flex-col gap-1 pt-4 border-t border-outline-variant/50">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+                Support
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+                Account
+            </a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="ml-60 flex-1 flex flex-col min-h-screen relative">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center h-14 px-6 w-full sticky top-0 z-40 bg-surface border-b border-outline-variant">
+<!-- Left: Brand/Search area based on JSON -->
+<div class="flex items-center gap-6">
+<span class="text-xl font-headline font-black text-on-surface hidden md:block">AutoPrice ERP</span>
+<div class="relative w-64 hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full h-9 pl-9 pr-3 rounded-lg border border-outline-variant bg-surface-container-lowest text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant" placeholder="Search..." type="text"/>
+</div>
+</div>
+<!-- Right: Actions & Profile -->
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:opacity-80 flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:opacity-80 flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:opacity-80 flex items-center justify-center mr-2">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:ring-offset-surface transition-all">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a user in a well-lit modern office environment. Soft natural lighting, corporate style, neutral background. High resolution, sharp focus on the face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAopyzWP5G124CaBSc5ZVlR-SmJBYaw0UI2h2IhSgNP3EPDcyWaop7MPAOuv9V9q75iVEXXxxB1lkhjSb-9hQK7lhm0WyQXdnXT4Km-1K9fHPh848tZwjevERjm0m7KGXKPEaTBPsSBxQ-Z_IK0qxdTepleJV1aQ6fqEQl2f8ZFBRFizYWv4E9vOd_x87WxnR3CGWZ9Y64AKpbC8WzGiSa_e00PSk8XHR2zPN-DYMiWMJmQU16QIC8PMzRiVTRLJS4RQG0_1P0lSWh"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 w-full max-w-[1400px] mx-auto p-6 md:p-8 flex flex-col gap-6">
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+<div>
+<h2 class="text-2xl font-headline font-bold text-on-surface tracking-tight">Competitor Pricing</h2>
+<p class="text-sm text-outline mt-1 font-medium">Last updated 6 h ago · 10 UAE dealers tracked</p>
+</div>
+<button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-container-highest hover:bg-surface-variant text-on-surface rounded-lg font-medium text-sm transition-colors border border-outline-variant shadow-sm self-start sm:self-auto">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+                    Run scrape now
+                </button>
+</div>
+<!-- Summary Cards (Bento style grid) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 flex flex-col justify-between relative overflow-hidden shadow-sm hover:shadow transition-shadow group">
+<div class="absolute top-0 right-0 w-16 h-16 bg-error/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="text-sm font-label uppercase text-on-surface-variant font-semibold tracking-wide">Priced above market</span>
+<span class="material-symbols-outlined text-error">trending_up</span>
+</div>
+<div class="flex items-baseline gap-2 relative z-10">
+<span class="text-3xl font-headline font-black text-on-surface">3</span>
+<span class="text-xs text-error font-medium bg-error/10 px-2 py-0.5 rounded-full border border-error/20">Requires Action</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 flex flex-col justify-between relative overflow-hidden shadow-sm hover:shadow transition-shadow group">
+<div class="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="text-sm font-label uppercase text-on-surface-variant font-semibold tracking-wide">Priced below market</span>
+<span class="material-symbols-outlined text-primary">trending_down</span>
+</div>
+<div class="flex items-baseline gap-2 relative z-10">
+<span class="text-3xl font-headline font-black text-on-surface">5</span>
+<span class="text-xs text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">Optimal</span>
+</div>
+</div>
+</div>
+<!-- Toolbar / Filters -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+<div class="flex flex-wrap items-center gap-3 flex-1">
+<!-- Search Input -->
+<div class="relative w-full sm:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full h-9 pl-9 pr-3 rounded-md border border-outline-variant bg-surface text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Search by model..." type="text"/>
+</div>
+<!-- Competitor Dropdown -->
+<div class="relative w-full sm:w-56">
+<select class="w-full h-9 pl-3 pr-8 rounded-md border border-outline-variant bg-surface text-sm appearance-none focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer">
+<option value="">All Competitors</option>
+<option value="alfuttaim_toyota">Al-Futtaim Toyota</option>
+<option value="alfuttaim_honda">Al-Futtaim Honda</option>
+<option value="gargash">Gargash</option>
+<option value="arabian">Arabian Automobiles</option>
+<option value="habtoor">Al Habtoor Motors</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px] pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Toggle -->
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="relative">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-variant border border-outline-variant rounded-full peer peer-checked:bg-primary peer-checked:border-primary transition-colors"></div>
+<div class="absolute left-[2px] top-[2px] bg-surface w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4 shadow-sm"></div>
+</div>
+<span class="text-sm font-medium text-on-surface-variant group-hover:text-on-surface transition-colors select-none">Only where we are more expensive</span>
+</label>
+</div>
+<!-- Data Table Section -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse whitespace-nowrap">
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-low/50">
+<th class="py-3 px-4 font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant w-[25%]">Model</th>
+<th class="py-3 px-4 font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant w-[15%]">Competitor</th>
+<th class="py-3 px-4 font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant text-right">Their Price</th>
+<th class="py-3 px-4 font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant text-right">Our Price</th>
+<th class="py-3 px-4 font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant w-[15%]">Difference</th>
+<th class="py-3 px-4 font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant w-[20%]">Recommendation</th>
+<th class="py-3 px-4 font-label text-[11px] font-bold uppercase tracking-wider text-on-surface-variant text-right">Scraped</th>
+<th class="py-3 px-4 w-10"></th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<!-- Row 1 (Expanded Target) -->
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors group cursor-pointer bg-surface-container-low/30">
+<td class="py-3 px-4 font-medium text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface border border-outline-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">directions_car</span>
+</div>
+<span class="truncate max-w-[200px]">Nissan Patrol Nismo 2023</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Al-Futtaim Toyota</td>
+<td class="py-3 px-4 text-right font-mono text-on-surface-variant">AED 328,000</td>
+<td class="py-3 px-4 text-right font-mono font-medium text-on-surface">AED 340,000</td>
+<td class="py-3 px-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1 text-error font-medium">
+<span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+                                            +AED 12,000
+                                        </div>
+<!-- Mini bar chart visualization -->
+<div class="h-1 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-error rounded-full" style="width: 75%; margin-left: 25%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant text-xs truncate max-w-[150px]">
+                                    Price is 3.6% above market aver...
+                                </td>
+<td class="py-3 px-4 text-right text-outline text-xs">6h ago</td>
+<td class="py-3 px-4 text-center">
+<button class="text-primary p-1 rounded hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">expand_less</span>
+</button>
+</td>
+</tr>
+<!-- Expanded AI Row (Directly below Row 1) -->
+<tr class="bg-surface-container-low border-b border-outline-variant shadow-inner">
+<td class="p-0" colspan="8">
+<div class="px-6 py-4 flex gap-4 border-l-4 border-primary">
+<div class="flex-1 pl-2">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-[18px]">auto_awesome</span>
+<span class="text-xs font-label uppercase font-bold text-primary tracking-wide">AI Recommendation</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed max-w-4xl">
+                                                Based on historical sales velocity and current inventory levels (3 units remaining), the current premium of +AED 12,000 (+3.6%) over Al-Futtaim Toyota is suppressing conversion rates. We recommend a tactical price reduction of AED 8,500 to narrow the gap to +AED 3,500. This preserves a slight premium reflecting our superior warranty package while removing the psychological barrier for cross-shopping buyers.
+                                            </p>
+<div class="mt-3 flex gap-3">
+<button class="px-3 py-1.5 bg-primary text-on-primary rounded text-xs font-medium hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+                                                    Apply -AED 8,500 adjustment
+                                                </button>
+<button class="px-3 py-1.5 bg-transparent border border-outline-variant text-on-surface-variant rounded text-xs font-medium hover:bg-surface-variant transition-colors">
+                                                    View pricing history
+                                                </button>
+</div>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors group cursor-pointer">
+<td class="py-3 px-4 font-medium text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface border border-outline-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">directions_car</span>
+</div>
+<span class="truncate max-w-[200px]">Lexus LX 600 2024</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Gargash</td>
+<td class="py-3 px-4 text-right font-mono text-on-surface-variant">AED 515,000</td>
+<td class="py-3 px-4 text-right font-mono font-medium text-on-surface">AED 505,000</td>
+<td class="py-3 px-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1 text-primary font-medium">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                            −AED 10,000
+                                        </div>
+<div class="h-1 w-full bg-surface-variant rounded-full overflow-hidden flex justify-end">
+<div class="h-full bg-primary rounded-full" style="width: 40%; margin-right: 25%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant text-xs truncate max-w-[150px]">
+                                    Aggressive positioning for hig...
+                                </td>
+<td class="py-3 px-4 text-right text-outline text-xs">6h ago</td>
+<td class="py-3 px-4 text-center">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+<td class="py-3 px-4 font-medium text-on-surface flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface border border-outline-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">directions_car</span>
+</div>
+<span class="truncate max-w-[200px]">Toyota Land Cruiser 300</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Al Nabooda</td>
+<td class="py-3 px-4 text-right font-mono text-on-surface-variant">AED 295,000</td>
+<td class="py-3 px-4 text-right font-mono font-medium text-on-surface">AED 290,000</td>
+<td class="py-3 px-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1 text-primary font-medium">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                            −AED 5,000
+                                        </div>
+<div class="h-1 w-full bg-surface-variant rounded-full overflow-hidden flex justify-end">
+<div class="h-full bg-primary rounded-full" style="width: 20%; margin-right: 50%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant text-xs truncate max-w-[150px]">
+                                    Competitive edge maintained in l...
+                                </td>
+<td class="py-3 px-4 text-right text-outline text-xs">6h ago</td>
+<td class="py-3 px-4 text-center">
+<button class="text-outline hover:text-on-surface p-1 rounded hover:bg-surface-variant transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="bg-surface-container-lowest border-t border-outline-variant p-3 flex items-center justify-between text-sm text-on-surface-variant">
+<span>Showing 1 to 3 of 124 results</span>
+<div class="flex gap-1">
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-variant transition-colors disabled:opacity-50" disabled="">Prev</button>
+<button class="px-3 py-1 bg-surface-variant border border-outline-variant rounded font-medium text-on-surface">1</button>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-variant transition-colors">2</button>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-variant transition-colors">3</button>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-variant transition-colors">Next</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

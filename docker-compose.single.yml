@@ -1,0 +1,169 @@
+# =============================================================================
+# NEXUS OS — SINGLE-DEALER STACK (3 containers)
+# =============================================================================
+# Use this instead of docker-compose.yml when running ONE dealership.
+#
+#   docker compose -f docker-compose.single.yml up -d
+#
+# WHAT CHANGED vs docker-compose.yml
+# ----------------------------------
+#   REMOVED  n8n-worker  — only needed for queue mode
+#   REMOVED  redis       — only held the transient BullMQ job queue, no real data
+#   KEPT     n8n-db      — DO NOT REMOVE. All 13 workflows, 7 credentials and the
+#                          execution history live inside this Postgres. Switching
+#                          n8n to SQLite would boot it with an EMPTY database.
+#
+# RAM: ~5.25 GB of declared limits -> ~1.4 GB. Fits a 1 GB VM *with swap*.
+#
+# GOING BACK is trivial — the original docker-compose.yml is untouched and both
+# files share the same named volumes, so no data is lost either direction.
+# Run only ONE of them at a time (container names collide).
+# =============================================================================
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: always
+    env_file: .env
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      # Override WEBHOOK_URL in .env when this moves off the Tailscale tunnel
+      # (e.g. to a GCP VM). Everything else stays identical.
+      - WEBHOOK_URL=${WEBHOOK_URL:-https://desktop-l3an0ma.tail2141f7.ts.net/}
+      - N8N_EDITOR_BASE_URL=${WEBHOOK_URL:-https://desktop-l3an0ma.tail2141f7.ts.net/}
+      - GENERIC_TIMEZONE=UTC
+
+      # --- Identity keys: MUST stay pinned ---
+      # Without these n8n regenerates them on every restart, which invalidates
+      # every browser session and every API token, and — worse — makes stored
+      # credentials undecryptable. Values live in .env.
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+
+      # Allow workflows to read process env vars via {{ $env.NAME }}.
+      # Newer n8n blocks this by default ("access to env vars denied"), which
+      # would force secrets to be hardcoded into workflow JSON.
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - BITRIX24_WEBHOOK_URL=${BITRIX24_WEBHOOK_URL}
+      - BITRIX24_DOMAIN=${BITRIX24_DOMAIN}
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+
+      # NOTE: no EXECUTIONS_MODE here. Default is "regular" — this single n8n
+      # process runs the workflows itself. That is what lets redis and the
+      # worker go away.
+
+      # Execution history pruning, tightened for a small disk. n8n stores the
+      # full input/output JSON of every node, and the AI agents push large
+      # payloads (273 failed runs piled up in one afternoon during the
+      # WhatsApp loop incident). 3 days / 1000 runs keeps this bounded.
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=72
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=1000
+
+      # n8n's OWN internal metadata DB. NOT the business database — Supabase
+      # (cloud) remains the single source of truth for leads/inventory/etc.
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=n8n-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=n8n_local_pw
+    depends_on:
+      n8n-db:
+        condition: service_healthy
+    networks:
+      - nexus_net
+    volumes:
+      - n8n_data:/home/node/.n8n
+    deploy:
+      resources:
+        limits:
+          # In regular mode this process runs the AI-agent workflows itself,
+          # so it needs the headroom the worker used to absorb. 1G got the
+          # container OOM-killed before; do not lower this.
+          memory: 2G
+
+  # n8n's dedicated internal Postgres — NOT the app's business database.
+  n8n-db:
+    image: postgres:16-alpine
+    container_name: n8n-db
+    restart: always
+    # Tuned down from the defaults, which assume a much larger host. On a
+    # 1 GB VM the stock settings alone would reserve well over 128 MB.
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=192MB
+      -c maintenance_work_mem=32MB
+      -c work_mem=2MB
+      -c max_connections=30
+    environment:
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=n8n_local_pw
+      - POSTGRES_DB=n8n
+    networks:
+      - nexus_net
+    volumes:
+      - n8n_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  waha:
+    image: devlikeapro/waha
+    container_name: waha
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      - WAHA_PRINT_QR=True
+      - WAHA_LOG_LEVEL=info
+      # GOWS (Go-based) engine. NOWEB has a known bug in these builds where a
+      # session sits on STARTING forever and never reaches SCAN_QR_CODE, so the
+      # QR can never be shown -- reproduced here on WAHA 2026.7.1.
+      # See github.com/devlikeapro/waha issues #1495 / #2006.
+      - WHATSAPP_DEFAULT_ENGINE=GOWS
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_DASHBOARD_ENABLED=true
+      - WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME}
+      - WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD}
+    networks:
+      - nexus_net
+    volumes:
+      # WAHA stores linked-device session data in /app/.sessions, NOT /app/.waha.
+      # The old mount meant the WhatsApp login was never actually persisted, so
+      # every `docker compose up -d` silently killed the session and any send
+      # failed with: Session "default" does not exist.
+      - waha_sessions:/app/.sessions
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  nexus_net:
+    driver: bridge
+
+# Same named volumes as docker-compose.yml, so switching between the two files
+# keeps every workflow, credential and WhatsApp session intact.
+volumes:
+  n8n_data:
+  n8n_db_data:
+  waha_sessions:

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoERP AI - Ask AI Streaming</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#4f46e5",
+                        "inverse-surface": "#303039",
+                        "on-primary-fixed-variant": "#3322cc",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fbf8ff",
+                        "tertiary": "#7e3000",
+                        "secondary-container": "#b6b4ff",
+                        "outline-variant": "#c7c4d8",
+                        "surface-tint": "#4d44e3",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#dad7ff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "background": "#fbf8ff",
+                        "secondary-fixed": "#e2dfff",
+                        "inverse-on-surface": "#f2effc",
+                        "surface-dim": "#dbd8e5",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary-fixed": "#0f0069",
+                        "tertiary-container": "#a44100",
+                        "on-secondary-fixed-variant": "#403f81",
+                        "on-surface": "#1b1b24",
+                        "on-background": "#1b1b24",
+                        "inverse-primary": "#c3c0ff",
+                        "surface-container-high": "#e9e7f3",
+                        "on-error-container": "#93000a",
+                        "secondary": "#58579b",
+                        "surface-container-low": "#f5f2ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#3525cd",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#efecf9",
+                        "surface-variant": "#e3e1ed",
+                        "surface-container-highest": "#e3e1ed",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-surface-variant": "#464555",
+                        "on-secondary-fixed": "#130f54",
+                        "secondary-fixed-dim": "#c2c1ff",
+                        "on-secondary-container": "#444386",
+                        "outline": "#777587",
+                        "surface": "#fbf8ff",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Public Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom Shimmer Animation for loading state */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .animate-shimmer {
+            background: linear-gradient(90deg, #e3e1ed 8%, #f5f2ff 18%, #e3e1ed 33%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased flex h-screen overflow-hidden selection:bg-primary/20 selection:text-primary">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low dark:bg-surface-dim font-body text-label-md font-medium fixed left-0 top-0 h-screen w-[240px] border-r border-outline-variant dark:border-outline flex flex-col h-full py-4 z-40">
+<!-- Header -->
+<div class="px-6 pb-6 flex items-center gap-3 border-b border-outline-variant/30 mb-4">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center shrink-0">
+<img class="w-full h-full object-cover rounded-lg mix-blend-multiply opacity-80" data-alt="A highly detailed, professional avatar for an enterprise user profile. The image features a stylized, minimalist flat illustration of a person in a corporate setting, using a color palette of deep blue (#3525cd) and crisp white (#ffffff). The lighting is bright and clean, reflecting a modern software interface context. Smooth edges, vector style, vector graphic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5sVQPzkPeHpXZBm_tZj8GeSqcfkPlUxfV21loETNR0IIKoRm2uzmlSt_U96dA8QPtkEzF3NwuD1Frik455y7ePmvK-P091CV-HeEHVP7Vck2aF5gupvEQYulgYXbMCRz8DCEZ43ZQJwyDBDv-DprZ7seT0akKNyPbE4Zwd3cBz3SqUfiTmn53hKVIEZR0GWJB9ebcI743NDTCdSJtMheeVDL7Ti-7L-0NqjV74ge7L_Yk_B2w9SKyh4WsPuoh3SPhM31nINlOGMi5"/>
+</div>
+<div>
+<h1 class="text-xl font-headline font-black text-primary dark:text-primary-fixed tracking-tight">AutoERP AI</h1>
+<p class="text-[11px] text-on-surface-variant uppercase tracking-wider font-label mt-0.5">Enterprise Assistant</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-4 mb-6">
+<button class="w-full flex items-center justify-center gap-2 bg-[#6760fd] hover:bg-primary text-white py-2 px-4 rounded-md transition-colors duration-200 text-sm font-semibold shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Inquiry
+            </button>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto px-3 space-y-1">
+<!-- Dashboard (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<!-- Ask AI (Active) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-primary dark:text-primary-fixed-dim font-bold border-r-2 border-primary dark:border-primary-fixed-dim bg-secondary-container/20 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px] icon-fill">auto_awesome</span>
+                Ask AI
+            </a>
+<!-- Policy Vault (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">policy</span>
+                Policy Vault
+            </a>
+<!-- Supply Chain (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+                Supply Chain
+            </a>
+<!-- Inventory (Inactive) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                Inventory
+            </a>
+</div>
+<!-- Footer Links -->
+<div class="px-3 pt-4 mt-auto border-t border-outline-variant/30 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+                Support
+            </a>
+</div>
+</nav>
+<!-- TopNavBar -->
+<header class="bg-surface-bright/80 dark:bg-surface-dim/80 backdrop-blur-md sticky top-0 z-50 w-full h-[56px] border-b border-outline-variant dark:border-outline flex justify-between items-center px-6 w-full ml-[240px] max-w-[calc(100%-240px)]">
+<!-- Search Bar (Left) -->
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-64 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px] group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full h-8 pl-10 pr-3 rounded-md bg-surface-container border border-outline-variant/50 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-on-surface-variant/60 text-on-surface" placeholder="Search..." type="text"/>
+</div>
+<div class="h-4 w-px bg-outline-variant/50 mx-2"></div>
+<!-- Product Name -->
+<span class="font-headline text-headline-sm font-semibold text-primary dark:text-primary-fixed-dim">Knowledge Assistant</span>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container transition-colors active:opacity-70">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container transition-colors active:opacity-70">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container transition-colors active:opacity-70 ml-2">
+<span class="material-symbols-outlined text-[24px]">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="fixed top-[56px] left-[240px] right-0 bottom-0 flex overflow-hidden bg-background">
+<!-- AI Chat Canvas -->
+<div class="flex-1 flex flex-col items-center overflow-y-auto px-8 py-10 relative">
+<div class="w-full max-w-[800px] flex flex-col gap-10 pb-20">
+<!-- User Question Echo -->
+<div class="flex items-start gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant shrink-0 flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">person</span>
+</div>
+<div class="pt-1 flex-1">
+<!-- User's question echoed at the top in 16px grey (#475467 approx mapped to text-on-surface-variant) -->
+<h2 class="text-base text-on-surface-variant font-medium leading-relaxed tracking-tight">
+                            "What are the mandatory compliance protocols and documentation requirements for cross-border data transfers originating from the US to EU-based vendor subsystems under the new Q3 directive?"
+                        </h2>
+</div>
+</div>
+<!-- AI Response Streaming State -->
+<div class="flex items-start gap-4">
+<div class="w-8 h-8 rounded-md bg-primary-container shrink-0 flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px] icon-fill">auto_awesome</span>
+</div>
+<div class="flex-1 pt-1 flex flex-col gap-5">
+<!-- Status Indicator (Searching...) -->
+<div class="inline-flex items-center gap-2 bg-secondary-container/20 border border-primary/20 text-primary px-3 py-1.5 rounded-full text-xs font-semibold w-max font-label uppercase tracking-wide">
+<span class="material-symbols-outlined text-[14px] animate-spin">data_usage</span>
+                            Searching 15 policy documents...
+                        </div>
+<!-- Shimmering Placeholder Lines (Loading State) -->
+<!-- Designed to reflect the AI Content rule: light background, 2px left accent border -->
+<div class="relative bg-primary/5 border-l-2 border-[#6760fd] p-5 rounded-r-lg flex flex-col gap-4 w-full">
+<!-- AI Chip -->
+<div class="absolute -top-3 left-4 bg-[#6760fd] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] icon-fill">memory</span>
+                                AI Draft
+                            </div>
+<!-- Shimmer Text Blocks -->
+<div class="space-y-3 mt-1">
+<div class="h-3.5 rounded animate-shimmer w-full"></div>
+<div class="h-3.5 rounded animate-shimmer w-11/12"></div>
+<div class="h-3.5 rounded animate-shimmer w-full"></div>
+<div class="h-3.5 rounded animate-shimmer w-4/5"></div>
+</div>
+<div class="space-y-3 pt-2">
+<div class="h-3.5 rounded animate-shimmer w-full"></div>
+<div class="h-3.5 rounded animate-shimmer w-3/4"></div>
+<div class="h-3.5 rounded animate-shimmer w-5/6"></div>
+</div>
+<!-- Fake Table Shimmer -->
+<div class="mt-4 border border-outline-variant/30 rounded overflow-hidden">
+<div class="bg-surface-container-low border-b border-outline-variant/30 p-2 flex gap-4">
+<div class="h-3 rounded animate-shimmer w-1/3"></div>
+<div class="h-3 rounded animate-shimmer w-1/3"></div>
+<div class="h-3 rounded animate-shimmer w-1/3"></div>
+</div>
+<div class="p-2 flex gap-4">
+<div class="h-3 rounded animate-shimmer w-1/3 opacity-70"></div>
+<div class="h-3 rounded animate-shimmer w-1/3 opacity-70"></div>
+<div class="h-3 rounded animate-shimmer w-1/3 opacity-70"></div>
+</div>
+<div class="p-2 flex gap-4 bg-surface-container-lowest/50">
+<div class="h-3 rounded animate-shimmer w-1/3 opacity-70"></div>
+<div class="h-3 rounded animate-shimmer w-1/3 opacity-70"></div>
+<div class="h-3 rounded animate-shimmer w-1/3 opacity-70"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<div class="h-5 w-5 rounded-full animate-shimmer"></div>
+<div class="h-3 rounded animate-shimmer w-32"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stop Generation Button (Floating Bottom Center) -->
+<div class="fixed bottom-8 left-[calc(50%+120px)] -translate-x-1/2 z-10">
+<button class="flex items-center gap-2 bg-surface border border-outline-variant hover:bg-surface-container text-on-surface-variant text-sm px-4 py-2 rounded-full shadow-sm transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">stop_circle</span>
+                    Stop generating
+                </button>
+</div>
+</div>
+<!-- Sidebar (260px): Recent Questions -->
+<aside class="w-[260px] border-l border-outline-variant/50 bg-surface flex flex-col shrink-0 h-full">
+<div class="p-4 border-b border-outline-variant/30 flex items-center justify-between">
+<h3 class="font-label text-[11px] uppercase tracking-wider text-on-surface-variant font-semibold">Recent questions</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">clear_all</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<!-- Recent Item 1 -->
+<button class="w-full flex items-start gap-2 p-2 rounded-md hover:bg-surface-container-low text-left group transition-colors">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant mt-0.5 group-hover:text-primary transition-colors">history</span>
+<span class="text-xs text-on-surface text-ellipsis overflow-hidden line-clamp-2 leading-tight">Vendor SLA penalties for Q4 logistics delays?</span>
+</button>
+<!-- Recent Item 2 -->
+<button class="w-full flex items-start gap-2 p-2 rounded-md hover:bg-surface-container-low text-left group transition-colors">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant mt-0.5 group-hover:text-primary transition-colors">history</span>
+<span class="text-xs text-on-surface text-ellipsis overflow-hidden line-clamp-2 leading-tight">Generate summary of current AWS storage costs vs budget.</span>
+</button>
+<!-- Recent Item 3 -->
+<button class="w-full flex items-start gap-2 p-2 rounded-md hover:bg-surface-container-low text-left group transition-colors">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant mt-0.5 group-hover:text-primary transition-colors">history</span>
+<span class="text-xs text-on-surface text-ellipsis overflow-hidden line-clamp-2 leading-tight">Update employee handbook section on remote work equipment.</span>
+</button>
+<!-- Time Separator -->
+<div class="px-2 pt-4 pb-1">
+<span class="font-label text-[10px] uppercase tracking-wider text-outline">Previous 7 Days</span>
+</div>
+<!-- Recent Item 4 -->
+<button class="w-full flex items-start gap-2 p-2 rounded-md hover:bg-surface-container-low text-left group transition-colors">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant mt-0.5 group-hover:text-primary transition-colors">history</span>
+<span class="text-xs text-on-surface text-ellipsis overflow-hidden line-clamp-2 leading-tight">List all active software licenses expiring before 2024.</span>
+</button>
+<!-- Recent Item 5 -->
+<button class="w-full flex items-start gap-2 p-2 rounded-md hover:bg-surface-container-low text-left group transition-colors">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant mt-0.5 group-hover:text-primary transition-colors">history</span>
+<span class="text-xs text-on-surface text-ellipsis overflow-hidden line-clamp-2 leading-tight">What is the approval chain for POs over $50k?</span>
+</button>
+</div>
+</aside>
+</main>
+</body></html>

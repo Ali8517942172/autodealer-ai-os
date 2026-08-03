@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoERP AI - Ask AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#4f46e5",
+                        "inverse-surface": "#303039",
+                        "on-primary-fixed-variant": "#3322cc",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fbf8ff",
+                        "tertiary": "#7e3000",
+                        "secondary-container": "#b6b4ff",
+                        "outline-variant": "#c7c4d8",
+                        "surface-tint": "#4d44e3",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#dad7ff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "background": "#fbf8ff",
+                        "secondary-fixed": "#e2dfff",
+                        "inverse-on-surface": "#f2effc",
+                        "surface-dim": "#dbd8e5",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary-fixed": "#0f0069",
+                        "tertiary-container": "#a44100",
+                        "on-secondary-fixed-variant": "#403f81",
+                        "on-surface": "#1b1b24",
+                        "on-background": "#1b1b24",
+                        "inverse-primary": "#c3c0ff",
+                        "surface-container-high": "#e9e7f3",
+                        "on-error-container": "#93000a",
+                        "secondary": "#58579b",
+                        "surface-container-low": "#f5f2ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#3525cd",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#efecf9",
+                        "surface-variant": "#e3e1ed",
+                        "surface-container-highest": "#e3e1ed",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-surface-variant": "#464555",
+                        "on-secondary-fixed": "#130f54",
+                        "secondary-fixed-dim": "#c2c1ff",
+                        "on-secondary-container": "#444386",
+                        "outline": "#777587",
+                        "surface": "#fbf8ff",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Public Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen text-on-surface font-body overflow-x-hidden">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-screen w-[240px] flex flex-col py-4 bg-surface-container-low border-r border-outline-variant z-40">
+<!-- Header -->
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary font-headline font-black text-xl">
+                A
+            </div>
+<div>
+<h2 class="text-xl font-headline font-black text-primary">AutoERP AI</h2>
+<p class="text-xs text-on-surface-variant font-label">Enterprise Assistant</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<div class="flex-1 px-3 space-y-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200 font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<!-- Active Tab -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-primary font-bold border-r-2 border-primary bg-secondary-container/20 font-body text-label-md transition-transform duration-150 scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                Ask AI
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200 font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">policy</span>
+                Policy Vault
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200 font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+                Supply Chain
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200 font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                Inventory
+            </a>
+</div>
+<!-- CTA & Footer -->
+<div class="px-4 mt-auto pt-4 space-y-4 border-t border-outline-variant/30">
+<button class="w-full py-2.5 px-4 bg-primary text-on-primary rounded-lg font-body font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Inquiry
+            </button>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200 font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant opacity-80 hover:bg-surface-container-high transition-colors duration-200 font-body text-label-md font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+                    Support
+                </a>
+</div>
+</div>
+</nav>
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 w-full h-[56px] flex justify-between items-center px-6 ml-[240px] max-w-[calc(100%-240px)] bg-surface-bright/80 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<h1 class="text-lg font-headline font-bold text-on-surface">Knowledge Assistant</h1>
+</div>
+<!-- Search Bar (on_left configuration visually pushed center-ish if space allows, but JSON says on_left, we'll keep it near the title) -->
+<div class="flex-1 max-w-md ml-8 mr-auto hidden md:flex items-center">
+<!-- Top bar search can be minimal or absent since main focus is Ask AI landing, but JSON specifies search_bar: on_left -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-full h-8 pl-9 pr-4 bg-surface-container-low border border-outline-variant rounded-full text-sm font-body focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-on-surface placeholder:text-on-surface-variant/60" placeholder="Search knowledge base..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-1 rounded-full text-on-surface-variant hover:text-primary transition-colors ml-2">
+<span class="material-symbols-outlined text-[32px] font-light">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas (Ask AI Landing) -->
+<main class="ml-[240px] flex flex-col items-center justify-center min-h-[calc(100vh-56px)] px-6 py-12">
+<div class="w-full max-w-[720px] flex flex-col items-center text-center">
+<!-- Sparkle Icon -->
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-6 shadow-sm border border-outline-variant/20">
+<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<!-- Headings -->
+<h1 class="text-2xl font-headline font-semibold text-on-surface mb-3 tracking-tight">
+                Ask anything about dealership policy
+            </h1>
+<p class="text-base text-on-surface-variant font-body mb-10 max-w-lg">
+                Answers come only from your uploaded documents, with page-level citations.
+            </p>
+<!-- Search Input Container -->
+<div class="w-full relative shadow-sm rounded-xl mb-10 group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input class="block w-full h-[52px] pl-12 pr-12 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface font-body text-base focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-[0_2px_8px_rgba(0,0,0,0.02)]" placeholder="e.g. Does our warranty cover flood damage?" type="text"/>
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center">
+<button class="p-2 rounded-lg bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Suggested Chips -->
+<div class="flex flex-wrap justify-center gap-3 w-full">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-sm font-body text-on-surface-variant hover:text-on-surface hover:border-outline hover:bg-surface-container-low transition-all shadow-sm">
+                    Does our warranty cover flood damage?
+                </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-sm font-body text-on-surface-variant hover:text-on-surface hover:border-outline hover:bg-surface-container-low transition-all shadow-sm">
+                    What is the trade-in valuation process?
+                </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-sm font-body text-on-surface-variant hover:text-on-surface hover:border-outline hover:bg-surface-container-low transition-all shadow-sm">
+                    Extended warranty terms
+                </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-sm font-body text-on-surface-variant hover:text-on-surface hover:border-outline hover:bg-surface-container-low transition-all shadow-sm">
+                    Refund and cancellation policy
+                </button>
+</div>
+</div>
+</main>
+</body></html>
