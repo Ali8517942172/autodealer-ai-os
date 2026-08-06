@@ -5,13 +5,11 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        contractAuditor: resolve(__dirname, 'contract-auditor.html')
-      }
-    }
+      // Single entry. contract-auditor.html was a Tailwind-era standalone page;
+      // its function now lives inside the app, so shipping it would mean
+      // shipping a second, unstyled copy of the product.
+      input: { main: resolve(__dirname, 'index.html') },
+    },
   },
-  server: {
-    port: 3000
-  }
+  server: { port: 3000 },
 });
