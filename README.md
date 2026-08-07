@@ -157,7 +157,7 @@ Claim Filed  → Event Bus → RAG + Service + Compliance + Customer Update
 | Phase | Where It Runs |
 |-------|---------------|
 | **Now (Build Phase)** | n8n and WAHA run locally via Docker Compose. Supabase (Postgres + Auth + pgvector) is already the live cloud database — it is never local. |
-| **Target (Go-Live Phase)** | n8n and WAHA move to a **Google Cloud e2-micro VM** — `nexus-vm`, `us-central1-a`, `34.10.178.195`, Always Free tier, 30 GB disk + 3 GB swap, Caddy on 80/443 for HTTPS. The React frontend deploys to **Vercel**. **Supabase stays the single backend/database/auth layer throughout** — nothing changes there between phases. |
+| **Target (Go-Live Phase)** | n8n and WAHA move to a **Google Cloud e2-micro VM** — `nexus-vm`, `us-central1-a`, `35.224.126.225`, Always Free tier, 30 GB disk + 3 GB swap, Caddy on 80/443 for HTTPS. The React frontend deploys to **Vercel**. **Supabase stays the single backend/database/auth layer throughout** — nothing changes there between phases. |
 
 
 ---
