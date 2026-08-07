@@ -173,7 +173,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ lead_email: $('Loop Over Silent Leads').first().json.email, channel: 'system', direction: 'outbound', message: '[SILENCE-ESCALATED] Silent for ' + $('Loop Over Silent Leads').first().json.hours_silent + 'h since ' + $('Loop Over Silent Leads').first().json.last_outbound_at }) }}",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Loop Over Silent Leads').item.json.email, channel: 'system', direction: 'outbound', message: '[SILENCE-ESCALATED] Silent for ' + $('Loop Over Silent Leads').item.json.hours_silent + 'h since ' + $('Loop Over Silent Leads').item.json.last_outbound_at }) }}",
         "options": {}
       },
       "id": "p6-mark-0001",
@@ -216,7 +216,8 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ workflow: 'Phase 6 Silence Detector', status: 'SUCCESS', lead_name: ($json.lead_name || $json.name || null), lead_email: ($json.lead_email || $json.email || null), summary: 'Completed', logged_at: $now.toISO() }) }}",
+        "jsonBody": "={{ JSON.stringify({ workflow: 'Phase 6 Silence Detector', status: 'SUCCESS', lead_name: ($('Loop Over Silent Leads').item.json.name || null), lead_email: ($('Loop Over Silent Leads').item.json.email || null), summary: 'Completed', logged_at: $now.toISO() }) }}",
+
         "options": {
           "timeout": 15000
         }
