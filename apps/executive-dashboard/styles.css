@@ -350,3 +350,25 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
    different heights even though the cards matched. Pin the value row. */
 .kpi { display: flex; flex-direction: column; }
 .kpi-sub { margin-top: auto; padding-top: 6px; }
+
+/* Currency broke across lines inside table cells exactly as it did in the KPIs
+   — "AED" on one line, the digits on the next. Numbers never wrap. */
+td.num, .kpi-value { white-space: nowrap; }
+
+/* Source chips wrapped ("Facebook Lead / Ad"), so the box grew and chips in the
+   same column ended up different heights. One line, ellipsis past the limit. */
+.chip.nowrap {
+  white-space: nowrap; max-width: 140px; overflow: hidden;
+  text-overflow: ellipsis; display: inline-block; line-height: 18px;
+}
+
+/* The sidebar's last item was clipped at short viewport heights. */
+.nav { padding-bottom: 32px; }
+
+/* Grid children stretch to the tallest sibling by default. On Automation the
+   workflow list is far taller than the activity log, so the log card stretched
+   and left half a column of blank white. Let each card own its height. */
+.grid.top { align-items: start; }
+
+/* Workflow name + its chips were wrapping onto a second line unevenly. */
+.wf-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 6px; }

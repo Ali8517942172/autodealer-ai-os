@@ -70,7 +70,12 @@ function ago(ts) {
   if (d < 3600) return `${Math.floor(d/60)} m ago`;
   if (d < 86400) return `${Math.floor(d/3600)} h ago`;
   if (d < 2592000) return `${Math.floor(d/86400)} d ago`;
-  return new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  /* Stay relative past 30 days. The Age column was switching to an absolute
+     date mid-list ("29 d ago" then "7 Jul 2026"), so two rows one day apart
+     looked unrelated and could not be compared at a glance. */
+  const mo = Math.floor(d / 2592000);
+  if (mo < 12) return `${mo} mo ago`;
+  return `${Math.floor(mo / 12)} y ago`;
 }
 const clock = ts => ts ? new Date(ts).toLocaleTimeString('en-GB', { hour12:false }) : '--:--:--';
 const initials = name => (name || '?').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
@@ -431,9 +436,12 @@ SCREENS.leads = async host => {
     { label:'Budget', align:'r', render: r => n0(r.budget_aed) == null ? '<span class="t-muted">—</span>' : aed(r.budget_aed) },
     { label:'AI score', align:'r', render: r => {
         const s = n0(r.ai_score); if (s == null) return '<span class="t-muted">—</span>';
-        return `<div style="font-weight:500">${s}</div><div class="bar" style="width:52px;margin-left:auto"><i style="width:${s}%;background:var(--${tone(r.status) === 'hot' ? 'hot' : tone(r.status) === 'warm' ? 'warm' : 'cold'})"></i></div>`;
+        const c = tone(r.status) === 'hot' ? 'hot' : tone(r.status) === 'warm' ? 'warm' : 'cold';
+        return `<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+          <div class="bar" style="width:44px"><i style="width:${s}%;background:var(--${c})"></i></div>
+          <span style="font-weight:500;min-width:22px;text-align:right">${s}</span></div>`;
       }},
-    { label:'Source', render: r => `<span class="chip">${esc(r.source || '—')}</span>` },
+    { label:'Source', render: r => `<span class="chip nowrap" title="${esc(r.source || '')}">${esc(r.source || '—')}</span>` },
     { label:'Assigned', render: r => r.users?.name
         ? esc(r.users.name)
         : `<span class="pill warm"><span class="dot"></span>Unassigned</span>` },
@@ -441,6 +449,8 @@ SCREENS.leads = async host => {
   ];
 
   function draw() {
+    card.querySelectorAll('#segStatus button').forEach(b =>
+      b.classList.toggle('on', b.dataset.v === f.status));
     const rows = filtered();
     $('resultCount').textContent = `${rows.length} of ${all.length} leads`;
     const host2 = $('leadTable');
@@ -1072,7 +1082,7 @@ SCREENS.compliance = async host => {
    ========================================================================== */
 SCREENS.automation = async host => {
   const strip = el('div', 'grid g4'); strip.innerHTML = stateLoading(2); host.appendChild(strip);
-  const grid = el('div', 'grid g2'); grid.style.marginTop = '16px'; host.appendChild(grid);
+  const grid = el('div', 'grid g2 top'); grid.style.marginTop = '16px'; host.appendChild(grid);
 
   let health = [], log = [];
   try {
@@ -1097,7 +1107,7 @@ SCREENS.automation = async host => {
   const HEALTH = {
     HEALTHY:          ['ok',   'Healthy'],
     DEGRADED:         ['hot',  'Failing'],
-    NEVER_RAN:        ['warm', 'Never ran'],
+    NEVER_RAN:        ['',     'No runs logged yet'],
     /* "0 runs" is ambiguous — a workflow can fire perfectly and simply have no
        Audit Log node. Only 4 of 13 write to audit_log. Saying "never ran" for
        the other 9 would be wrong. */
@@ -1105,7 +1115,7 @@ SCREENS.automation = async host => {
   };
   const maxRuns = Math.max(1, ...health.map(w => w.runs || 0));
   wCard.innerHTML = `<div class="card-head"><div><div class="card-title">All workflows</div>
-    <div class="card-sub">Including the ones that have never logged a run</div></div></div>
+    <div class="card-sub">Audit logging was added to all 13 today — counts build up from the next run of each</div></div></div>
     <div>${health.map(w => {
       const [t, lbl] = HEALTH[w.health] || ['', w.health];
       return `<div class="list-item" style="cursor:default;align-items:flex-start">
@@ -1116,8 +1126,8 @@ SCREENS.automation = async host => {
             <span class="chip">${esc(w.trigger_type)}${w.trigger_detail ? ' · ' + esc(w.trigger_detail) : ''}</span>
           </div>
           <div class="cell-sub" style="margin-top:4px;white-space:normal">${esc(w.description || '')}</div>
-          <div class="bar" style="margin-top:8px;max-width:220px">
-            <i style="width:${((w.runs || 0) / maxRuns * 100).toFixed(1)}%;background:var(--${w.failures ? 'hot' : 'primary'})"></i></div>
+          ${w.runs ? `<div class="bar" style="margin-top:8px;max-width:220px">
+            <i style="width:${(w.runs / maxRuns * 100).toFixed(1)}%;background:var(--${w.failures ? 'hot' : 'primary'})"></i></div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div class="num" style="font-weight:500">${num(w.runs)}</div>
@@ -1130,7 +1140,7 @@ SCREENS.automation = async host => {
   const lCard = el('div', 'card flush'); grid.appendChild(lCard);
   lCard.innerHTML = `<div class="card-head"><div class="card-title">Activity log</div>
     <div class="card-sub">Newest first · ${log.length} entries</div></div>
-    <div style="max-height:640px;overflow-y:auto">${log.length ? log.map(a => `
+    <div style="max-height:70vh;overflow-y:auto">${log.length ? log.map(a => `
       <div class="list-item" style="cursor:default">
         <span class="mono t-muted">${clock(a.logged_at)}</span>
         ${pill(a.status)}
