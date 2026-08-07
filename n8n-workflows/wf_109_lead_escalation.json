@@ -97,8 +97,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1104,
-        304
+        1110,
+        128
       ],
       "credentials": {
         "supabaseApi": {

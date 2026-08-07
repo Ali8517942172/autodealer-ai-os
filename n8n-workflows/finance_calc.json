@@ -73,7 +73,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        650,
+        880,
         300
       ]
     },
@@ -108,7 +108,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        900,
+        1110,
         300
       ],
       "credentials": {
@@ -132,7 +132,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1150,
+        1340,
         300
       ]
     },
@@ -167,8 +167,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2200,
-        600
+        1570,
+        300
       ],
       "credentials": {
         "supabaseApi": {
