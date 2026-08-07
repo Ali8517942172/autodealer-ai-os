@@ -428,6 +428,19 @@
       "maxTries": 2,
       "waitBetweenTries": 1500,
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Audit Log replies with an empty body (Prefer: return=minimal). This\n// keeps the sub-workflow's return value meaningful for the Master Router.\nreturn $input.all().length ? $input.all() : [{ json: { status: 'done' } }];"
+      },
+      "id": "whatsapp-return",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2650,
+        700
+      ]
     }
   ],
   "connections": {
@@ -608,6 +621,17 @@
         [
           {
             "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
             "type": "main",
             "index": 0
           }

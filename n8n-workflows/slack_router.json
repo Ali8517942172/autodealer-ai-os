@@ -6,7 +6,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "slack-command",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
         "options": {}
       },
       "id": "1",
@@ -237,6 +237,20 @@
       "maxTries": 2,
       "waitBetweenTries": 1500,
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "auto-respond-1786092139256",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        814,
+        304
+      ]
     }
   ],
   "connections": {
@@ -336,6 +350,17 @@
       ]
     },
     "Format Slack Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
       "main": [
         [
           {

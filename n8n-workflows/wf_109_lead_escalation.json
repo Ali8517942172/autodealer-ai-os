@@ -306,6 +306,19 @@
         354,
         344
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Audit Log answers with an empty body (Prefer: return=minimal). Without\n// this the Master Router, which calls this workflow as a sub-workflow,\n// would receive nothing back.\nreturn $input.all().length ? $input.all() : [{ json: { status: 'escalated' } }];"
+      },
+      "id": "wf109-return",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2650,
+        600
+      ]
     }
   ],
   "connections": {
@@ -430,6 +443,17 @@
         [
           {
             "node": "AI Escalation Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
             "type": "main",
             "index": 0
           }

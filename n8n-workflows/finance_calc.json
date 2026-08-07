@@ -6,7 +6,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "finance-calc",
-        "responseMode": "responseNode",
+        "responseMode": "lastNode",
         "options": {}
       },
       "id": "1",
@@ -238,29 +238,18 @@
       "main": [
         [
           {
-            "node": "Return Quote",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Return Quote": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Respond to Webhook": {
-      "main": [
-        [
-          {
             "node": "Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Return Quote",
             "type": "main",
             "index": 0
           }
