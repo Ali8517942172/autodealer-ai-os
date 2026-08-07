@@ -868,6 +868,11 @@ SCREENS.finance = async host => {
       <div class="field"><label for="fScore">AECB credit score</label>
         <input type="number" id="fScore" min="300" max="900" placeholder="720" />
         <div class="hint">Entered manually from the customer's AECB report. Real-time bureau lookups require a licensed financial-institution agreement in the UAE.</div></div>
+      <div class="field"><label for="fName">Customer name</label>
+        <input type="text" id="fName" placeholder="Vikram Malhotra" /></div>
+      <div class="field"><label for="fEmail">Customer email</label>
+        <input type="email" id="fEmail" placeholder="name@example.com" />
+        <div class="hint">A quote is a promise made to a named person. Without this the record cannot be traced back to anyone.</div></div>
       <button class="btn primary" id="fGo">Calculate</button>
     </div>
     <div id="fOut" style="margin-top:18px"></div>`;
@@ -885,7 +890,16 @@ SCREENS.finance = async host => {
     const out = $('fOut');
     out.innerHTML = `<div class="t-muted">Calculating…</div>`;
     try {
-      const r = await n8n('finance-calc', { vehicleValue, loanPayoffAmount, creditScore });
+      /* Attribution travels with the request. The backend records lead_email,
+         lead_name and quoted_by; without these the quote is stored with nobody
+         attached to it, which defeats the point of storing it. quoted_by comes
+         from the session, never from a field the rep can type into. */
+      const r = await n8n('finance-calc', {
+        vehicleValue, loanPayoffAmount, creditScore,
+        lead_name:  $('fName').value.trim()  || null,
+        lead_email: $('fEmail').value.trim() || null,
+        quoted_by:  ME?.name || SESSION?.user?.email || null,
+      });
       if (r.status === 'error') {
         out.innerHTML = `<div class="banner hot"><span class="material-symbols-outlined" style="font-size:20px">error</span>
           <div>${(r.errors || ['Invalid input']).map(esc).join('<br>')}</div></div>`;
@@ -906,6 +920,33 @@ SCREENS.finance = async host => {
       out.innerHTML = stateError('the calculation', e.message);
     }
   });
+
+  /* Quote history. Until today finance_calc wrote nothing anywhere — every
+     equity/APR figure a rep quoted a customer vanished with the HTTP response.
+     This panel is the record. */
+  const hist = el('div', 'card flush');
+  hist.style.marginTop = '16px';
+  hist.innerHTML = `<div class="card-head"><div><div class="card-title">Recent quotes</div>
+    <div class="card-sub">Every calculation is now recorded and attributable</div></div></div>
+    <div id="fqBody">${stateLoading(3)}</div>`;
+  host.appendChild(hist);
+
+  db('finance_quotes?select=*&order=created_at.desc&limit=50')
+    .then(rows => {
+      $('fqBody').innerHTML = rows.length ? table([
+        { label:'When', render: r => `<span class="t-muted">${ago(r.created_at)}</span>` },
+        { label:'Customer', strong:true, render: r => `${esc(r.lead_name || '—')}<div class="cell-sub">${esc(r.lead_email || '')}</div>` },
+        { label:'Vehicle value', align:'r', render: r => aed(r.vehicle_value_aed) },
+        { label:'Payoff', align:'r', render: r => aed(r.loan_payoff_aed) },
+        { label:'Equity', align:'r', render: r => `<span class="${r.equity_status === 'Negative' ? 't-hot' : 't-ok'}">${aed(r.equity_aed)}</span>` },
+        { label:'LTV', align:'r', render: r => pct(r.loan_to_value_pct) },
+        { label:'Tier', render: r => `<span class="chip">${esc(r.finance_tier)}</span>` },
+        { label:'APR', align:'r', render: r => pct(r.indicative_apr_pct) },
+        { label:'Quoted by', render: r => esc(r.quoted_by || '—') },
+      ], rows) : stateEmpty('No quotes recorded yet',
+          'Every calculation from this screen is now stored, with the customer and the rep it belongs to.', 'receipt_long');
+    })
+    .catch(e => { $('fqBody').innerHTML = stateError('quote history', e.message); });
 
   try {
     const inv = await db('inventory?select=*&order=model');
