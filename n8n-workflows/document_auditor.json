@@ -191,7 +191,10 @@
         }
       },
       "alwaysOutputData": true,
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -315,7 +318,10 @@
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -342,7 +348,10 @@
           "name": "Slack account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -382,7 +391,10 @@
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -459,6 +471,99 @@
           "name": "Supabase account"
         }
       },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/kyc_documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Approved').first().json.lead_email, lead_name: $('Approved').first().json.lead_name, chat_id: $('Approved').first().json.chat_id, document_type: $('Approved').first().json.parsed.documentType, full_name: $('Approved').first().json.parsed.fullName, date_of_birth: $('Approved').first().json.parsed.dateOfBirth, expiry_date: $('Approved').first().json.parsed.expiryDate, is_valid: true, tampering: false, confidence_score: $('Approved').first().json.parsed.confidenceScore, remarks: $('Approved').first().json.parsed.remarks, attempt_number: 1, verdict: 'APPROVED', reviewed_at: $now.toISO() }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "kyc-rec-ok",
+      "name": "Record KYC (Approved)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        -160
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/kyc_documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $('Decide: Re-ask or Escalate').first().json.lead_email, lead_name: $('Decide: Re-ask or Escalate').first().json.lead_name, chat_id: $('Decide: Re-ask or Escalate').first().json.chat_id, document_type: $('Decide: Re-ask or Escalate').first().json.parsed.documentType, full_name: $('Decide: Re-ask or Escalate').first().json.parsed.fullName, is_valid: false, tampering: ($('Decide: Re-ask or Escalate').first().json.parsed.tamperingDetected === true), confidence_score: $('Decide: Re-ask or Escalate').first().json.parsed.confidenceScore, remarks: $('Decide: Re-ask or Escalate').first().json.reason, attempt_number: $('Decide: Re-ask or Escalate').first().json.nextAttempt, max_attempts: 3, verdict: ($('Decide: Re-ask or Escalate').first().json.withinLimit ? 'REJECTED' : 'ESCALATED') }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "kyc-rec-rej",
+      "name": "Record KYC (Rejected)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        420
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
       "onError": "continueRegularOutput"
     }
   ],
@@ -587,6 +692,11 @@
             "node": "Within Retry Limit?",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Record KYC (Rejected)",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -625,6 +735,17 @@
         [
           {
             "node": "Log KYC Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log KYC Approved": {
+      "main": [
+        [
+          {
+            "node": "Record KYC (Approved)",
             "type": "main",
             "index": 0
           }

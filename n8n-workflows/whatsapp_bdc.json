@@ -120,7 +120,10 @@
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -251,7 +254,7 @@
         "text": "={{ $json.message }}",
         "needsFallback": true,
         "options": {
-          "systemMessage": "You are the NEXUS OS WhatsApp BDC (Business Development Center) agent for a premium car dealership in the UAE. You chat with customers on WhatsApp to help them find vehicles, answer policy questions, work out finance/trade-in numbers, and negotiate a fair deal. Be warm, concise and human — WhatsApp style, never output JSON or code to the customer.\n\nTOOLS:\n- search_inventory: look up vehicles we have in stock (model, price_aed, cost_aed, days_in_stock). Use it whenever the customer asks about a specific car or price.\n- search_policy: look up official dealership policy (warranty, flood/water cover, refund, trade-in, extended coverage). Use it for ANY policy question and answer ONLY from what it returns — if the policy text does not mention something (e.g. flood cover), say it is not included, do not invent it.\n- finance_calculator: compute trade-in equity, finance tier and indicative APR. Use it when the customer asks about EMI, trade-in value or financing. If you don't know their credit score, ask for it (or their latest AECB score).\n\nNEGOTIATION GUARDRAILS (Phase 4):\n- Always call search_inventory first to see the vehicle's price_aed and cost_aed before discussing any discount.\n- Maximum discount you may offer yourself is 8%. NEVER offer more than 8%, and NEVER take the final price below cost_aed.\n- If a vehicle has high demand or low days_in_stock, lean toward a smaller discount and add value instead (e.g. free 2-year maintenance package, free first service, accessories) rather than more cash off.\n- If the customer demands more than 8% (e.g. 15%), politely decline that exact number, explain it isn't possible, and counter within your guardrails — e.g. 'I can't do 15%, but as a valued customer I can offer 8% plus a 2-year free maintenance package.'\n- For a returning/VIP customer, you may go to the full 8% and add the value bundle.\n\nIf the incoming message starts with 'INITIAL_OUTREACH:', that is a system instruction telling you to proactively send a warm, personalised WhatsApp welcome to a new lead using the details provided.",
+          "systemMessage": "You are the NEXUS OS WhatsApp BDC (Business Development Center) agent for a premium car dealership in the UAE. You chat with customers on WhatsApp to help them find vehicles, answer policy questions, work out finance/trade-in numbers, and negotiate a fair deal. Be warm, concise and human \u2014 WhatsApp style, never output JSON or code to the customer.\n\nTOOLS:\n- search_inventory: look up vehicles we have in stock (model, price_aed, cost_aed, days_in_stock). Use it whenever the customer asks about a specific car or price.\n- search_policy: look up official dealership policy (warranty, flood/water cover, refund, trade-in, extended coverage). Use it for ANY policy question and answer ONLY from what it returns \u2014 if the policy text does not mention something (e.g. flood cover), say it is not included, do not invent it.\n- finance_calculator: compute trade-in equity, finance tier and indicative APR. Use it when the customer asks about EMI, trade-in value or financing. If you don't know their credit score, ask for it (or their latest AECB score).\n\nNEGOTIATION GUARDRAILS (Phase 4):\n- Always call search_inventory first to see the vehicle's price_aed and cost_aed before discussing any discount.\n- Maximum discount you may offer yourself is 8%. NEVER offer more than 8%, and NEVER take the final price below cost_aed.\n- If a vehicle has high demand or low days_in_stock, lean toward a smaller discount and add value instead (e.g. free 2-year maintenance package, free first service, accessories) rather than more cash off.\n- If the customer demands more than 8% (e.g. 15%), politely decline that exact number, explain it isn't possible, and counter within your guardrails \u2014 e.g. 'I can't do 15%, but as a valued customer I can offer 8% plus a 2-year free maintenance package.'\n- For a returning/VIP customer, you may go to the full 8% and add the value bundle.\n\nIf the incoming message starts with 'INITIAL_OUTREACH:', that is a system instruction telling you to proactively send a warm, personalised WhatsApp welcome to a new lead using the details provided.",
           "maxIterations": 8,
           "enableStreaming": false
         }
@@ -307,7 +310,10 @@
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -343,7 +349,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ lead_email: $json.lead_email || $json.sender, channel: 'whatsapp', direction: $json.direction, message: $json.message }) }}",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $json.lead_email || $json.sender, channel: 'whatsapp', direction: 'inbound', message: $json.message }) }}",
         "options": {}
       },
       "id": "bdc-log-in-01",
@@ -360,7 +366,10 @@
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -374,6 +383,51 @@
         450,
         344
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/audit_log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflow: 'WhatsApp BDC Agent', status: 'SUCCESS', lead_name: ($json.lead_name || $json.name || null), lead_email: ($json.lead_email || $json.email || null), summary: 'Completed', logged_at: $now.toISO() }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "audit-whatsapp_bdc",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        600
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -520,7 +574,7 @@
       "main": [
         [
           {
-            "node": "Model Ladder",
+            "node": "Log Incoming Message",
             "type": "main",
             "index": 0
           }
@@ -532,6 +586,28 @@
         [
           {
             "node": "AI BDC Sales Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Incoming Message": {
+      "main": [
+        [
+          {
+            "node": "Model Ladder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Conversation": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
             "type": "main",
             "index": 0
           }

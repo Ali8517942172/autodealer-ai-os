@@ -63,7 +63,10 @@
           "id": "L4pRhS1d4Xhfyh5c",
           "name": "Resend API (Header)"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -103,7 +106,10 @@
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -219,7 +225,10 @@
           "id": "oOf93CGdFiAxHkHF",
           "name": "Slack account"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {
@@ -247,7 +256,10 @@
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
     },
     {
       "parameters": {

@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Accept a raw webhook POST (payload under .body) or a direct/sub-workflow call.\nconst raw = $input.first().json;\nconst src = raw.body || raw;\n\nconst vehicleValue = parseFloat(src.vehicleValue);\nconst loanPayoffAmount = parseFloat(src.loanPayoffAmount);\n// Credit score is entered manually by the rep from the customer's AECB report --\n// real-time bureau lookups require a licensed financial-institution agreement in\n// the UAE, so this stays a manual field rather than an automated external call.\nconst creditScore = parseInt(src.creditScore, 10);\n\nconst errors = [];\nif (!Number.isFinite(vehicleValue) || vehicleValue <= 0) {\n  errors.push('vehicleValue must be a positive number (AED).');\n}\nif (!Number.isFinite(loanPayoffAmount) || loanPayoffAmount < 0) {\n  errors.push('loanPayoffAmount must be zero or a positive number (AED).');\n}\nif (!Number.isFinite(creditScore) || creditScore < 300 || creditScore > 900) {\n  errors.push('A valid AECB credit score (300-900) is required. Ask the customer for their latest AECB report.');\n}\n\nif (errors.length) {\n  return [{ json: { status: 'error', errors: errors, calculatedAt: new Date().toISOString() } }];\n}\n\nconst equity = vehicleValue - loanPayoffAmount;\nconst ltv = vehicleValue > 0 ? Math.round((loanPayoffAmount / vehicleValue) * 1000) / 10 : null;\n\nlet financeTier = 'Subprime';\nlet indicativeApr = 12.5;\nif (creditScore >= 720)      { financeTier = 'Prime Plus'; indicativeApr = 3.99; }\nelse if (creditScore >= 680) { financeTier = 'Prime';      indicativeApr = 5.49; }\nelse if (creditScore >= 620) { financeTier = 'Near Prime'; indicativeApr = 7.99; }\n\nreturn [{\n  json: {\n    status: 'success',\n    equity_aed: Math.round(equity),\n    equity_status: equity >= 0 ? 'Positive' : 'Negative',\n    loan_to_value_pct: ltv,\n    credit_score: creditScore,\n    finance_tier: financeTier,\n    indicative_apr_pct: indicativeApr,\n    vehicle_value_aed: Math.round(vehicleValue),\n    loan_payoff_aed: Math.round(loanPayoffAmount),\n    disclaimer: 'Indicative only. Final APR and approval are set by the lender, not by NEXUS OS.',\n    calculated_at: new Date().toISOString()\n  }\n}];"
+        "jsCode": "// Accept a raw webhook POST (payload under .body) or a direct/sub-workflow call.\nconst raw = $input.first().json;\nconst src = raw.body || raw;\n\nconst vehicleValue = parseFloat(src.vehicleValue);\nconst loanPayoffAmount = parseFloat(src.loanPayoffAmount);\n// Credit score is entered manually by the rep from the customer's AECB report --\n// real-time bureau lookups require a licensed financial-institution agreement in\n// the UAE, so this stays a manual field rather than an automated external call.\nconst creditScore = parseInt(src.creditScore, 10);\n\n// Attribution for the quote record. A finance figure with a lender\n// disclaimer must be traceable to a customer and a rep.\nconst leadEmail = src.lead_email || src.email || null;\nconst leadName  = src.lead_name  || src.name  || null;\nconst quotedBy  = src.quoted_by  || src.rep   || null;\n\nconst errors = [];\nif (!Number.isFinite(vehicleValue) || vehicleValue <= 0) {\n  errors.push('vehicleValue must be a positive number (AED).');\n}\nif (!Number.isFinite(loanPayoffAmount) || loanPayoffAmount < 0) {\n  errors.push('loanPayoffAmount must be zero or a positive number (AED).');\n}\nif (!Number.isFinite(creditScore) || creditScore < 300 || creditScore > 900) {\n  errors.push('A valid AECB credit score (300-900) is required. Ask the customer for their latest AECB report.');\n}\n\nif (errors.length) {\n  return [{ json: { status: 'error', errors: errors, lead_email: leadEmail,\n    lead_name: leadName, calculatedAt: new Date().toISOString() } }];\n}\n\nconst equity = vehicleValue - loanPayoffAmount;\nconst ltv = vehicleValue > 0 ? Math.round((loanPayoffAmount / vehicleValue) * 1000) / 10 : null;\n\nlet financeTier = 'Subprime';\nlet indicativeApr = 12.5;\nif (creditScore >= 720)      { financeTier = 'Prime Plus'; indicativeApr = 3.99; }\nelse if (creditScore >= 680) { financeTier = 'Prime';      indicativeApr = 5.49; }\nelse if (creditScore >= 620) { financeTier = 'Near Prime'; indicativeApr = 7.99; }\n\nreturn [{\n  json: {\n    status: 'success',\n    equity_aed: Math.round(equity),\n    equity_status: equity >= 0 ? 'Positive' : 'Negative',\n    loan_to_value_pct: ltv,\n    credit_score: creditScore,\n    finance_tier: financeTier,\n    indicative_apr_pct: indicativeApr,\n    vehicle_value_aed: Math.round(vehicleValue),\n    loan_payoff_aed: Math.round(loanPayoffAmount),\n    disclaimer: 'Indicative only. Final APR and approval are set by the lender, not by NEXUS OS.',\n    calculated_at: new Date().toISOString(),\n    lead_email: leadEmail,\n    lead_name: leadName,\n    quoted_by: quotedBy\n  }\n}];"
       },
       "id": "3",
       "name": "Calculate Equity & Tier",
@@ -43,6 +43,143 @@
       "parameters": {
         "inputSource": "passthrough"
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fc-ok",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fc-if-0001",
+      "name": "Quote Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/finance_quotes",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_email: $json.lead_email, lead_name: $json.lead_name, quoted_by: $json.quoted_by, vehicle_value_aed: $json.vehicle_value_aed, loan_payoff_aed: $json.loan_payoff_aed, credit_score: $json.credit_score, equity_aed: $json.equity_aed, equity_status: $json.equity_status, loan_to_value_pct: $json.loan_to_value_pct, finance_tier: $json.finance_tier, indicative_apr_pct: $json.indicative_apr_pct, disclaimer: $json.disclaimer, source: 'finance-calc-webhook' }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "fc-log-quote-0001",
+      "name": "Log Quote",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Re-emit the calculation. 'Log Quote' returns an empty body\n// (Prefer: return=minimal), so without this the webhook would answer with\n// nothing. Also keeps the sub-workflow caller contract intact.\nreturn $('Calculate Equity & Tier').all();"
+      },
+      "id": "fc-return-0001",
+      "name": "Return Quote",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1150,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/audit_log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflow: 'Finance Calc', status: 'SUCCESS', lead_name: ($json.lead_name || $json.name || null), lead_email: ($json.lead_email || $json.email || null), summary: 'Completed', logged_at: $now.toISO() }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "audit-finance_calc",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        600
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -62,6 +199,57 @@
         [
           {
             "node": "Calculate Equity & Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Equity & Tier": {
+      "main": [
+        [
+          {
+            "node": "Quote Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Valid?": {
+      "main": [
+        [
+          {
+            "node": "Log Quote",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Quote": {
+      "main": [
+        [
+          {
+            "node": "Return Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Quote": {
+      "main": [
+        [
+          {
+            "node": "Audit Log",
             "type": "main",
             "index": 0
           }
