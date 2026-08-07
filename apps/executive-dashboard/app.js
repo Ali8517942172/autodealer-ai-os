@@ -52,7 +52,15 @@ const num  = v => { const x = n0(v); return x == null ? '—' : nf.format(Math.r
 const aed  = v => { const x = n0(v); return x == null ? '—' : 'AED ' + nf.format(Math.round(x)); };
 const aedSigned = v => { const x = n0(v); if (x == null) return '—'; return (x < 0 ? '−' : '+') + 'AED ' + nf.format(Math.abs(Math.round(x))); };
 const pct  = v => { const x = n0(v); return x == null ? '—' : x.toFixed(1) + '%'; };
-const mins = v => { const x = n0(v); if (x == null) return '—'; return x < 60 ? `${x.toFixed(x % 1 ? 1 : 0)} min` : `${(x/60).toFixed(1)} h`; };
+const mins = v => {
+  const x = n0(v);
+  if (x == null) return '—';
+  /* Deliberately stays in minutes up to 2 h. The 5-minute rule is the founding
+     promise of this product; "73 min" is uncomfortable in a way "1.2 h" is not,
+     and that discomfort is the point. */
+  if (x < 120) return `${Math.round(x)} min`;
+  return `${(x / 60).toFixed(1)} h`;
+};
 
 function ago(ts) {
   if (!ts) return '—';
@@ -196,8 +204,11 @@ function closeDrawer() {
 
 /* ── Reusable renderers ──────────────────────────────────────────────────── */
 function kpi(label, value, sub, cls = '') {
+  /* Long currency values wrapped mid-figure ("AED" on one line, the digits on
+     the next). Shrink rather than wrap — a KPI must read as one number. */
+  const long = String(value).replace(/<[^>]*>/g, '').length > 12;
   return `<div class="kpi"><div class="label-caps">${esc(label)}</div>
-    <div class="kpi-value ${cls}">${value}</div>
+    <div class="kpi-value ${cls}${long ? ' long' : ''}">${value}</div>
     ${sub ? `<div class="kpi-sub">${sub}</div>` : ''}</div>`;
 }
 
@@ -289,7 +300,7 @@ SCREENS.overview = async host => {
           : delta(avgResp, prev?.avg_response_minutes, v => mins(v), true)),
       kpi('Pipeline value', aed(pipeline),
         withBudget.length < leads.length
-          ? `<span class="t-muted">From ${withBudget.length} of ${leads.length} leads — ${leads.length - withBudget.length} have no budget recorded</span>`
+          ? `<span class="t-muted">From ${withBudget.length} of ${leads.length} leads · ${leads.length - withBudget.length} ${leads.length - withBudget.length === 1 ? 'has' : 'have'} no budget recorded</span>`
           : delta(pipeline, prev?.pipeline_aed, v => aed(v))),
       kpi('Units at risk', num(risk.length),
         risk.length ? `<span class="t-hot">Oldest ${num(Math.max(...risk.map(r => n0(r.days_in_stock) || 0)))} days in stock</span>` : 'No unit past the aging threshold'),
@@ -299,7 +310,14 @@ SCREENS.overview = async host => {
     await panel(attnHost, {
       title: 'Needs attention',
       sub: 'Live union of unassigned HOT leads, SLA breaches, aging stock, price undercuts and workflow failures',
-      load: () => db('v_needs_attention?select=*&order=severity.asc,at.desc&limit=40'),
+      load: () => db('v_needs_attention?select=*&limit=60').then(rows => {
+        /* A HOT lead with no owner decays in minutes; a car aging on the lot
+           decays over weeks. Severity alone put four parked cars above a lead
+           nobody is working. */
+        const rank = { lead_unassigned: 0, sla_breach: 1, workflow_failure: 2, undercut: 3, inventory_aging: 4 };
+        return rows.sort((a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9)
+          || new Date(b.at) - new Date(a.at));
+      }),
       render: items => {
         if (!items.length) return stateEmpty('Nothing needs you right now', 'No unassigned HOT leads, SLA breaches, aging units, undercuts or failures.', 'task_alt');
         const KIND = { lead_unassigned:'person_alert', sla_breach:'timer', inventory_aging:'directions_car',
@@ -329,7 +347,7 @@ SCREENS.overview = async host => {
       actions: `<button class="btn sm" data-act="leads">View all</button>`,
       load: () => db('leads?select=id,name,status,ai_score,vehicle_interest,source,created_at&order=created_at.desc&limit=8'),
       render: rows => rows.length ? table([
-        { label:'Time',    render: r => `<span class="mono t-muted">${clock(r.created_at)}</span>` },
+        { label:'When', render: r => `<div class="t-muted">${ago(r.created_at)}</div><div class="cell-sub mono">${clock(r.created_at)}</div>` },
         { label:'Status',  render: r => pill(r.status || 'NEW') },
         { label:'Name',    strong: true, render: r => esc(r.name) },
         { label:'Interest',render: r => `<span class="t-2">${esc(r.vehicle_interest || '—')}</span>` },

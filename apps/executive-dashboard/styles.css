@@ -340,3 +340,13 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 .login-card { width: 100%; max-width: 380px; }
 
 .hide { display: none !important; }
+
+/* A KPI that wraps stops reading as a single figure. AED 5,455,000 was
+   breaking after "AED". Shrink the long ones instead of letting them wrap. */
+.kpi-value { white-space: nowrap; }
+.kpi-value.long { font-size: 24px; line-height: 32px; letter-spacing: -.01em; }
+
+/* KPI sub-lines varied from one to three lines, so the cards' contents sat at
+   different heights even though the cards matched. Pin the value row. */
+.kpi { display: flex; flex-direction: column; }
+.kpi-sub { margin-top: auto; padding-top: 6px; }
