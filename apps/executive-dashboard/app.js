@@ -770,7 +770,13 @@ function nextStockId(inv) {
   return 'VH-' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0');
 }
 
-const isoDate = d => new Date(d).toISOString().slice(0, 10);
+/* Local calendar date, not UTC. toISOString() on local midnight in Dubai (UTC+4)
+   rolls back to the previous day, which defaulted "acquired on" to yesterday and
+   showed a brand new car as already 1 day old. */
+const isoDate = d => {
+  const x = new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+};
 
 function unitForm(existing, inv, onDone) {
   const isNew = !existing;
