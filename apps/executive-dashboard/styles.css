@@ -237,10 +237,14 @@ td.strong { font-weight: 500; }
 .btn.ghost:hover { background: var(--surface-hover); }
 .btn.sm { height: 30px; padding: 0 10px; font-size: 13px; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
+/* Destructive actions never share a colour with a primary action — the delete
+   button should not be one mis-click away from looking like Save. */
+.btn.danger { border-color: var(--hot); color: var(--hot-text); background: var(--surface); }
+.btn.danger:hover { background: var(--hot-fill); }
 .btn .material-symbols-outlined { font-size: 18px; }
 
 input[type=text], input[type=number], input[type=search], input[type=email],
-input[type=password], select, textarea {
+input[type=password], input[type=date], select, textarea {
   height: 36px; padding: 0 12px; border: 1px solid var(--border);
   border-radius: var(--radius-control); background: var(--surface);
   font: inherit; font-size: 14px; color: var(--text); width: 100%;
