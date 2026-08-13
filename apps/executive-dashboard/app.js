@@ -667,39 +667,251 @@ SCREENS.conversations = async host => {
   openThread(0);
 };
 
+/* ── Modal ───────────────────────────────────────────────────────────────────
+   The drawer is the read view; a modal is the write view. Keeping them separate
+   means a form can never be half-covered by a detail panel. */
+function openModal(title, bodyHtml, footHtml) {
+  document.getElementById('modalWrap')?.remove();
+  const wrap = el('div');
+  wrap.id = 'modalWrap';
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-modal', 'true');
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;'
+    + 'justify-content:center;padding:40px 16px;overflow:auto;background:rgba(15,23,41,.45)';
+  wrap.innerHTML = `<div class="card" style="width:100%;max-width:720px;margin:auto">
+      <div class="card-head" style="margin-bottom:4px">
+        <div class="card-title" style="flex:1">${esc(title)}</div>
+        <button class="btn ghost sm" id="mClose" aria-label="Close">
+          <span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div id="modalBody">${bodyHtml}</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:20px;flex-wrap:wrap">${footHtml || ''}</div>
+      <div class="cell-sub" id="modalMsg" style="margin-top:12px"></div>
+    </div>`;
+  document.body.appendChild(wrap);
+  const close = () => wrap.remove();
+  wrap.querySelector('#mClose').addEventListener('click', close);
+  wrap.addEventListener('mousedown', e => { if (e.target === wrap) close(); });
+  document.addEventListener('keydown', function esc_(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc_); }
+  });
+  wrap.querySelector('input,select,textarea')?.focus();
+  return { wrap, close, msg: t => { wrap.querySelector('#modalMsg').innerHTML = t; } };
+}
+function modalError(m, e) { m.msg(`<span class="t-hot">${esc(e.message || String(e))}</span>`); }
+
 /* ==========================================================================
    S4 · Inventory
    ========================================================================== */
+
+/* Every money column on this screen is derived, not entered. These constants were
+   reverse-engineered from the twelve seeded units and reproduce all of them exactly.
+   The one soft edge: the HEALTHY/WARNING boundary is only pinned to somewhere
+   between 62 and 82 days by that data — 75 is the assumption. CRITICAL at 120 is
+   exact (121 was CRITICAL, 97 was WARNING). */
+const INV = {
+  HOLDING_PER_DAY: 50,      // AED per unit per day
+  VAT_RATE: 0.05,           // UAE VAT on the list price
+  COMMISSION_RATE: 0.05,    // of net margin
+  WARN_DAYS: 75,
+  CRITICAL_DAYS: 120,
+  STATUSES: ['Available', 'Reserved', 'Sold'],
+};
+
+const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+
+/* acquired_at is the source of truth; everything else falls out of it. Units
+   that are Sold stop accruing — a sold car is not costing the lot anything. */
+function deriveUnit(u) {
+  const price = n0(u.price_aed) || 0;
+  const cost = n0(u.cost_aed) || 0;
+  let days;
+  if (u.acquired_at) {
+    days = Math.max(0, Math.round((today0() - new Date(u.acquired_at + 'T00:00:00')) / 86400000));
+  } else {
+    days = n0(u.days_in_stock) || 0;   // pre-migration rows, if any survive
+  }
+  const sold = String(u.status || '').toLowerCase() === 'sold';
+  const holding = sold ? (n0(u.holding_cost_accrued) || 0) : days * INV.HOLDING_PER_DAY;
+  const gross = price - cost;
+  const net = gross - holding;
+  return {
+    ...u,
+    days_in_stock: days,
+    holding_cost_accrued: holding,
+    gross_margin: gross,
+    net_margin: net,
+    vat_amount: Math.round(price * INV.VAT_RATE),
+    recommended_commission: Math.round(net * INV.COMMISSION_RATE),
+    aging_alert: sold ? 'HEALTHY'
+      : days >= INV.CRITICAL_DAYS ? 'CRITICAL'
+      : days >= INV.WARN_DAYS ? 'WARNING' : 'HEALTHY',
+  };
+}
+
+/* What actually goes to Postgres. The derived columns are stored as well as shown,
+   because n8n workflows and the Finance Desk read them straight off the table. */
+function unitRow(u) {
+  const d = deriveUnit(u);
+  return {
+    id: d.id, model: d.model, vin: d.vin || null,
+    status: d.status, acquired_at: d.acquired_at,
+    price_aed: n0(d.price_aed) || 0, cost_aed: n0(d.cost_aed) || 0,
+    days_in_stock: d.days_in_stock, holding_cost_accrued: d.holding_cost_accrued,
+    gross_margin: d.gross_margin, net_margin: d.net_margin,
+    vat_amount: d.vat_amount, recommended_commission: d.recommended_commission,
+    aging_alert: d.aging_alert,
+    ai_recommendation: d.ai_recommendation || null,
+  };
+}
+
+function nextStockId(inv) {
+  const nums = inv.map(u => /^VH-(\d+)$/.exec(String(u.id || ''))).filter(Boolean).map(m => Number(m[1]));
+  return 'VH-' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0');
+}
+
+const isoDate = d => new Date(d).toISOString().slice(0, 10);
+
+function unitForm(existing, inv, onDone) {
+  const isNew = !existing;
+  const u = existing || {
+    id: nextStockId(inv), model: '', vin: '', status: 'Available',
+    acquired_at: isoDate(today0()), price_aed: '', cost_aed: '', ai_recommendation: '',
+  };
+  const f = (id, label, input, hint) => `<div class="field">
+    <label for="${id}">${label}</label>${input}
+    ${hint ? `<div class="cell-sub">${hint}</div>` : ''}</div>`;
+
+  const m = openModal(isNew ? 'Add vehicle' : `Edit ${u.model}`, `
+    <div class="grid g2">
+      ${f('uId', 'Stock number', `<input id="uId" value="${esc(u.id)}" ${isNew ? '' : 'disabled'} />`,
+          isNew ? 'Must be unique. Used as the row key everywhere.' : 'The stock number cannot be changed once a unit exists.')}
+      ${f('uStatus', 'Status', `<select id="uStatus">${INV.STATUSES
+          .map(s => `<option ${s === u.status ? 'selected' : ''}>${s}</option>`).join('')}</select>`)}
+    </div>
+    ${f('uModel', 'Model', `<input id="uModel" value="${esc(u.model)}" placeholder="Toyota Land Cruiser 2024" />`)}
+    <div class="grid g2">
+      ${f('uVin', 'VIN (optional)', `<input id="uVin" value="${esc(u.vin || '')}" />`)}
+      ${f('uAcq', 'Acquired on', `<input type="date" id="uAcq" value="${esc(u.acquired_at || '')}" max="${isoDate(today0())}" />`,
+          'Days in stock, holding cost and the aging alert are all counted from this date.')}
+    </div>
+    <div class="grid g2">
+      ${f('uPrice', 'List price (AED)', `<input type="number" min="0" id="uPrice" value="${esc(u.price_aed)}" placeholder="290000" />`)}
+      ${f('uCost', 'Cost (AED)', `<input type="number" min="0" id="uCost" value="${esc(u.cost_aed)}" placeholder="250000" />`)}
+    </div>
+    ${f('uRec', 'AI recommendation (optional)', `<textarea id="uRec" rows="2">${esc(u.ai_recommendation || '')}</textarea>`,
+        'Normally written by the pricing workflow. Editable here for a manual override.')}
+    <div class="card" style="background:var(--sunken);margin-top:4px">
+      <div class="label-caps" style="margin-bottom:10px">Calculated</div>
+      <dl class="kv" id="uCalc"></dl>
+      <div class="cell-sub" style="margin-top:10px">
+        Holding cost accrues at ${aed(INV.HOLDING_PER_DAY)} a day and stops when a unit is marked Sold.
+        VAT is ${(INV.VAT_RATE * 100)}% of list; commission is ${(INV.COMMISSION_RATE * 100)}% of net margin.
+      </div>
+    </div>`,
+    `<button class="btn primary" id="uSave">${isNew ? 'Add vehicle' : 'Save changes'}</button>
+     <button class="btn" id="uCancel">Cancel</button>
+     <div style="flex:1"></div>
+     ${isNew ? '' : '<button class="btn danger" id="uDelete">Delete</button>'}`);
+
+  const read = () => ({
+    id: $('uId').value.trim(),
+    model: $('uModel').value.trim(),
+    vin: $('uVin').value.trim(),
+    status: $('uStatus').value,
+    acquired_at: $('uAcq').value,
+    price_aed: $('uPrice').value,
+    cost_aed: $('uCost').value,
+    ai_recommendation: $('uRec').value.trim(),
+  });
+
+  const paint = () => {
+    const d = deriveUnit(read());
+    $('uCalc').innerHTML = `
+      <dt>Days in stock</dt><dd class="num">${num(d.days_in_stock)}</dd>
+      <dt>Aging alert</dt><dd>${pill(d.aging_alert)}</dd>
+      <dt>Gross margin</dt><dd class="num ${d.gross_margin < 0 ? 't-hot' : ''}">${aed(d.gross_margin)}</dd>
+      <dt>Holding cost</dt><dd class="num">${aed(d.holding_cost_accrued)}</dd>
+      <dt>Net margin</dt><dd class="num"><strong class="${d.net_margin < 0 ? 't-hot' : ''}">${aed(d.net_margin)}</strong></dd>
+      <dt>VAT</dt><dd class="num">${aed(d.vat_amount)}</dd>
+      <dt>Recommended commission</dt><dd class="num">${aed(d.recommended_commission)}</dd>`;
+  };
+  ['uStatus', 'uAcq', 'uPrice', 'uCost'].forEach(id =>
+    $(id).addEventListener('input', paint));
+  paint();
+
+  m.wrap.querySelector('#uCancel').addEventListener('click', m.close);
+
+  m.wrap.querySelector('#uSave').addEventListener('click', async () => {
+    const v = read();
+    if (!v.id) return m.msg('<span class="t-hot">A stock number is required.</span>');
+    if (!v.model) return m.msg('<span class="t-hot">A model is required.</span>');
+    if (!v.acquired_at) return m.msg('<span class="t-hot">An acquisition date is required.</span>');
+    if (v.price_aed === '' || v.cost_aed === '')
+      return m.msg('<span class="t-hot">List price and cost are both required — every margin on this screen is derived from them.</span>');
+    if (isNew && inv.some(x => String(x.id) === v.id))
+      return m.msg(`<span class="t-hot">Stock number ${esc(v.id)} already exists.</span>`);
+
+    const btn = m.wrap.querySelector('#uSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      if (isNew) await dbWrite('POST', 'inventory', unitRow(v));
+      else await dbWrite('PATCH', `inventory?id=eq.${encodeURIComponent(v.id)}`, unitRow(v));
+      m.close(); onDone();
+    } catch (e) {
+      btn.disabled = false; btn.textContent = isNew ? 'Add vehicle' : 'Save changes';
+      modalError(m, e);
+    }
+  });
+
+  m.wrap.querySelector('#uDelete')?.addEventListener('click', () => {
+    m.msg(`<span class="t-hot">Delete ${esc(u.id)} — ${esc(u.model)}? This cannot be undone.</span>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn danger" id="uDelYes">Yes, delete it</button>
+        <button class="btn" id="uDelNo">Keep it</button></div>`);
+    $('uDelNo').addEventListener('click', () => m.msg(''));
+    $('uDelYes').addEventListener('click', async () => {
+      try { await dbWrite('DELETE', `inventory?id=eq.${encodeURIComponent(u.id)}`, undefined); m.close(); onDone(); }
+      catch (e) { modalError(m, e); }
+    });
+  });
+}
+
 SCREENS.inventory = async host => {
   const strip = el('div', 'grid g5'); strip.innerHTML = stateLoading(2); host.appendChild(strip);
   const tableHost = el('div'); tableHost.style.marginTop = '16px'; host.appendChild(tableHost);
 
-  let inv = [];
-  try { inv = await db('inventory?select=*&order=days_in_stock.desc&limit=1000'); }
+  let raw = [];
+  try { raw = await db('inventory?select=*&order=acquired_at.asc&limit=1000'); }
   catch (e) { strip.innerHTML = stateError('inventory', e.message); return; }
 
+  /* Derived live from acquired_at rather than read off the stored columns, so the
+     aging numbers are true on the day you look at them, not on the day they were written. */
+  const inv = raw.map(deriveUnit).sort((a, b) => b.days_in_stock - a.days_in_stock);
+  const reload = () => go('inventory');
+
   const st = s => inv.filter(i => String(i.status || '').toLowerCase() === s).length;
-  const value = inv.reduce((a, i) => a + (n0(i.price_aed) || 0), 0);
-  const holding = inv.reduce((a, i) => a + (n0(i.holding_cost_accrued) || 0), 0);
+  const onLot = inv.filter(i => String(i.status || '').toLowerCase() !== 'sold');
+  const value = onLot.reduce((a, i) => a + (n0(i.price_aed) || 0), 0);
+  const holding = onLot.reduce((a, i) => a + (n0(i.holding_cost_accrued) || 0), 0);
 
   strip.innerHTML = [
     kpi('Total units', num(inv.length), `${st('available')} available · ${st('reserved')} reserved · ${st('sold')} sold`),
-    kpi('Stock value', aed(value), 'Sum of listed prices'),
-    kpi('Holding cost accrued', aed(holding), '', holding > 0 ? '' : ''),
-    kpi('Critical aging', num(inv.filter(i => String(i.aging_alert).toUpperCase() === 'CRITICAL').length), 'Past the aging threshold'),
-    kpi('Oldest unit', num(Math.max(0, ...inv.map(i => n0(i.days_in_stock) || 0))) + ' d',
-        esc(inv[0]?.model || '—')),
+    kpi('Stock value', aed(value), 'Listed price of unsold units'),
+    kpi('Holding cost accrued', aed(holding), `${aed(INV.HOLDING_PER_DAY)} per unit per day`),
+    kpi('Critical aging', num(inv.filter(i => i.aging_alert === 'CRITICAL').length), `${INV.CRITICAL_DAYS} days or more on the lot`),
+    kpi('Oldest unit', num(onLot[0]?.days_in_stock || 0) + ' d', esc(onLot[0]?.model || '—')),
   ].join('');
 
-  const buckets = [[0,30],[31,60],[61,90],[91,120],[121,9999]];
-  const labels = ['0–30','31–60','61–90','91–120','120+'];
-  const colors = ['var(--ok)','var(--ok)','var(--cold)','var(--warm)','var(--hot)'];
-  const counts = buckets.map(([a,b]) => inv.filter(i => { const d = n0(i.days_in_stock) || 0; return d >= a && d <= b; }).length);
-  const totalUnits = inv.length || 1;
+  const buckets = [[0, 30], [31, 60], [61, 90], [91, 120], [121, 99999]];
+  const labels = ['0–30', '31–60', '61–90', '91–120', '120+'];
+  const colors = ['var(--ok)', 'var(--ok)', 'var(--cold)', 'var(--warm)', 'var(--hot)'];
+  const counts = buckets.map(([a, b]) => onLot.filter(i => i.days_in_stock >= a && i.days_in_stock <= b).length);
+  const totalUnits = onLot.length || 1;
 
   const agingCard = el('div', 'card');
   agingCard.innerHTML = `<div class="label-caps" style="margin-bottom:12px">Days in stock</div>
-    <div class="stackbar">${counts.map((c, i) => `<i style="width:${(c/totalUnits*100).toFixed(1)}%;background:${colors[i]}"></i>`).join('')}</div>
+    <div class="stackbar">${counts.map((c, i) => `<i style="width:${(c / totalUnits * 100).toFixed(1)}%;background:${colors[i]}"></i>`).join('')}</div>
     <div style="display:flex;gap:18px;margin-top:12px;flex-wrap:wrap">
       ${labels.map((l, i) => `<div style="display:flex;align-items:center;gap:8px">
         <span style="width:8px;height:8px;border-radius:50%;background:${colors[i]}"></span>
@@ -709,26 +921,35 @@ SCREENS.inventory = async host => {
 
   const card = el('div', 'card flush'); card.style.marginTop = '16px'; tableHost.appendChild(card);
   const cols = [
-    { label:'Vehicle', strong:true, render: r => `${esc(r.model)}<div class="cell-sub mono">${esc(r.id)}${r.vin ? ' · ' + esc(r.vin) : ''}</div>` },
-    { label:'Status', render: r => pill(r.status || '—', String(r.status).toLowerCase() === 'sold' ? 'ok' : String(r.status).toLowerCase() === 'reserved' ? 'cold' : '') },
-    { label:'Days', align:'r', render: r => {
-        const d = n0(r.days_in_stock) || 0;
+    { label: 'Vehicle', strong: true, render: r => `${esc(r.model)}<div class="cell-sub mono">${esc(r.id)}${r.vin ? ' · ' + esc(r.vin) : ''}</div>` },
+    { label: 'Status', render: r => pill(r.status || '—', String(r.status).toLowerCase() === 'sold' ? 'ok' : String(r.status).toLowerCase() === 'reserved' ? 'cold' : '') },
+    {
+      label: 'Days', align: 'r', render: r => {
+        const d = r.days_in_stock;
         const c = d > 120 ? 'hot' : d > 90 ? 'warm' : 'cold';
         return `<div class="t-${c}" style="font-weight:500">${num(d)}</div>
-                <div class="bar" style="width:56px;margin-left:auto"><i style="width:${Math.min(100, d/2)}%;background:var(--${c})"></i></div>`;
-      }},
-    { label:'Price', align:'r', render: r => aed(r.price_aed) },
-    { label:'Gross margin', align:'r', render: r => aed(r.gross_margin) },
-    { label:'Holding cost', align:'r', render: r => `<span class="${(n0(r.holding_cost_accrued)||0) > 5000 ? 't-hot' : ''}">${aed(r.holding_cost_accrued)}</span>` },
-    { label:'Net margin', align:'r', render: r => aed(r.net_margin) },
-    { label:'Commission', align:'r', render: r => aed(r.recommended_commission) },
-    { label:'Alert', render: r => r.aging_alert ? pill(r.aging_alert) : '<span class="t-muted">—</span>' },
+                <div class="bar" style="width:56px;margin-left:auto"><i style="width:${Math.min(100, d / 2)}%;background:var(--${c})"></i></div>`;
+      }
+    },
+    { label: 'Price', align: 'r', render: r => aed(r.price_aed) },
+    { label: 'Gross margin', align: 'r', render: r => aed(r.gross_margin) },
+    { label: 'Holding cost', align: 'r', render: r => `<span class="${(n0(r.holding_cost_accrued) || 0) > 5000 ? 't-hot' : ''}">${aed(r.holding_cost_accrued)}</span>` },
+    { label: 'Net margin', align: 'r', render: r => aed(r.net_margin) },
+    { label: 'Commission', align: 'r', render: r => aed(r.recommended_commission) },
+    { label: 'Alert', render: r => r.aging_alert ? pill(r.aging_alert) : '<span class="t-muted">—</span>' },
   ];
-  card.innerHTML = `<div class="card-head"><div class="card-title">Stock</div>
-      <div class="card-sub">Click a row for the AI recommendation and margin detail</div><div style="flex:1"></div></div>
+  card.innerHTML = `<div class="card-head"><div><div class="card-title">Stock</div>
+      <div class="card-sub">Click a row for the AI recommendation and margin detail</div></div>
+      <div style="flex:1"></div>
+      <button class="btn primary sm" id="invAdd">
+        <span class="material-symbols-outlined">add</span>Add vehicle</button></div>
     <div id="invTable"></div>`;
+  card.querySelector('#invAdd').addEventListener('click', () => unitForm(null, inv, reload));
+
   const th = card.querySelector('#invTable');
-  th.innerHTML = table(cols, inv, { onRow: true });
+  th.innerHTML = inv.length ? table(cols, inv, { onRow: true })
+    : stateEmpty('No vehicles in stock', 'Add the first unit to start tracking aging and margin.', 'directions_car');
+
   wireRows(th, inv, unit => {
     openDrawer(`
       <div class="drawer-head">
@@ -748,12 +969,17 @@ SCREENS.inventory = async host => {
             <dt>Net margin</dt><dd class="num"><strong>${aed(unit.net_margin)}</strong></dd>
             <dt>VAT</dt><dd class="num">${aed(unit.vat_amount)}</dd>
             <dt>Recommended commission</dt><dd class="num">${aed(unit.recommended_commission)}</dd>
+            <dt>Acquired</dt><dd>${esc(unit.acquired_at || '—')}</dd>
             <dt>Days in stock</dt><dd class="num">${num(unit.days_in_stock)}</dd>
           </dl></div>
       </div>
-      <div class="drawer-foot"><button class="btn" id="dComp">Compare against competitors</button></div>`);
+      <div class="drawer-foot">
+        <button class="btn primary" id="dEdit">Edit</button>
+        <button class="btn" id="dComp">Compare against competitors</button>
+      </div>`);
     $('dClose').addEventListener('click', closeDrawer);
     $('dComp').addEventListener('click', () => { closeDrawer(); go('competitors'); });
+    $('dEdit').addEventListener('click', () => { closeDrawer(); unitForm(unit, inv, reload); });
   });
 };
 
