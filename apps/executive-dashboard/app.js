@@ -1505,7 +1505,18 @@ SCREENS.deals = async host => {
   catch (e) { strip.innerHTML = stateError('deal data', e.message); return; }
 
   const revenue = purchases.reduce((t, p) => t + (n0(p.amount_aed) || 0), 0);
-  const embedded = new Set(vectors.map(v => String(v.deal_id || '')));
+
+  /* The Closed-Won workflow derives an id of `auto:<email>|<closed_at>` when the
+     caller supplies no deal_id, and closed_at arrives as a full ISO timestamp
+     while purchase_history only stores a date. Comparing the ids whole would
+     therefore never match, and every row would claim "Not embedded" forever —
+     a status column that is always wrong is worse than no column. Match on the
+     email and the calendar day instead. */
+  const dayKey = (email, when) => `${String(email || '').toLowerCase()}|${String(when || '').slice(0, 10)}`;
+  const embedded = new Set(vectors.map(v => {
+    const m = /^auto:([^|]+)\|(.+)$/.exec(String(v.deal_id || ''));
+    return m ? dayKey(m[1], m[2]) : null;
+  }).filter(Boolean));
 
   strip.innerHTML = [
     kpi('Deals closed', num(purchases.length), 'Recorded in purchase_history'),
@@ -1527,7 +1538,7 @@ SCREENS.deals = async host => {
     { label:'Vehicle', render: p => esc(p.vehicle || '—') },
     { label:'Amount', align:'r', render: p => aed(p.amount_aed) },
     { label:'Closed', render: p => `<span class="t-muted">${esc(p.purchase_date || '—')}</span>` },
-    { label:'RAG memory', render: p => embedded.has(`auto:${String(p.email || '').toLowerCase()}|${p.purchase_date}`)
+    { label:'RAG memory', render: p => embedded.has(dayKey(p.email, p.purchase_date))
         ? pill('Embedded', 'ok') : '<span class="t-muted">Not embedded</span>' },
   ], purchases, { empty: stateEmpty('No deals recorded yet',
       'Record a closed-won deal and it becomes part of what Ask AI knows.', 'handshake') });
