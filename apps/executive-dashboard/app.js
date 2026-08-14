@@ -130,8 +130,20 @@ async function dbWrite(method, path, body) {
    a recoverable condition — those screens degrade, the rest of the app works. */
 async function n8n(path, payload) {
   if (!N8N_BASE) throw new Error('VITE_N8N_BASE_URL is not set, so workflow calls are disabled.');
+  /* These webhooks are still unauthenticated on the n8n side, and since the GCP URL
+     now ships inside a public JS bundle, anyone who opens devtools can read it and
+     call them — ask-ai spends OpenRouter tokens on every call. Send the signed-in
+     user's Supabase JWT so the workflows can verify a real session per request.
+     A shared secret compiled into this bundle would be equally public and prove
+     nothing; a JWT is identity the browser cannot forge. Harmless until the
+     workflows check it, which is the next step and must land after this ships. */
   const res = await fetch(`${N8N_BASE}/webhook/${path}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload || {}),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(SESSION?.access_token ? { Authorization: `Bearer ${SESSION.access_token}` } : {}),
+    },
+    body: JSON.stringify(payload || {}),
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`${res.status} — ${text.slice(0, 200)}`);
