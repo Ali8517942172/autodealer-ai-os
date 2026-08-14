@@ -102,27 +102,62 @@ const supabase = envErrors.length ? null : createClient(SUPABASE_URL, SUPABASE_A
 let SESSION = null;
 let ME = null;
 
-function headers() {
+/* Supabase access tokens expire after an hour. supabase-js refreshes them in the
+   background, but SESSION was captured once at boot and never updated, so every
+   request kept presenting the original token. After an hour the dashboard died
+   with a raw PostgREST error — `401 PGRST303 {"message":"JWT expired"}` — on
+   whichever screen you happened to open, and the n8n webhooks (which now verify
+   the same token) rejected everything too.
+
+   getSession() returns the current token and refreshes it when it is close to
+   expiry, so asking it per request is what keeps the token live. It reads from
+   memory in the normal case, so this is not a network call per request. */
+async function authToken() {
+  if (!supabase) return SUPABASE_ANON;
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) SESSION = data.session;
+  } catch { /* fall through to whatever we already hold */ }
+  return SESSION?.access_token || SUPABASE_ANON;
+}
+
+async function headers() {
   return {
     apikey: SUPABASE_ANON,
-    Authorization: `Bearer ${SESSION?.access_token || SUPABASE_ANON}`,
+    Authorization: `Bearer ${await authToken()}`,
     'Content-Type': 'application/json',
   };
 }
 
+/* An expired or missing session is not a data error, and rendering it as one
+   ("Couldn't load team performance — 401 PGRST303…") tells the user nothing
+   they can act on. Send them back to the login screen instead. */
+function isAuthFailure(status, body) {
+  return status === 401 && /JWT|token|expired|PGRST30/i.test(String(body || ''));
+}
+function sessionEnded() {
+  SESSION = null;
+  renderLogin('Your session expired. Please sign in again.');
+}
+
 async function db(path) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: headers() });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: await headers() });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
+    if (isAuthFailure(res.status, body)) { sessionEnded(); throw new Error('Session expired'); }
     throw new Error(`${res.status} ${res.statusText}${body ? ' — ' + body.slice(0, 180) : ''}`);
   }
   return res.json();
 }
 async function dbWrite(method, path, body) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method, headers: { ...headers(), Prefer: 'return=representation' }, body: JSON.stringify(body),
+    method, headers: { ...(await headers()), Prefer: 'return=representation' }, body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`${res.status} — ${(await res.text().catch(()=>'')).slice(0,180)}`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    if (isAuthFailure(res.status, text)) { sessionEnded(); throw new Error('Session expired'); }
+    throw new Error(`${res.status} — ${text.slice(0, 180)}`);
+  }
   return res.json();
 }
 
@@ -137,11 +172,12 @@ async function n8n(path, payload) {
      A shared secret compiled into this bundle would be equally public and prove
      nothing; a JWT is identity the browser cannot forge. Harmless until the
      workflows check it, which is the next step and must land after this ships. */
+  const token = await authToken();
   const res = await fetch(`${N8N_BASE}/webhook/${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(SESSION?.access_token ? { Authorization: `Bearer ${SESSION.access_token}` } : {}),
+      ...(token && token !== SUPABASE_ANON ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(payload || {}),
   });
@@ -149,6 +185,19 @@ async function n8n(path, payload) {
   if (!res.ok) throw new Error(`${res.status} — ${text.slice(0, 200)}`);
   try { return JSON.parse(text); } catch { return { raw: text }; }
 }
+
+/* Webhook paths, in one place. Every one of these is guarded by the Supabase JWT
+   check inside n8n, so n8n() sending the session token is what makes them work —
+   an unauthenticated call is rejected by the workflow, not by this file. */
+const HOOK = {
+  askAi:      'ask-ai',
+  finance:    'finance-calc',
+  warmDrip:   'lead-trigger',
+  closedWon:  'deals/closed-won',
+  kyc:        'audit-kyc',
+  erpSync:    'erp-sync',
+  escalation: 'lead-escalation',
+};
 
 /* ── Screen registry ─────────────────────────────────────────────────────── */
 const NAV = [
@@ -168,6 +217,8 @@ const NAV = [
     { id:'customers',title:'Customer 360',  icon:'contacts' },
   ]},
   { group: 'Operations', items: [
+    { id:'campaigns',  title:'Campaigns', icon:'campaign' },
+    { id:'deals',      title:'Deals',     icon:'handshake' },
     { id:'automation', title:'Automation', icon:'account_tree' },
     { id:'team',       title:'Team',       icon:'groups' },
   ]},
@@ -1322,7 +1373,254 @@ SCREENS.compliance = async host => {
 };
 
 /* ==========================================================================
-   S9 · Automation
+   S9 · Campaigns
+   The 7-day warm drip and the 12-hour silence detector both ran entirely inside
+   n8n with nothing in the product to show for them, and no way to start one.
+   A campaign nobody can see or trigger is indistinguishable from a broken one —
+   which is exactly how the drip sat failing on every run without being noticed.
+   ========================================================================== */
+SCREENS.campaigns = async host => {
+  const strip = el('div', 'grid g4'); strip.innerHTML = stateLoading(2); host.appendChild(strip);
+  const body = el('div'); body.style.marginTop = '16px'; host.appendChild(body);
+
+  let leads = [], comms = [], audit = [];
+  try {
+    [leads, comms, audit] = await Promise.all([
+      db('leads?select=*&order=ai_score.desc'),
+      db('communication_logs?select=*&order=created_at.desc&limit=500'),
+      db('audit_log?select=*&order=logged_at.desc&limit=300'),
+    ]);
+  } catch (e) { strip.innerHTML = stateError('campaign data', e.message); return; }
+
+  const dripAudit  = audit.filter(a => /drip/i.test(a.workflow || ''));
+  const emails     = comms.filter(c => String(c.channel || '').toLowerCase() === 'email' && c.direction === 'outbound');
+  const silenced   = comms.filter(c => String(c.message || '').startsWith('[SILENCE-ESCALATED]'));
+  const eligible   = leads.filter(l => ['WARM', 'COLD'].includes(String(l.status || '').toUpperCase()) && l.email);
+  const started    = new Set(dripAudit.map(a => String(a.lead_email || '').toLowerCase()).filter(Boolean));
+
+  strip.innerHTML = [
+    kpi('Eligible for a drip', num(eligible.length), 'Warm and cold leads that have an email address'),
+    kpi('Drips started', num(started.size),
+        started.size ? 'Distinct leads in the audit log' : '<span class="t-hot">Never started from the product</span>'),
+    kpi('Drip emails sent', num(emails.length), 'Outbound, as recorded in communication_logs'),
+    kpi('Silence escalations', num(silenced.length),
+        silenced.length ? '<span class="t-warm">Twelve hours with no reply</span>' : 'Nobody has gone quiet'),
+  ].join('');
+
+  /* ── Eligible leads, each with the one action this screen exists for ── */
+  const q = el('div', 'card flush'); body.appendChild(q);
+  q.innerHTML = `<div class="card-head"><div><div class="card-title">Warm &amp; cold leads</div>
+    <div class="card-sub">Day 1 welcome, day 3 follow-up, day 7 final offer — sent by n8n, not by this browser</div></div></div>
+    <div id="dripT"></div>`;
+
+  q.querySelector('#dripT').innerHTML = table([
+    { label:'Lead', strong:true, render: l => `${esc(l.name || '—')}<div class="cell-sub">${esc(l.email || '')}</div>` },
+    { label:'Status', render: l => pill(l.status || 'NEW') },
+    { label:'Interest', render: l => esc(l.vehicle_interest || '—') },
+    { label:'Budget', align:'r', render: l => aed(l.budget_aed) },
+    { label:'Score', align:'r', render: l => num(l.ai_score) },
+    { label:'Drip', render: l => started.has(String(l.email || '').toLowerCase())
+        ? pill('Started', 'ok')
+        : '<span class="t-muted">Not started</span>' },
+    { label:'', align:'r', render: l => `<button class="btn sm" data-drip="${esc(l.email)}"
+        data-name="${esc(l.name || '')}" data-veh="${esc(l.vehicle_interest || '')}">Start drip</button>` },
+  ], eligible, { empty: stateEmpty('No warm or cold leads',
+      'Every lead is currently HOT, so nothing qualifies for the nurture sequence.', 'campaign') });
+
+  q.querySelectorAll('[data-drip]').forEach(btn => btn.addEventListener('click', async () => {
+    const original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Starting…';
+    try {
+      /* Field names match what Normalize Lead Input actually reads. This pairing
+         is the whole bug that kept the drip at 0 successful runs — the dashboard
+         and the workflow have to agree on one vocabulary, so it is written once,
+         here, and not re-derived per caller. */
+      await n8n(HOOK.warmDrip, {
+        lead_email: btn.dataset.drip,
+        lead_name: btn.dataset.name,
+        vehicle_interest: btn.dataset.veh,
+      });
+      btn.textContent = 'Started';
+      btn.classList.add('ok');
+    } catch (e) {
+      btn.disabled = false; btn.textContent = original;
+      alert(`Could not start the drip.\n\n${e.message}`);
+    }
+  }));
+
+  /* ── Silence detector ── */
+  const s = el('div', 'card flush'); s.style.marginTop = '16px'; body.appendChild(s);
+  s.innerHTML = `<div class="card-head"><div><div class="card-title">Silence detector</div>
+    <div class="card-sub">A lead that has not replied for twelve hours is escalated once, then never again</div></div></div>
+    <div>${silenced.length ? silenced.map(c => `
+      <div class="list-item" style="cursor:default">
+        <span class="mono t-muted">${clock(c.created_at)}</span>
+        ${pill('Escalated', 'warm')}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:500">${esc(c.lead_email || 'Unknown contact')}</div>
+          <div class="cell-sub">${esc(String(c.message || '').replace('[SILENCE-ESCALATED]', '').trim())}</div>
+        </div>
+        <div class="cell-sub">${ago(c.created_at)}</div>
+      </div>`).join('')
+      : stateEmpty('Nobody has gone silent',
+          'The detector only fires for leads that received an outbound message and did not reply within twelve hours.',
+          'notifications_off')}</div>`;
+
+  /* ── Drip activity ── */
+  const a = el('div', 'card flush'); a.style.marginTop = '16px'; body.appendChild(a);
+  a.innerHTML = `<div class="card-head"><div class="card-title">Campaign activity</div>
+    <div class="card-sub">Newest first</div></div>
+    <div style="max-height:50vh;overflow-y:auto">${dripAudit.length ? dripAudit.map(x => `
+      <div class="list-item" style="cursor:default">
+        <span class="mono t-muted">${clock(x.logged_at)}</span>
+        ${pill(x.status)}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:500">${esc(x.lead_name || x.lead_email || x.workflow)}</div>
+          <div class="cell-sub">${esc(String(x.summary || '').slice(0, 160))}</div>
+        </div>
+        <div class="cell-sub">${ago(x.logged_at)}</div>
+      </div>`).join('')
+      : stateEmpty('No campaign runs logged',
+          'The drip workflow writes here every time it starts a sequence.', 'receipt_long')}</div>`;
+};
+
+/* ==========================================================================
+   S10 · Deals
+   Closing a deal is what feeds the RAG memory: the Closed-Won workflow embeds
+   the deal and writes it to pgvector so Ask AI can reason over real sales.
+   Until now that workflow could only be triggered by hand outside the product.
+   ========================================================================== */
+SCREENS.deals = async host => {
+  const strip = el('div', 'grid g4'); strip.innerHTML = stateLoading(2); host.appendChild(strip);
+  const body = el('div'); body.style.marginTop = '16px'; host.appendChild(body);
+
+  const load = async () => Promise.all([
+    db('purchase_history?select=*&order=purchase_date.desc'),
+    db('deals_embeddings?select=id,deal_id,content,created_at&order=created_at.desc&limit=200').catch(() => []),
+    db('leads?select=id,name,email,phone,vehicle_interest,budget_aed,status'),
+  ]);
+
+  let purchases = [], vectors = [], leads = [];
+  try { [purchases, vectors, leads] = await load(); }
+  catch (e) { strip.innerHTML = stateError('deal data', e.message); return; }
+
+  const revenue = purchases.reduce((t, p) => t + (n0(p.amount_aed) || 0), 0);
+  const embedded = new Set(vectors.map(v => String(v.deal_id || '')));
+
+  strip.innerHTML = [
+    kpi('Deals closed', num(purchases.length), 'Recorded in purchase_history'),
+    kpi('Revenue', aed(revenue), 'Lifetime, across all recorded deals'),
+    kpi('Average deal', aed(purchases.length ? revenue / purchases.length : null)),
+    kpi('In RAG memory', num(vectors.length),
+        vectors.length ? 'Embedded and searchable by Ask AI' : '<span class="t-hot">Ask AI cannot cite a single real deal</span>'),
+  ].join('');
+
+  const t = el('div', 'card flush'); body.appendChild(t);
+  t.innerHTML = `<div class="card-head"><div><div class="card-title">Closed-won deals</div>
+    <div class="card-sub">Recording a deal here also embeds it into pgvector, so Ask AI can quote it back</div></div>
+    <div style="flex:1"></div>
+    <button class="btn primary" id="newDeal"><span class="material-symbols-outlined">add</span> Record a deal</button></div>
+    <div id="dealT"></div>`;
+
+  t.querySelector('#dealT').innerHTML = table([
+    { label:'Customer', strong:true, render: p => `${esc(p.customer_name || '—')}<div class="cell-sub">${esc(p.email || '')}</div>` },
+    { label:'Vehicle', render: p => esc(p.vehicle || '—') },
+    { label:'Amount', align:'r', render: p => aed(p.amount_aed) },
+    { label:'Closed', render: p => `<span class="t-muted">${esc(p.purchase_date || '—')}</span>` },
+    { label:'RAG memory', render: p => embedded.has(`auto:${String(p.email || '').toLowerCase()}|${p.purchase_date}`)
+        ? pill('Embedded', 'ok') : '<span class="t-muted">Not embedded</span>' },
+  ], purchases, { empty: stateEmpty('No deals recorded yet',
+      'Record a closed-won deal and it becomes part of what Ask AI knows.', 'handshake') });
+
+  t.querySelector('#newDeal').addEventListener('click', () => dealForm(leads, () => go('deals')));
+
+  const v = el('div', 'card flush'); v.style.marginTop = '16px'; body.appendChild(v);
+  v.innerHTML = `<div class="card-head"><div><div class="card-title">RAG memory</div>
+    <div class="card-sub">What the Closed-Won workflow has embedded into pgvector</div></div></div>
+    <div style="max-height:50vh;overflow-y:auto">${vectors.length ? vectors.map(x => `
+      <div class="list-item" style="cursor:default">
+        <div style="flex:1;min-width:0">
+          <div class="mono" style="font-weight:500;font-size:12px">${esc(x.deal_id)}</div>
+          <div class="cell-sub" style="white-space:normal">${esc(String(x.content || '').slice(0, 220))}</div>
+        </div>
+        <div class="cell-sub">${ago(x.created_at)}</div>
+      </div>`).join('')
+      : stateEmpty('Nothing embedded yet',
+          'Every deal recorded above is sent to the Closed-Won workflow, which embeds it here.', 'database')}</div>`;
+};
+
+/* The deal form posts to n8n rather than writing purchase_history directly:
+   the workflow is what produces the embedding, and a row written straight to
+   Postgres would be invisible to Ask AI. One write path, one source of truth. */
+function dealForm(leads, onDone) {
+  const today = new Date();
+  const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const f = (id, label, input, hint) => `<div class="field"><label for="${id}">${label}</label>${input}
+    ${hint ? `<div class="cell-sub">${hint}</div>` : ''}</div>`;
+
+  const m = openModal('Record a closed-won deal', `
+    ${f('dLead', 'Lead', `<select id="dLead">
+        <option value="">— pick a lead, or type the details below —</option>
+        ${leads.filter(l => l.email).map(l =>
+          `<option value="${esc(l.email)}" data-name="${esc(l.name || '')}" data-veh="${esc(l.vehicle_interest || '')}"
+            data-budget="${esc(l.budget_aed || '')}">${esc(l.name || l.email)} — ${esc(l.vehicle_interest || 'no vehicle noted')}</option>`).join('')}
+      </select>`, 'Picking a lead fills the rest in. You can still edit any field.')}
+    <div class="grid g2">
+      ${f('dName', 'Customer name', `<input id="dName" placeholder="Vikram Malhotra" />`)}
+      ${f('dEmail', 'Email', `<input type="email" id="dEmail" placeholder="name@example.com" />`,
+          'Used with the close date to build a stable deal id, so re-recording the same deal updates its vector instead of duplicating it.')}
+    </div>
+    <div class="grid g2">
+      ${f('dVeh', 'Vehicle', `<input id="dVeh" placeholder="Toyota Land Cruiser 2024" />`)}
+      ${f('dPhone', 'Phone (optional)', `<input id="dPhone" placeholder="+971…" />`)}
+    </div>
+    <div class="grid g2">
+      ${f('dPrice', 'Sale price (AED)', `<input type="number" min="1" id="dPrice" placeholder="290000" />`)}
+      ${f('dDate', 'Closed on', `<input type="date" id="dDate" value="${iso}" max="${iso}" />`)}
+    </div>`,
+    `<button class="btn primary" id="dSave">Record deal</button>
+     <button class="btn" id="dCancel">Cancel</button>`);
+
+  $('dLead').addEventListener('change', e => {
+    const o = e.target.selectedOptions[0];
+    if (!o || !o.value) return;
+    $('dEmail').value = o.value;
+    $('dName').value = o.dataset.name || '';
+    $('dVeh').value = o.dataset.veh || '';
+    if (o.dataset.budget && !$('dPrice').value) $('dPrice').value = o.dataset.budget;
+  });
+
+  m.wrap.querySelector('#dCancel').addEventListener('click', m.close);
+  m.wrap.querySelector('#dSave').addEventListener('click', async () => {
+    const v = {
+      lead_email: $('dEmail').value.trim(),
+      lead_name: $('dName').value.trim(),
+      phone: $('dPhone').value.trim(),
+      vehicle: $('dVeh').value.trim(),
+      sale_price_aed: $('dPrice').value,
+      closed_at: $('dDate').value,
+    };
+    if (!v.lead_email) return m.msg('<span class="t-hot">An email address is required — the deal id is derived from it.</span>');
+    if (!v.lead_name)  return m.msg('<span class="t-hot">A customer name is required.</span>');
+    if (!v.vehicle)    return m.msg('<span class="t-hot">A vehicle is required — it is most of what gets embedded.</span>');
+    if (!v.sale_price_aed || Number(v.sale_price_aed) <= 0)
+      return m.msg('<span class="t-hot">A sale price above zero is required.</span>');
+    if (!v.closed_at)  return m.msg('<span class="t-hot">A close date is required.</span>');
+
+    const btn = m.wrap.querySelector('#dSave');
+    btn.disabled = true; btn.textContent = 'Recording…';
+    try {
+      await n8n(HOOK.closedWon, v);
+      m.close(); onDone();
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Record deal';
+      modalError(m, e);
+    }
+  });
+}
+
+/* ==========================================================================
+   S11 · Automation
    ========================================================================== */
 SCREENS.automation = async host => {
   const strip = el('div', 'grid g4'); strip.innerHTML = stateLoading(2); host.appendChild(strip);
@@ -1731,6 +2029,13 @@ async function boot() {
   const { data } = await supabase.auth.getSession();
   SESSION = data.session;
   if (!SESSION) { renderLogin(); return; }
+
+  /* Keep SESSION in step with the client's own refresh cycle. Without this the
+     app holds the boot-time token forever and starts 401-ing after an hour. */
+  supabase.auth.onAuthStateChange((event, session) => {
+    SESSION = session;
+    if (!session && event !== 'INITIAL_SESSION') sessionEnded();
+  });
 
   ME = await db(`users?select=*&email=eq.${encodeURIComponent(SESSION.user.email)}`).then(r => r[0]).catch(() => null);
 
