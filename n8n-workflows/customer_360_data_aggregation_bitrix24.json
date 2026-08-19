@@ -1,5 +1,4 @@
 {
-  "id": "AZkGM5M4c1uzSH7S",
   "name": "Customer 360 - Data Aggregation (Bitrix24)",
   "nodes": [
     {
@@ -29,7 +28,7 @@
       },
       "name": "Split In Batches",
       "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 2,
+      "typeVersion": 3,
       "position": [
         448,
         304
@@ -44,7 +43,8 @@
         "filters": {
           "sender": "={{  $json.email }}"
         },
-        "options": {}
+        "options": {},
+        "resource": "message"
       },
       "name": "Gmail - Get Emails",
       "type": "n8n-nodes-base.gmail",
@@ -55,6 +55,10 @@
       ],
       "id": "de16255d-f002-4f8c-9d17-a5fbc2cc7bc9",
       "alwaysOutputData": true,
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "webhookId": "305df1b6-7c62-4784-9758-27908667237c",
       "credentials": {
         "gmailOAuth2": {
           "id": "1Cgivoyjt7psAirH",
@@ -62,17 +66,15 @@
         }
       },
       "continueOnFail": true,
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "operation": "search",
         "query": "={{ $('Split In Batches').first().json.email }}",
         "limit": 20,
-        "options": {}
+        "options": {},
+        "resource": "message"
       },
       "name": "Slack - Search Mentions",
       "type": "n8n-nodes-base.slack",
@@ -83,16 +85,17 @@
       ],
       "id": "2c43a24f-34a0-479e-86dd-dde6c024fa17",
       "alwaysOutputData": true,
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "webhookId": "a3f030fc-12ee-44eb-ab7b-bbb9f2f4d216",
       "credentials": {
         "slackApi": {
           "id": "oOf93CGdFiAxHkHF",
           "name": "Slack account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -170,7 +173,8 @@
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -193,7 +197,7 @@
       ],
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 2000
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -229,7 +233,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ workflow: 'Customer 360 Aggregation', status: 'SUCCESS', lead_name: ($json.lead_name || $json.name || null), lead_email: ($json.lead_email || $json.email || null), summary: 'Completed', logged_at: $now.toISO() }) }}",
+        "jsonBody": "={{ JSON.stringify({ workflow: 'Customer 360 Aggregation', status: ($json && $json.error) ? 'FAILED' : 'SUCCESS', lead_name: ($json.lead_name || $json.name || null), lead_email: ($json.lead_email || $json.email || null), summary: ($json && $json.error) ? ('Profile upsert failed: ' + JSON.stringify($json.error).substring(0, 200)) : ('Profile synced — ' + ($json.total_emails ?? 0) + ' email(s), ' + ($json.total_slack_messages ?? 0) + ' Slack mention(s)'), logged_at: $now.toISO() }) }}",
         "options": {
           "timeout": 15000
         }
@@ -239,18 +243,18 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1558,
+        1600,
         304
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 1500,
       "onError": "continueRegularOutput"
     }
   ],
@@ -368,13 +372,20 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "saveExecutionProgress": true,
+    "saveExecutionProgress": false,
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": true,
     "binaryMode": "separate",
     "saveDataErrorExecution": "all",
     "saveDataSuccessExecution": "all",
-    "timezone": "Asia/Dubai"
+    "timezone": "Asia/Dubai",
+    "errorWorkflow": "iYJkh1kztWxZXDbT"
+  },
+  "_exported_from": {
+    "id": "AZkGM5M4c1uzSH7S",
+    "active": true,
+    "updatedAt": "2026-08-17T18:19:21.546Z",
+    "published": true
   }
 }

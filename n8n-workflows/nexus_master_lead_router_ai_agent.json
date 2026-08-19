@@ -1,14 +1,11 @@
 {
-  "id": "JnlZFAVmFAuNXVya",
   "name": "NEXUS Master Lead Router - AI Agent",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "nexus-inbound-lead",
-        "responseMode": "onReceived",
-        "options": {},
-        "responseData": "{\"status\":\"accepted\"}"
+        "options": {}
       },
       "id": "1",
       "name": "Webhook Catch-All",
@@ -17,7 +14,8 @@
       "position": [
         0,
         304
-      ]
+      ],
+      "webhookId": "d0ba4bc1-47b4-4ad0-8ae9-83df19614c9a"
     },
     {
       "parameters": {
@@ -28,7 +26,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
+        176,
         304
       ]
     },
@@ -41,8 +39,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        736,
-        304
+        752,
+        288
       ]
     },
     {
@@ -152,7 +150,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ workflow: 'Master Router', status: 'Success', lead_name: $('Parse AI Decision').first().json.lead.name, lead_email: $('Parse AI Decision').first().json.lead.email, lead_score: $('Parse AI Decision').first().json.ai_decision.score, intent: $('Parse AI Decision').first().json.ai_decision.intent, summary: $('Parse AI Decision').first().json.ai_decision.reason, logged_at: $now.toISO() }) }}",
+        "jsonBody": "={{ JSON.stringify({ workflow: 'Master Router', status: $('Parse AI Decision').first().json.ai_decision.parse_failed ? 'FAILED' : 'SUCCESS', lead_name: $('Parse AI Decision').first().json.lead.name, lead_email: $('Parse AI Decision').first().json.lead.email, lead_score: $('Parse AI Decision').first().json.ai_decision.score, intent: $('Parse AI Decision').first().json.ai_decision.intent, summary: $('Parse AI Decision').first().json.ai_decision.parse_failed ? ('Scored by the regex fallback, not by the agent. ' + ($('Parse AI Decision').first().json.ai_decision.reason || '')) : ($('Parse AI Decision').first().json.ai_decision.reason || 'Completed'), logged_at: $now.toISO() }) }}",
         "options": {}
       },
       "id": "11",
@@ -160,19 +158,19 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1638,
-        367
+        1456,
+        304
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -226,7 +224,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "Creates or updates a lead in the Supabase 'leads' table, merging on the email address. Call this once you have scored and classified the lead. Provide name, email, phone, vehicle_interest, ai_score (1-100 integer) and status (HOT, WARM or COLD).",
+        "toolDescription": "Creates or updates a lead in the Supabase 'leads' table, merging on the email address. Call this once you have scored and classified the lead. Provide name, email, phone, vehicle_interest, budget_aed (the stated budget in AED as a plain number, 0 if the lead did not mention one), ai_score (1-100 integer) and status (HOT, WARM or COLD).",
         "method": "POST",
         "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/leads?on_conflict=email",
         "authentication": "predefinedCredentialType",
@@ -246,7 +244,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ name: $fromAI('name', 'Full name of the lead', 'string'), email: $fromAI('email', 'Email address of the lead', 'string'), phone: $fromAI('phone', 'Phone number of the lead, empty string if unknown', 'string'), vehicle_interest: $fromAI('vehicle_interest', 'Which vehicle or vehicle type the lead is interested in', 'string'), ai_score: $fromAI('ai_score', 'Lead quality score from 1 to 100', 'number'), status: $fromAI('status', 'Lead classification: HOT, WARM or COLD', 'string'), source: 'nexus-master-router' }) }}",
+        "jsonBody": "={{ JSON.stringify(Object.assign({ name: $fromAI('name', 'Full name of the lead', 'string'), email: $fromAI('email', 'Email address of the lead', 'string'), phone: $fromAI('phone', 'Phone number of the lead, empty string if unknown', 'string'), vehicle_interest: $fromAI('vehicle_interest', 'Which vehicle or vehicle type the lead is interested in', 'string'), ai_score: $fromAI('ai_score', 'Lead quality score from 1 to 100', 'number'), status: $fromAI('status', 'Lead classification: HOT, WARM or COLD', 'string'), source: 'nexus-master-router' }, Number($fromAI('budget_aed', 'The budget the lead stated, in AED, as a plain number. Use 0 if they did not mention a budget.', 'number')) > 0 ? { budget_aed: Number($fromAI('budget_aed', 'The budget the lead stated, in AED, as a plain number. Use 0 if they did not mention a budget.', 'number')) } : {})) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequestTool",
@@ -476,14 +474,14 @@
     },
     {
       "parameters": {
-        "jsCode": "// n8n's Agent node accepts a maximum of 2 language models, so a deeper\n// fallback chain has to be built as a retry ladder instead. Each tier swaps\n// BOTH slots, giving 5 distinct models across 2 providers over 4 attempts.\n// Model IDs were taken from OpenRouter's live /models list (tool-capable, free).\nconst TIERS = [\n  { orModel: 'google/gemini-2.5-flash',                  groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3-super-120b-a12b:free',   groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'google/gemma-4-31b-it:free',               groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'inclusionai/ling-3.0-flash:free',          groqModel: 'llama-3.3-70b-versatile' }\n];\n\nconst prev = $input.first().json;\nconst attempt = Number(prev.attempt ?? -1) + 1;\n\nif (attempt >= TIERS.length) {\n  throw new Error('All ' + TIERS.length + ' model tiers failed for lead ' +\n    ((prev.lead && prev.lead.email) || 'unknown') + '. Tried: ' +\n    TIERS.map(t => t.orModel + ' / ' + t.groqModel).join(', '));\n}\n\nreturn [{ json: {\n  lead: prev.lead,\n  attempt: attempt,\n  maxTiers: TIERS.length,\n  orModel: TIERS[attempt].orModel,\n  groqModel: TIERS[attempt].groqModel\n} }];"
+        "jsCode": "// n8n's Agent node accepts a maximum of 2 language models, so a deeper\n// fallback chain is built as a retry ladder. Each tier swaps the OpenRouter slot.\n// 16 Aug 2026: every id below was verified live against OpenRouter -- it exists,\n// it is :free (no paid model, per the free-tier rule), and it actually returned\n// a tool_call in a real request. The previous ladder had a PAID gemini tier plus\n// two dead ids (gemma-4-31b-it:free rate-limited 429, ling-3.0-flash:free is\n// 404 free-tier-discontinued), which is why all 4 tiers failed on live traffic.\nconst TIERS = [\n  { orModel: 'nvidia/nemotron-3-ultra-550b-a55b:free',   groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3.5-lightning:free',       groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3-super-120b-a12b:free',   groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'openai/gpt-oss-20b:free',                  groqModel: 'llama-3.3-70b-versatile' }\n];\n\nconst prev = $input.first().json;\nconst attempt = Number(prev.attempt ?? -1) + 1;\n\nif (attempt >= TIERS.length) {\n  throw new Error('All ' + TIERS.length + ' model tiers failed for lead ' +\n    ((prev.lead && prev.lead.email) || 'unknown') + '. Tried: ' +\n    TIERS.map(t => t.orModel + ' / ' + t.groqModel).join(', '));\n}\n\nreturn [{ json: {\n  lead: prev.lead,\n  attempt: attempt,\n  maxTiers: TIERS.length,\n  orModel: TIERS[attempt].orModel,\n  groqModel: TIERS[attempt].groqModel\n} }];"
       },
       "id": "mr-ladder-01",
       "name": "Model Ladder",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        344,
+        352,
         304
       ]
     },
@@ -496,26 +494,44 @@
           "mode": "id"
         },
         "text": "=:warning: *Lead could not be classified*\n\n*Name:* {{ $json.lead.name }}\n*Email:* {{ $json.lead.email || 'n/a' }}\n*Phone:* {{ $json.lead.phone || 'n/a' }}\n*Enquiry:* {{ $json.lead.vehicle_interest || 'n/a' }}\n\n*Raw AI output:* {{ $json.ai_decision.reason }}\n*Parse failed:* {{ $json.ai_decision.parse_failed }}\n\nThis lead was NOT routed automatically. Please review and assign it manually.",
-        "otherOptions": {}
+        "otherOptions": {},
+        "resource": "message",
+        "operation": "post"
       },
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.5,
       "position": [
         1200,
-        700
+        704
       ],
       "id": "mr-unknown-01",
       "name": "Slack: Unclassified Lead",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
+      "webhookId": "eea02491-c358-45ac-a6b6-7d0bba8bafb7",
       "credentials": {
         "slackApi": {
           "id": "oOf93CGdFiAxHkHF",
           "name": "Slack account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ ($json.lead && ($json.lead.email || $json.lead.phone)) || 'lead-' + $execution.id }}",
+        "contextWindowLength": "={{ 10 }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        560,
+        560
+      ],
+      "id": "f83d708b-3116-4af1-a510-187aa359eef4",
+      "name": "Simple Memory"
     }
   ],
   "connections": {
@@ -731,6 +747,17 @@
           }
         ]
       ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Lead Scoring Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -739,6 +766,13 @@
     "availableInMCP": true,
     "timezone": "Asia/Dubai",
     "saveDataErrorExecution": "all",
-    "saveDataSuccessExecution": "all"
+    "saveDataSuccessExecution": "all",
+    "errorWorkflow": "iYJkh1kztWxZXDbT"
+  },
+  "_exported_from": {
+    "id": "JnlZFAVmFAuNXVya",
+    "active": true,
+    "updatedAt": "2026-08-16T14:02:47.177Z",
+    "published": true
   }
 }

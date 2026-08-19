@@ -1,0 +1,130 @@
+{
+  "name": "NEXUS Infra Health Probe",
+  "nodes": [
+    {
+      "id": "probe-hook",
+      "name": "Probe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "nexus-infra-probe",
+      "parameters": {
+        "path": "infra-probe",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "probe-waha",
+      "name": "WAHA Sessions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "http://waha:3000/api/sessions/default",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.WAHA_API_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "probe-fmt",
+      "name": "Format Probe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst s = r.body !== undefined ? r.body : r;\nconst hooks = ((s.config || {}).webhooks || []).map(h => ({ url: h.url, events: h.events }));\nreturn [{ json: { probe: 'waha (GCP container)', http_status: r.statusCode ?? null,\n  session: s.name || null, status: s.status || null,\n  connected_number: (s.me && s.me.id) || null,\n  webhook_count: hooks.length, webhooks: hooks,\n  checked_at: new Date().toISOString() } }];"
+      }
+    },
+    {
+      "id": "probe-resp",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Probe Webhook": {
+      "main": [
+        [
+          {
+            "node": "WAHA Sessions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA Sessions": {
+      "main": [
+        [
+          {
+            "node": "Format Probe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Probe": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dubai",
+    "errorWorkflow": "iYJkh1kztWxZXDbT",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "availableInMCP": true
+  },
+  "_exported_from": {
+    "id": "57QpbNQGwlFKb0q3",
+    "active": true,
+    "updatedAt": "2026-08-17T17:50:33.173Z",
+    "published": true
+  }
+}

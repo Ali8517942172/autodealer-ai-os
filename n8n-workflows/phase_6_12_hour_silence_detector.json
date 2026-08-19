@@ -1,5 +1,4 @@
 {
-  "id": "B3TcpfzOMWj8oWgF",
   "name": "Phase 6 - 12-Hour Silence Detector",
   "nodes": [
     {
@@ -7,8 +6,7 @@
         "rule": {
           "interval": [
             {
-              "field": "hours",
-              "hoursInterval": 1
+              "field": "hours"
             }
           ]
         }
@@ -19,7 +17,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        300
+        304
       ]
     },
     {
@@ -52,20 +50,20 @@
       "typeVersion": 1,
       "position": [
         240,
-        300
+        304
       ],
       "id": "p6-leads-0001",
       "name": "Fetch Open Leads",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
-      },
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      }
     },
     {
       "parameters": {
@@ -78,21 +76,21 @@
       "typeVersion": 1,
       "position": [
         480,
-        300
+        304
       ],
       "id": "p6-comms-0001",
       "name": "Fetch Recent Comms",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
-      },
-      "alwaysOutputData": true,
-      "executeOnce": true,
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      }
     },
     {
       "parameters": {
@@ -104,13 +102,12 @@
       "typeVersion": 2,
       "position": [
         720,
-        300
+        304
       ],
-      "alwaysOutputData": true
+      "alwaysOutputData": false
     },
     {
       "parameters": {
-        "batchSize": 1,
         "options": {}
       },
       "id": "p6-loop-0001",
@@ -119,7 +116,7 @@
       "typeVersion": 3,
       "position": [
         960,
-        300
+        304
       ]
     },
     {
@@ -184,16 +181,16 @@
         1440,
         400
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -217,7 +214,6 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ workflow: 'Phase 6 Silence Detector', status: 'SUCCESS', lead_name: ($('Loop Over Silent Leads').item.json.name || null), lead_email: ($('Loop Over Silent Leads').item.json.email || null), summary: 'Completed', logged_at: $now.toISO() }) }}",
-
         "options": {
           "timeout": 15000
         }
@@ -227,18 +223,18 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1670,
+        1680,
         400
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 1500,
       "onError": "continueRegularOutput"
     }
   ],
@@ -344,6 +340,14 @@
     "saveDataErrorExecution": "all",
     "saveDataSuccessExecution": "all",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": true
+    "availableInMCP": true,
+    "binaryMode": "separate",
+    "errorWorkflow": "iYJkh1kztWxZXDbT"
+  },
+  "_exported_from": {
+    "id": "B3TcpfzOMWj8oWgF",
+    "active": true,
+    "updatedAt": "2026-08-14T04:21:48.708Z",
+    "published": true
   }
 }

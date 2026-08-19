@@ -1,26 +1,9 @@
 {
-  "id": "VmnIXo7tM30zqawp",
   "name": "Slack Command Center - AI Agent",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "slack-command",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "id": "1",
-      "name": "Slack Webhook (POST)",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1.1,
-      "position": [
-        -160,
-        304
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Slack slash commands arrive as form-encoded fields under .body\nconst raw = $input.first().json;\nconst b = raw.body || raw;\n\nconst command = String(b.text || raw.text || '').trim();\nif (!command) {\n  throw new Error('Empty Slack command. Usage: /nexus find lead ahmed');\n}\n\nreturn [{ json: {\n  command,\n  user: b.user_name || b.user_id || 'unknown',\n  channel: b.channel_name || b.channel_id || null\n} }];"
+        "jsCode": "// Slack slash commands arrive as form-encoded fields under .body\nconst raw = $input.first().json;\nconst b = raw.body || raw;\n\nlet command = String(b.text || raw.text || '').trim();\n\n// A bare `/nexus` used to throw. The user had already been acknowledged by then,\n// so they simply never heard back. Answer with usage instead.\nif (!command) {\n  command = 'The user sent no command text. Reply with a short usage hint: ' +\n            '`/nexus find lead <name>` or `/nexus update lead <name> status <status>`.';\n}\n\nreturn [{ json: {\n  command,\n  user: b.user_name || b.user_id || 'unknown',\n  channel: b.channel_name || b.channel_id || null,\n  // Slack's 3-second slash-command deadline cannot be met by an AI agent with\n  // tool calls, so the webhook acks immediately and the answer is delivered\n  // here afterwards. Valid for 30 minutes / 5 posts.\n  response_url: b.response_url || null\n} }];\n"
       },
       "id": "2",
       "name": "Extract Command",
@@ -54,7 +37,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{json: {\n  response_type: 'in_channel',\n  blocks: [\n    {\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: `*Agent Confirmation:* \\n${$input.all()[0].json.output}`\n      }\n    }\n  ]\n}}];"
+        "jsCode": "const answer = $input.all()[0].json.output;\nconst ctx = $('Extract Command').first().json;\n\nreturn [{ json: {\n  response_url: ctx.response_url,\n  payload: {\n    response_type: 'in_channel',\n    replace_original: false,\n    blocks: [\n      { type: 'section', text: { type: 'mrkdwn', text: '*NEXUS:*\\n' + answer } },\n      { type: 'context', elements: [\n        { type: 'mrkdwn', text: 'requested by ' + ctx.user + ' · `' + ctx.command + '`' } ] }\n    ]\n  }\n} }];\n"
       },
       "id": "7",
       "name": "Format Slack Response",
@@ -182,7 +165,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// n8n's Agent node accepts a maximum of 2 language models, so a deeper\n// fallback chain is built as a retry ladder. Each tier swaps the OpenRouter\n// slot, giving 5 distinct models across 2 providers over 4 attempts.\n// Model IDs verified against OpenRouter's live /models list (tool-capable, free).\nconst TIERS = [\n  { orModel: 'google/gemini-2.5-flash',                groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3-super-120b-a12b:free', groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'google/gemma-4-31b-it:free',             groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'inclusionai/ling-3.0-flash:free',        groqModel: 'llama-3.3-70b-versatile' }\n];\nconst prev = $input.first().json;\nconst attempt = Number(prev.__attempt ?? -1) + 1;\nif (attempt >= TIERS.length) {\n  throw new Error('All ' + TIERS.length + ' model tiers failed. Tried: ' + TIERS.map(t=>t.orModel).join(', '));\n}\nreturn [{ json: { ...prev, __attempt: attempt, orModel: TIERS[attempt].orModel, groqModel: TIERS[attempt].groqModel } }];"
+        "jsCode": "// n8n's Agent node accepts a maximum of 2 language models, so a deeper\n// fallback chain is built as a retry ladder. Each tier swaps the OpenRouter slot.\n// 16 Aug 2026: every id below was verified live against OpenRouter -- it exists,\n// it is :free (no paid model, per the free-tier rule), and it actually returned\n// a tool_call in a real request. The previous ladder had a PAID gemini tier plus\n// two dead ids (gemma-4-31b-it:free rate-limited 429, ling-3.0-flash:free is\n// 404 free-tier-discontinued), which is why all 4 tiers failed on live traffic.\nconst TIERS = [\n  { orModel: 'nvidia/nemotron-3-ultra-550b-a55b:free',   groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3.5-lightning:free',       groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'nvidia/nemotron-3-super-120b-a12b:free',   groqModel: 'llama-3.3-70b-versatile' },\n  { orModel: 'openai/gpt-oss-20b:free',                  groqModel: 'llama-3.3-70b-versatile' }\n];\nconst prev = $input.first().json;\nconst attempt = Number(prev.__attempt ?? -1) + 1;\nif (attempt >= TIERS.length) {\n  throw new Error('All ' + TIERS.length + ' model tiers failed. Tried: ' + TIERS.map(t=>t.orModel).join(', '));\n}\nreturn [{ json: { ...prev, __attempt: attempt, orModel: TIERS[attempt].orModel, groqModel: TIERS[attempt].groqModel } }];"
       },
       "id": "ladder-VmnIXo",
       "name": "Model Ladder",
@@ -224,47 +207,88 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1014,
+        1008,
         304
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 1500,
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.user_id || $json.user || $json.channel_id || $json.channel || 'slack-' + $execution.id }}",
+        "contextWindowLength": "={{ 10 }}"
       },
-      "id": "auto-respond-1786092139256",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
       "position": [
-        814,
+        560,
+        672
+      ],
+      "id": "ad43c6f3-5c5a-43d7-bcae-56d5a285bf3c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-command",
+        "responseMode": "onReceived",
+        "responseData": "NEXUS is on it — the answer will land in this channel shortly.",
+        "options": {
+          "responseData": "NEXUS is on it — the answer will land in this channel shortly."
+        }
+      },
+      "id": "1",
+      "name": "SlackWebhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
         304
-      ]
+      ],
+      "webhookId": "ce225f73-7470-4bc1-abe1-2bf543a25fea"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.response_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        828,
+        454
+      ],
+      "name": "Post Answer to Slack",
+      "id": "38780f38-6238-477b-8417-f9eaecf66fac",
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     }
   ],
   "connections": {
-    "Slack Webhook (POST)": {
-      "main": [
-        [
-          {
-            "node": "Extract Command",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Extract Command": {
       "main": [
         [
@@ -353,14 +377,36 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Post Answer to Slack",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Respond to Webhook": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI CRM Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SlackWebhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Answer to Slack": {
       "main": [
         [
           {
@@ -374,13 +420,20 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "saveExecutionProgress": true,
+    "saveExecutionProgress": false,
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
     "binaryMode": "separate",
     "availableInMCP": true,
     "timezone": "Asia/Dubai",
     "saveDataErrorExecution": "all",
-    "saveDataSuccessExecution": "all"
+    "saveDataSuccessExecution": "all",
+    "errorWorkflow": "iYJkh1kztWxZXDbT"
+  },
+  "_exported_from": {
+    "id": "VmnIXo7tM30zqawp",
+    "active": true,
+    "updatedAt": "2026-08-17T16:46:43.399Z",
+    "published": true
   }
 }

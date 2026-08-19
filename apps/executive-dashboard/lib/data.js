@@ -1,0 +1,117 @@
+/* NEXUS OS — lib/data.js
+   Split out of the original monolithic app.js on 17 Aug 2026. The body below is
+   the original code, moved not rewritten. */
+import { createClient } from '@supabase/supabase-js';
+import { N8N_BASE, SUPABASE_ANON, SUPABASE_URL, envErrors } from './env.js';
+
+const supabase = envErrors.length ? null : createClient(SUPABASE_URL, SUPABASE_ANON);
+let SESSION = null;
+let ME = null;
+
+/* Supabase access tokens expire after an hour. supabase-js refreshes them in the
+   background, but SESSION was captured once at boot and never updated, so every
+   request kept presenting the original token. After an hour the dashboard died
+   with a raw PostgREST error — `401 PGRST303 {"message":"JWT expired"}` — on
+   whichever screen you happened to open, and the n8n webhooks (which now verify
+   the same token) rejected everything too.
+
+   getSession() returns the current token and refreshes it when it is close to
+   expiry, so asking it per request is what keeps the token live. It reads from
+   memory in the normal case, so this is not a network call per request. */
+async function authToken() {
+  if (!supabase) return SUPABASE_ANON;
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) SESSION = data.session;
+  } catch { /* fall through to whatever we already hold */ }
+  return SESSION?.access_token || SUPABASE_ANON;
+}
+
+async function headers() {
+  return {
+    apikey: SUPABASE_ANON,
+    Authorization: `Bearer ${await authToken()}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+/* An expired or missing session is not a data error, and rendering it as one
+   ("Couldn't load team performance — 401 PGRST303…") tells the user nothing
+   they can act on. Send them back to the login screen instead. */
+function isAuthFailure(status, body) {
+  return status === 401 && /JWT|token|expired|PGRST30/i.test(String(body || ''));
+}
+/* app.js registers the real handler at boot. Importing renderLogin here
+   instead would make lib/data.js depend on the entry module, and the entry
+   module already depends on this one. */
+let onSessionEnded = () => {};
+function setSessionEndedHandler(fn) { onSessionEnded = fn; }
+function setSession(s) { SESSION = s; }
+function setMe(m) { ME = m; }
+function sessionEnded() {
+  SESSION = null;
+  onSessionEnded('Your session expired. Please sign in again.');
+}
+
+async function db(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: await headers() });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    if (isAuthFailure(res.status, body)) { sessionEnded(); throw new Error('Session expired'); }
+    throw new Error(`${res.status} ${res.statusText}${body ? ' — ' + body.slice(0, 180) : ''}`);
+  }
+  return res.json();
+}
+async function dbWrite(method, path, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method, headers: { ...(await headers()), Prefer: 'return=representation' }, body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    if (isAuthFailure(res.status, text)) { sessionEnded(); throw new Error('Session expired'); }
+    throw new Error(`${res.status} — ${text.slice(0, 180)}`);
+  }
+  return res.json();
+}
+
+/* n8n webhooks. Kept separate from db() because a missing VITE_N8N_BASE_URL is
+   a recoverable condition — those screens degrade, the rest of the app works. */
+async function n8n(path, payload) {
+  if (!N8N_BASE) throw new Error('VITE_N8N_BASE_URL is not set, so workflow calls are disabled.');
+  /* These webhooks are still unauthenticated on the n8n side, and since the GCP URL
+     now ships inside a public JS bundle, anyone who opens devtools can read it and
+     call them — ask-ai spends OpenRouter tokens on every call. Send the signed-in
+     user's Supabase JWT so the workflows can verify a real session per request.
+     A shared secret compiled into this bundle would be equally public and prove
+     nothing; a JWT is identity the browser cannot forge. Harmless until the
+     workflows check it, which is the next step and must land after this ships. */
+  const token = await authToken();
+  const res = await fetch(`${N8N_BASE}/webhook/${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && token !== SUPABASE_ANON ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`${res.status} — ${text.slice(0, 200)}`);
+  try { return JSON.parse(text); } catch { return { raw: text }; }
+}
+
+/* Webhook paths, in one place. Every one of these is guarded by the Supabase JWT
+   check inside n8n, so n8n() sending the session token is what makes them work —
+   an unauthenticated call is rejected by the workflow, not by this file. */
+const HOOK = {
+  askAi:      'ask-ai',
+  finance:    'finance-calc',
+  warmDrip:   'lead-trigger',
+  closedWon:  'deals/closed-won',
+  kyc:        'audit-kyc',
+  erpSync:    'erp-sync',
+  escalation: 'lead-escalation',
+};
+
+/* ── Screen registry ─────────────────────────────────────────────────────── */
+
+export { supabase, SESSION, ME, authToken, headers, isAuthFailure, sessionEnded, db, dbWrite, n8n, HOOK, setSessionEndedHandler, setSession, setMe };

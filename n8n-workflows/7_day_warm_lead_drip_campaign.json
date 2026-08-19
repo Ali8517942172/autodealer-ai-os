@@ -1,22 +1,6 @@
 {
-  "id": "G7FhvMY2ucW5Fg7X",
   "name": "7-Day Warm Lead Drip Campaign",
   "nodes": [
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "lead-trigger",
-        "options": {}
-      },
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        256,
-        304
-      ],
-      "id": "a8215a60-42e6-4ecc-bba4-d95d1206c14c"
-    },
     {
       "parameters": {
         "unit": "days"
@@ -28,7 +12,8 @@
         592,
         304
       ],
-      "id": "ce50a8c1-2340-4f5d-bff8-1e30858c4a4e"
+      "id": "ce50a8c1-2340-4f5d-bff8-1e30858c4a4e",
+      "webhookId": "567313a2-e23a-4ff5-9203-8ef4c2b078d5"
     },
     {
       "parameters": {
@@ -39,10 +24,11 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        1056,
+        1120,
         304
       ],
-      "id": "31434088-8d13-435e-a8e9-5cc860e9c656"
+      "id": "31434088-8d13-435e-a8e9-5cc860e9c656",
+      "webhookId": "e8fba666-7c84-4103-9751-914ece18de0c"
     },
     {
       "parameters": {
@@ -56,7 +42,8 @@
         1456,
         304
       ],
-      "id": "53a6defc-25c8-4314-a9b0-8152d638ebc1"
+      "id": "53a6defc-25c8-4314-a9b0-8152d638ebc1",
+      "webhookId": "2fa2a18f-403b-4ff1-ab6c-4a6640efa67f"
     },
     {
       "parameters": {
@@ -70,11 +57,12 @@
         1856,
         304
       ],
-      "id": "00b98382-39f9-4ff0-acb4-e8165bedb324"
+      "id": "00b98382-39f9-4ff0-acb4-e8165bedb324",
+      "webhookId": "636081a8-51cd-4a8b-99eb-e84342e94cf8"
     },
     {
       "parameters": {
-        "jsCode": "// This workflow is invoked two ways:\n//  1) directly via its POST webhook  -> data sits under item.body\n//  2) as a sub-workflow from the Master Router -> data sits under item.lead\n// Normalise both into a flat { name, email, phone, vehicle_interest }.\nconst item = $input.first().json;\n\nlet lead;\nif (item.lead) {\n  lead = item.lead;                 // Master Router sub-workflow call\n} else if (item.body) {\n  lead = item.body;                 // raw webhook POST\n} else {\n  lead = item;                      // already flat\n}\n\nconst clean = (v) => (v === undefined || v === null || v === false || v === '') ? null : String(v).trim();\n\nconst email = clean(lead.email);\nif (!email) {\n  throw new Error('Drip campaign aborted: no email address on the incoming lead. Payload keys: ' + Object.keys(item).join(', '));\n}\n\nreturn [{\n  json: {\n    name: clean(lead.name) || 'there',\n    email: email,\n    phone: clean(lead.phone) || clean(lead.whatsapp),\n    vehicle_interest: clean(lead.vehicle_interest) || clean(lead.vehicleInterest) || clean(lead.message) || 'a vehicle'\n  }\n}];"
+        "jsCode": "// -- Entry-path resolution ------------------------------------------------\n// DripWebhook -> Verify JWT -> here        (public HTTP; auth enforced)\n// Called by Master Router -> here          (sub-workflow; already trusted)\n//\n// $('DripWebhook') THROWS when that node did not run in this execution -- it\n// does NOT return undefined, so `?.` and `||` cannot rescue it, and an\n// Expression field cannot hold try/catch. Removing this try/catch breaks the\n// Master Router sub-workflow path.\nlet webhookJson = null;\ntry {\n  webhookJson = $('DripWebhook').first().json;\n} catch (e) {\n  // sub-workflow path -- DripWebhook never executed.\n}\n\nlet item;\nif (webhookJson) {\n  // 'Verify JWT' runs with onError = continueRegularOutput, so a rejected\n  // token arrives as data. Supabase returns the user object on success.\n  // This endpoint is fire-and-forget (the caller only ever sees\n  // 'Workflow was started'), so a failed execution is the right signal.\n  const auth = $input.first().json || {};\n  if (!auth.id) {\n    throw new Error('Drip campaign aborted: unauthorized. A valid Supabase session token is required in the Authorization header.');\n  }\n  item = webhookJson;\n} else {\n  item = $input.first().json;\n}\n\n// -- Normalise the lead ---------------------------------------------------\n// Invoked two ways: webhook POST puts data under .body, the Master Router\n// passes it under .lead. The dashboard posts lead_email / lead_name; the\n// Master Router passes email / name. Both vocabularies are accepted.\nlet lead;\nif (item.lead) {\n  lead = item.lead;                 // Master Router sub-workflow call\n} else if (item.body) {\n  lead = item.body;                 // raw webhook POST\n} else {\n  lead = item;                      // already flat\n}\n\nconst clean = (v) => (v === undefined || v === null || v === false || v === '') ? null : String(v).trim();\n\nconst email = clean(lead.email) || clean(lead.lead_email);\nif (!email) {\n  // List the LEAD keys, not the webhook envelope keys -- the old message\n  // printed 'headers, params, query, body' which pointed at the wrong layer.\n  throw new Error('Drip campaign aborted: no email address on the incoming lead. Lead keys received: ' + Object.keys(lead).join(', '));\n}\n\nreturn [{\n  json: {\n    name: clean(lead.name) || clean(lead.lead_name) || 'there',\n    email: email,\n    phone: clean(lead.phone) || clean(lead.whatsapp),\n    vehicle_interest: clean(lead.vehicle_interest) || clean(lead.vehicleInterest) || clean(lead.message) || 'a vehicle'\n  }\n}];"
       },
       "id": "29196054-dff5-437c-b8ab-326387744fcf",
       "name": "Normalize Lead Input",
@@ -117,16 +105,16 @@
         800,
         656
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -160,16 +148,16 @@
         1344,
         672
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -203,16 +191,16 @@
         2272,
         304
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -330,16 +318,16 @@
         1280,
         32
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -444,16 +432,16 @@
         2016,
         80
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 1500
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -462,7 +450,9 @@
         "message": "=<p>Hi {{ $('Normalize Lead Input').first().json.name }},</p><p>Thanks for getting in touch with NEXUS OS about the <strong>{{ $('Normalize Lead Input').first().json.vehicle_interest }}</strong>.</p><p>I've made a note of what you're looking for. If you'd like, I can put together a few options in your budget and arrange a time for you to come see them.</p><p>Just reply to this email and let me know what suits you.</p><p>Best regards,<br>NEXUS OS Sales Team</p>",
         "options": {
           "appendAttribution": false
-        }
+        },
+        "resource": "message",
+        "operation": "send"
       },
       "id": "drip-gm1",
       "name": "Email: Welcome (Gmail)",
@@ -472,15 +462,16 @@
         736,
         304
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "1120e6c3-4f46-42bb-9fbb-0d464ae3488f",
       "credentials": {
         "gmailOAuth2": {
           "id": "1Cgivoyjt7psAirH",
           "name": "Gmail OAuth2 API"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000
+      }
     },
     {
       "parameters": {
@@ -489,7 +480,9 @@
         "message": "=<p>Hi {{ $('Normalize Lead Input').first().json.name }},</p><p>Just checking in on the <strong>{{ $('Normalize Lead Input').first().json.vehicle_interest }}</strong> you were interested in.</p><p>We've had some new arrivals this week, so if your requirements have changed at all, let me know and I'll send over what fits.</p><p>Happy to answer any questions - finance, trade-in value, warranty, anything.</p><p>Best regards,<br>NEXUS OS Sales Team</p>",
         "options": {
           "appendAttribution": false
-        }
+        },
+        "resource": "message",
+        "operation": "send"
       },
       "id": "drip-gm2",
       "name": "Email: Follow Up (Gmail)",
@@ -499,15 +492,16 @@
         1264,
         304
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "b55ca2a6-c1a8-4cba-b536-6b1f91ddecb7",
       "credentials": {
         "gmailOAuth2": {
           "id": "1Cgivoyjt7psAirH",
           "name": "Gmail OAuth2 API"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000
+      }
     },
     {
       "parameters": {
@@ -516,7 +510,9 @@
         "message": "=<p>Hi {{ $('Normalize Lead Input').first().json.name }},</p><p>I wanted to come back to you one last time about the <strong>{{ $('Normalize Lead Input').first().json.vehicle_interest }}</strong>.</p><p>As a thank you for your interest, we can offer you an <strong>exclusive 5% discount</strong> on your first purchase with us. This one is valid for the next 48 hours.</p><p>If the timing isn't right, that's completely fine - just reply and tell me, and I'll stop following up.</p><p>Best regards,<br>NEXUS OS Sales Team</p>",
         "options": {
           "appendAttribution": false
-        }
+        },
+        "resource": "message",
+        "operation": "send"
       },
       "id": "drip-gm3",
       "name": "Email: Final Offer (Gmail)",
@@ -526,15 +522,16 @@
         2064,
         304
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "e3d18a10-4d81-4f06-ada8-ad7c1677ef48",
       "credentials": {
         "gmailOAuth2": {
           "id": "1Cgivoyjt7psAirH",
           "name": "Gmail OAuth2 API"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000
+      }
     },
     {
       "parameters": {
@@ -567,32 +564,68 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2502,
-        304
+        2208,
+        608
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
       "credentials": {
         "supabaseApi": {
           "id": "dv4OeARarErZLHCj",
           "name": "Supabase account"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 1500,
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Audit Log replies with an empty body (Prefer: return=minimal). This\n// keeps the sub-workflow's return value meaningful for the Master Router.\nreturn $input.all().length ? $input.all() : [{ json: { status: 'done' } }];"
+        "httpMethod": "POST",
+        "path": "lead-trigger",
+        "options": {}
       },
-      "id": "marketin-return",
-      "name": "Return Result",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "name": "DripWebhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
       "position": [
-        2650,
-        700
-      ]
+        272,
+        320
+      ],
+      "id": "a8215a60-42e6-4ecc-bba4-d95d1206c14c",
+      "webhookId": "86e37768-2628-480e-b5c8-fb6fe1db92c9"
+    },
+    {
+      "parameters": {
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/auth/v1/user",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzdnVvb3Zpdnlzc3pkb2lvcmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTg0MzUsImV4cCI6MjA5OTMzNDQzNX0.YPYzknrhqyzT5W9YeiJLGQcV3JF9BGlL1g0BbTr9l9E"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ $json.headers && $json.headers.authorization ? $json.headers.authorization : '' }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "drip-verify-jwt-0001",
+      "name": "Verify JWT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        144
+      ],
+      "retryOnFail": false,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "notes": "Guard for the public webhook path only. Returns the Supabase user object on a valid token; 401 arrives as data because onError = continueRegularOutput."
     }
   ],
   "connections": {
@@ -634,17 +667,6 @@
         [
           {
             "node": "Email: Final Offer (Gmail)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook Trigger": {
-      "main": [
-        [
-          {
-            "node": "Normalize Lead Input",
             "type": "main",
             "index": 0
           }
@@ -819,11 +841,22 @@
         ]
       ]
     },
-    "Audit Log": {
+    "DripWebhook": {
       "main": [
         [
           {
-            "node": "Return Result",
+            "node": "Verify JWT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify JWT": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Input",
             "type": "main",
             "index": 0
           }
@@ -838,6 +871,13 @@
     "timezone": "Asia/Dubai",
     "saveDataErrorExecution": "all",
     "callerPolicy": "workflowsFromSameOwner",
-    "saveDataSuccessExecution": "all"
+    "saveDataSuccessExecution": "all",
+    "errorWorkflow": "iYJkh1kztWxZXDbT"
+  },
+  "_exported_from": {
+    "id": "G7FhvMY2ucW5Fg7X",
+    "active": true,
+    "updatedAt": "2026-08-14T04:22:22.767Z",
+    "published": true
   }
 }

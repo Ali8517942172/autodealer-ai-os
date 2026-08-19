@@ -40,3 +40,11 @@ claude_desktop_config.json
 # DB dumps hold encrypted n8n credentials; local backups and build output
 n8n_backup*.sql
 *.bak
+
+# Staging area for files an agent could not delete directly (device_bash cannot
+# rm). Review the contents, then delete the folder yourself.
+_to_delete/
+_to_delete_git_locks/
+
+# Local backup archives — not source
+backups/

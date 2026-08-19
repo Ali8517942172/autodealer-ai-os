@@ -1,0 +1,120 @@
+{
+  "name": "NEXUS Error Handler",
+  "nodes": [
+    {
+      "id": "a03a9ff8-7e44-4f52-8a88-200a53bec546",
+      "name": "Any Workflow Failed",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f632bfc4-86cc-4d13-aa8f-16c5b97211f5",
+              "name": "workflow",
+              "type": "string",
+              "value": "={{ ($json.workflow && $json.workflow.name) || 'Unknown workflow' }}"
+            },
+            {
+              "id": "facb0d06-edb5-4f87-9314-17108f0de0c9",
+              "name": "status",
+              "type": "string",
+              "value": "FAILED"
+            },
+            {
+              "id": "537d3dd0-d427-4021-987a-5d833788d7a3",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ [ (($json.execution && $json.execution.error && $json.execution.error.message) || ($json.error && $json.error.message) || 'Execution failed with no error message'), ($json.execution && $json.execution.lastNodeExecuted ? 'Failed at node: ' + $json.execution.lastNodeExecuted : null), ($json.execution && $json.execution.id ? 'Execution ' + $json.execution.id : null), ($json.execution && $json.execution.url ? $json.execution.url : null) ].filter(Boolean).join(' · ').slice(0, 1000) }}"
+            },
+            {
+              "id": "dd6e066e-831d-4142-852f-58fd16eda3ea",
+              "name": "logged_at",
+              "type": "string",
+              "value": "={{ $now.toUTC().toISO() }}"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "name": "Build Failure Row",
+      "id": "a69cb272-2946-4fb0-bfb7-7228bb944aa8"
+    },
+    {
+      "id": "8b86a612-43af-48e1-aa7c-2ab36f640860",
+      "name": "Log Failure to audit_log",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "tableId": "audit_log",
+        "dataToSend": "autoMapInputData"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    }
+  ],
+  "connections": {
+    "Any Workflow Failed": {
+      "main": [
+        [
+          {
+            "node": "Build Failure Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Failure Row": {
+      "main": [
+        [
+          {
+            "node": "Log Failure to audit_log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "timezone": "Asia/Dubai",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all",
+    "saveExecutionProgress": false
+  },
+  "_exported_from": {
+    "id": "iYJkh1kztWxZXDbT",
+    "active": true,
+    "updatedAt": "2026-08-17T18:20:39.681Z",
+    "published": true
+  }
+}

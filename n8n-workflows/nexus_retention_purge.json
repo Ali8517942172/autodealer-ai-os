@@ -1,0 +1,423 @@
+{
+  "name": "NEXUS Retention Purge",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 3,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Every Night 03:00",
+      "id": "e5440cbb-d4d1-414a-8f28-6e8b36fadb81"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://dsvuoovivysszdoiorch.supabase.co/rest/v1/kyc_documents?select=id,storage_path,retain_until&storage_path=not.is.null&purged_at=is.null&retain_until=lt.' + $now.toFormat('yyyy-MM-dd') + '&limit=500' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        -120
+      ],
+      "name": "Find Expired Documents",
+      "id": "c559c9e8-fd7d-4880-a8f8-5f04c09ea4e2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate the expired rows into a single bulk delete.\n// `Find Expired Documents` runs with alwaysOutputData, so an empty result\n// arrives as one empty item rather than as no items at all.\nconst rows = $input.all()\n  .map(i => i.json)\n  .filter(r => r && r.id && r.storage_path);\n\nif (rows.length === 0) return [];   // nothing due — stop this branch quietly\n\nreturn [{ json: {\n  count: rows.length,\n  ids: rows.map(r => r.id),\n  paths: rows.map(r => r.storage_path),\n  oldest_due: rows.map(r => r.retain_until).sort()[0],\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -120
+      ],
+      "name": "Collect Expired Paths",
+      "id": "fffa8f1b-89cd-4269-8008-2d86e5d5603a"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/storage/v1/object/kyc-documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ prefixes: $json.paths }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -120
+      ],
+      "name": "Delete Storage Objects",
+      "id": "b04ba142-c3b6-466c-b76d-001af291d486",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://dsvuoovivysszdoiorch.supabase.co/rest/v1/kyc_documents?id=in.(' + $('Collect Expired Paths').first().json.ids.join(',') + ')' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ purged_at: $now.toISO() }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        -120
+      ],
+      "name": "Mark Rows Purged",
+      "id": "02e79109-0223-4e7a-aa8a-d1e8e939f8c1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// One audit row per purge run. A retention policy you cannot evidence is not\n// a retention policy, so record what was destroyed and when.\nconst plan = $('Collect Expired Paths').first().json;\nconst del = $('Delete Storage Objects').first().json;\n\nconst errors = Array.isArray(del) ? del.filter(d => d && d.error) : [];\n\nreturn [{ json: {\n  workflow: 'NEXUS Retention Purge',\n  status: errors.length ? 'PARTIAL' : 'SUCCESS',\n  summary: 'Retention purge: deleted ' + plan.count + ' KYC document(s) past retain_until'\n           + ' (oldest due ' + plan.oldest_due + ').'\n           + (errors.length ? ' ' + errors.length + ' object(s) failed to delete.' : ''),\n}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -120
+      ],
+      "name": "Summarise Purge",
+      "id": "45d2416c-a91d-41e4-a0a7-fc8dc7019273"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/audit_log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflow: $json.workflow, status: $json.status, summary: $json.summary }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        -120
+      ],
+      "name": "Log Purge to Audit",
+      "id": "d24adb31-b9b7-4fa7-a9df-1c4002dc5a65",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ 'https://dsvuoovivysszdoiorch.supabase.co/rest/v1/processed_messages?processed_at=lt.' + $now.minus(7, 'days').toUTC().toISO() }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        140
+      ],
+      "name": "Prune Dedupe Guard",
+      "id": "a342ad2d-682e-441c-80c3-b723d3e6343e",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://dsvuoovivysszdoiorch.supabase.co/rest/v1/kyc_documents?select=id,lead_email,created_at&storage_path=is.null&purged_at=is.null&created_at=gte.2026-08-17T16:01:48Z&order=created_at.asc&limit=100",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        380
+      ],
+      "name": "Find Archive Gaps",
+      "id": "7d7e381d-e0c1-44e7-b61f-8f9b70772af7",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dv4OeARarErZLHCj",
+          "name": "Supabase account"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// The KYC archive fails open on purpose — a Storage outage must not stop a\n// customer getting their verdict. The cost is a row that claims no document.\n// `purged_at IS NULL` distinguishes a genuine gap from a document we deleted on\n// schedule. Anything here is a compliance hole, so it is worth a Slack ping.\nconst rows = $input.all().map(i => i.json).filter(r => r && r.id);\nif (rows.length === 0) return [];\n\nconst oldest = rows.map(r => r.created_at).sort()[0];\nreturn [{ json: {\n  count: rows.length,\n  oldest: oldest,\n  text: ':warning: *KYC archive gap* — ' + rows.length +\n        ' document(s) in `kyc_documents` have no stored file ' +\n        '(`storage_path IS NULL AND purged_at IS NULL`). Oldest: ' + oldest +\n        '. The verdict was recorded but the image was never archived, so the ' +\n        'retention record is incomplete for those customers.'\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        380
+      ],
+      "name": "Any Gaps?",
+      "id": "6cf00ef3-4d22-4c6a-bd27-20d99d4baea4"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BKTLL1X54",
+          "mode": "id"
+        },
+        "text": "={{ $json.text }}",
+        "otherOptions": {},
+        "resource": "message",
+        "operation": "post"
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        660,
+        380
+      ],
+      "name": "Slack: Archive Gap Alert",
+      "id": "41d725ae-07b7-4c59-8cf7-81a27b4a111f",
+      "credentials": {
+        "slackApi": {
+          "id": "oOf93CGdFiAxHkHF",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "b203793f-fd40-48d7-998a-1897429a3b17"
+    }
+  ],
+  "connections": {
+    "Every Night 03:00": {
+      "main": [
+        [
+          {
+            "node": "Find Expired Documents",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prune Dedupe Guard",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Find Archive Gaps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Expired Documents": {
+      "main": [
+        [
+          {
+            "node": "Collect Expired Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Expired Paths": {
+      "main": [
+        [
+          {
+            "node": "Delete Storage Objects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Storage Objects": {
+      "main": [
+        [
+          {
+            "node": "Mark Rows Purged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Rows Purged": {
+      "main": [
+        [
+          {
+            "node": "Summarise Purge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarise Purge": {
+      "main": [
+        [
+          {
+            "node": "Log Purge to Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Archive Gaps": {
+      "main": [
+        [
+          {
+            "node": "Any Gaps?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Gaps?": {
+      "main": [
+        [
+          {
+            "node": "Slack: Archive Gap Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dubai",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": false,
+    "errorWorkflow": "iYJkh1kztWxZXDbT",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "_exported_from": {
+    "id": "aIYwwoYStDAi9kHy",
+    "active": true,
+    "updatedAt": "2026-08-17T17:50:40.499Z",
+    "published": true
+  }
+}

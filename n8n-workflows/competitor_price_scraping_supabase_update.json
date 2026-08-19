@@ -1,5 +1,4 @@
 {
-  "id": "LphiGg4iqF1bn6El",
   "name": "Competitor Price Scraping & Supabase Update",
   "nodes": [
     {
@@ -355,8 +354,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2374,
-        224
+        2200,
+        600
       ],
       "credentials": {
         "supabaseApi": {
@@ -492,6 +491,13 @@
     "availableInMCP": true,
     "binaryMode": "separate",
     "timezone": "Asia/Dubai",
-    "saveDataErrorExecution": "all"
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "iYJkh1kztWxZXDbT"
+  },
+  "_exported_from": {
+    "id": "LphiGg4iqF1bn6El",
+    "active": true,
+    "updatedAt": "2026-08-14T04:21:59.673Z",
+    "published": true
   }
 }
