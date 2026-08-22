@@ -100,7 +100,11 @@ SCREENS.team = async host => {
   const [usersR, perfR, leadsR] = await Promise.allSettled([
     db('users?select=id,name,email,role,status&order=name.asc'),
     db('v_team_performance?select=*'),
-    db(`leads?select=id,name,status,ai_score,lead_score,budget_aed,vehicle_interest,assigned_to_id,created_at&order=created_at.desc&limit=${LEAD_LIMIT}`),
+    /* `lead_score` is NOT a column on leads — the score lives in ai_score alone.
+       Asking for both made PostgREST reject the entire request with 42703, which
+       took the roster's per-rep lead counts and pipeline down with it. Verified
+       against the live schema, not the gate's stub. */
+    db(`leads?select=id,name,status,ai_score,budget_aed,vehicle_interest,assigned_to_id,created_at&order=created_at.desc&limit=${LEAD_LIMIT}`),
   ]);
 
   const users = valOf(usersR), usersErr = errOf(usersR);
