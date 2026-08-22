@@ -14,7 +14,7 @@
      · both null, created BEFORE it   → predates archiving. Explained, not flagged.
    Nothing on this screen is estimated and no row is fabricated: if a table
    cannot be read, the panel that depends on it says so. */
-import { db } from '../lib/data.js';
+import { db, signedUrl } from '../lib/data.js';
 import { $, el } from '../lib/dom.js';
 import { ago, clock, esc, n0, num, pill } from '../lib/format.js';
 import { SCREENS } from '../lib/nav.js';
@@ -43,9 +43,16 @@ const NO_DECISION_HOOK =
 const NO_REASK_HOOK =
   'No re-request endpoint exists yet. Asking the customer for another upload needs a WAHA send-message webhook, and none is deployed.';
 const NO_FILE_LINK =
-  'Documents live in the private kyc-documents bucket and can only be opened through a short-lived signed URL. There is no browser helper that mints one, so link-outs stay disabled.';
+  'This record has no storage_path, so no file was ever archived for it. There is nothing to open.';
 const PURGED_FILE =
   'This file was deleted on schedule under the retention policy. There is nothing left to open.';
+/* Signing is deliberately short-lived: long enough to click through, short
+   enough that the URL is dead by the time anyone forwards it. The number is in
+   the button's title so a reviewer knows the link they just opened is perishable
+   before they try to share it. */
+const SIGNED_URL_TTL = 60;
+const CAN_OPEN_FILE =
+  `Opens the archived document through a ${SIGNED_URL_TTL}-second signed URL. The bucket stays private — the link expires and cannot be reused.`;
 
 /* Date-only columns (date_of_birth, expiry_date, retain_until) are rendered
    verbatim. Parsing "2026-08-17" into a Date and formatting it locally shifts
@@ -458,7 +465,11 @@ SCREENS.compliance = async host => {
     const a = n0(d.attempt_number), mx = n0(d.max_attempts);
     const atAudit = expiredAtAudit(d);
     const lapsed = !atAudit && isPastDate(d.expiry_date);
-    const fileTitle = d.purged_at ? PURGED_FILE : NO_FILE_LINK;
+    /* Three distinct cases, and they must not be collapsed: the object is there
+       and signable; it was purged on schedule (signing it would hand back a URL
+       that 404s); or it was never archived at all. */
+    const canOpen = !d.purged_at && !!d.storage_path;
+    const fileTitle = canOpen ? CAN_OPEN_FILE : (d.purged_at ? PURGED_FILE : NO_FILE_LINK);
 
     /* Re-uploads from the same customer are separate rows that relate to each
        other only through attempt_number, so a reviewer reading one row cannot
@@ -560,9 +571,36 @@ SCREENS.compliance = async host => {
         <button class="btn primary" disabled title="${esc(NO_DECISION_HOOK)}">Approve</button>
         <button class="btn danger" disabled title="${esc(NO_DECISION_HOOK)}">Reject</button>
         <button class="btn" disabled title="${esc(NO_REASK_HOOK)}">Re-request upload</button>
-        <button class="btn ghost" disabled title="${esc(fileTitle)}">Open file</button>
+        <button class="btn ghost" id="cOpenFile" ${canOpen ? '' : 'disabled'} title="${esc(fileTitle)}">Open file</button>
       </div>`);
     $('cClose').addEventListener('click', closeDrawer);
+
+    if (canOpen) {
+      const btn = $('cOpenFile');
+      btn.addEventListener('click', async () => {
+        /* The tab is opened BEFORE the await. A popup blocker only trusts a
+           window.open that happens inside the click's own task; opening it after
+           the signing round-trip gets it blocked, and the reviewer sees nothing
+           happen at all. */
+        const tab = window.open('', '_blank', 'noopener');
+        const label = btn.textContent;
+        btn.disabled = true; btn.textContent = 'Signing…';
+        try {
+          const url = await signedUrl(d.storage_path, SIGNED_URL_TTL);
+          if (tab) tab.location = url; else window.location.assign(url);
+        } catch (e) {
+          if (tab) tab.close();
+          btn.title = `Could not open the document: ${e.message}`;
+          btn.textContent = 'Could not open';
+          /* Leave the failure on the button rather than throwing it away: the
+             reviewer needs to know the archive did not answer, and this drawer
+             has no other place to say so. */
+          return;
+        } finally {
+          if (btn.textContent === 'Signing…') { btn.textContent = label; btn.disabled = false; }
+        }
+      });
+    }
   }
 
   /* ── Activity trail ────────────────────────────────────────────────────── */

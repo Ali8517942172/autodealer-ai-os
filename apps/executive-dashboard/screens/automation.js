@@ -39,6 +39,20 @@ import { closeDrawer, kpi, openDrawer, table, wireRows } from '../lib/ui.js';
    was rebuilt to stop telling. */
 const AUDIT_LIMIT = 500;
 
+/* audit_log has no execution_id column, which is why "Open in n8n" used to be a
+   permanently disabled button. But the Error Handler already writes the
+   execution's own n8n URL into the summary text:
+
+     "… · Failed at node: Model Ladder · Execution 3213 ·
+      https://…/workflow/BiyHk9ZXxJUVGbf6/executions/3213"
+
+   So the deep-link exists for exactly the runs that need one — the failures.
+   Match the n8n execution URL shape specifically rather than any URL, so a link
+   that happens to appear inside some other workflow's summary can never turn
+   into a button claiming to open a stack trace. */
+const EXEC_URL_RE = /https?:\/\/[^\s·"'<>]+\/workflow\/[A-Za-z0-9_-]+\/executions\/\d+/;
+const execUrl = row => (String(row?.summary || '').match(EXEC_URL_RE) || [null])[0];
+
 const low = s => String(s || '').trim().toLowerCase();
 const up  = s => String(s || '').trim().toUpperCase();
 
@@ -764,6 +778,7 @@ SCREENS.automation = async host => {
   function openRun(a) {
     if (!a) return;
     const bad = ['FAILED', 'REJECTED'].includes(up(a.status));
+    const trace = execUrl(a);
     const wf = (health || []).find(w => namesFor(w).has(low(a.workflow))) || null;
     openDrawer(`
       <div class="drawer-head">
@@ -782,7 +797,9 @@ SCREENS.automation = async host => {
           </div>
           <div class="quote" style="margin-top:12px;white-space:pre-wrap">${esc(a.summary || 'The workflow wrote no summary for this run.')}</div>
           ${bad ? `<div class="banner hot" style="margin-top:12px"><span class="material-symbols-outlined">error</span>
-            <div>This run did not complete. audit_log records the outcome and the summary above but not the n8n execution id, so the stack trace has to be found in the n8n execution list by timestamp.</div></div>` : ''}
+            <div>This run did not complete. ${trace
+              ? 'The Error Handler recorded the execution\'s own n8n URL in the summary — <b>Open in n8n</b> below goes straight to the stack trace.'
+              : 'audit_log records the outcome and the summary above but not the n8n execution id, and this summary carries no execution link either, so the stack trace has to be found in the n8n execution list by timestamp.'}</div></div>` : ''}
         </div>
         <div class="section">
           <div class="label-caps">Subject</div>
@@ -806,7 +823,9 @@ SCREENS.automation = async host => {
       </div>
       <div class="drawer-foot">
         ${wf ? '<button class="btn" id="aOpenWf">Open workflow</button>' : ''}
-        <button class="btn ghost" disabled title="audit_log stores no n8n execution id, so there is nothing to deep-link to. Adding the execution id to the Audit Log node is what would make this work.">Open in n8n</button>
+        ${trace
+          ? `<a class="btn ghost" href="${esc(trace)}" target="_blank" rel="noopener noreferrer">Open in n8n</a>`
+          : `<button class="btn ghost" disabled title="This run's summary carries no n8n execution link, and audit_log has no execution_id column. The Error Handler writes the link on failures it catches; runs logged by a workflow's own Audit Log node do not carry one. Adding the execution id to those nodes is what would make this work everywhere.">Open in n8n</button>`}
       </div>`);
     $('aRunClose').addEventListener('click', closeDrawer);
     if (wf) $('aOpenWf').addEventListener('click', () => openWorkflow(wf));

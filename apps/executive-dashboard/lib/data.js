@@ -99,6 +99,32 @@ async function n8n(path, payload) {
   try { return JSON.parse(text); } catch { return { raw: text }; }
 }
 
+/* Short-lived signed URL for a private Storage object.
+
+   The kyc-documents bucket is private and must stay private — a KYC document is
+   a customer's passport or Emirates ID. Storage RLS already carries exactly the
+   two policies this needs: `kyc_objects_staff_read` (SELECT for `authenticated`
+   where bucket_id = 'kyc-documents') and `kyc_objects_no_anon` (everything
+   denied for `anon`). So a signed-in member of staff can mint a link and a
+   logged-out visitor cannot, without any of it going through a service-role key
+   or a public URL.
+
+   Default TTL is 60 seconds: long enough to click through, short enough that a
+   link pasted into a chat is dead by the time anyone else opens it.
+
+   A row whose `purged_at` is set has had its object deleted by the retention job
+   — signing that path returns a URL that 404s. Callers must skip those rows
+   rather than offering a link that breaks. */
+async function signedUrl(path, expiresIn = 60) {
+  if (!supabase) throw new Error('Supabase is not configured in this build.');
+  if (!path) throw new Error('No storage path on this record.');
+  const { data, error } = await supabase.storage
+    .from('kyc-documents').createSignedUrl(path, expiresIn);
+  if (error) throw new Error(error.message || 'Could not sign that document.');
+  if (!data?.signedUrl) throw new Error('Storage returned no URL for that path.');
+  return data.signedUrl;
+}
+
 /* Webhook paths, in one place. Every one of these is guarded by the Supabase JWT
    check inside n8n, so n8n() sending the session token is what makes them work —
    an unauthenticated call is rejected by the workflow, not by this file. */
@@ -114,4 +140,4 @@ const HOOK = {
 
 /* ── Screen registry ─────────────────────────────────────────────────────── */
 
-export { supabase, SESSION, ME, authToken, headers, isAuthFailure, sessionEnded, db, dbWrite, n8n, HOOK, setSessionEndedHandler, setSession, setMe };
+export { supabase, SESSION, ME, authToken, headers, isAuthFailure, sessionEnded, db, dbWrite, n8n, signedUrl, HOOK, setSessionEndedHandler, setSession, setMe };
